@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strata - 3D Gaming Library for React Three Fiber</title>
+    <meta name="description" content="Complete solution for foreground, midground, and background 3D gaming - terrain, water, vegetation, characters, and more.">
+    <style>
+        :root {
+            --primary: #d4af37;
+            --bg-dark: #0a0a0a;
+            --bg-card: #141414;
+            --text: #e0e0e0;
+            --text-muted: #888;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        
+        header {
+            background: linear-gradient(180deg, rgba(212,175,55,0.1) 0%, transparent 100%);
+            border-bottom: 1px solid rgba(212,175,55,0.2);
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 3rem;
+            color: var(--primary);
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+        
+        .tagline {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto 1.5rem;
+        }
+        
+        .badges {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .badge {
+            background: var(--bg-card);
+            border: 1px solid rgba(212,175,55,0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            color: var(--primary);
+        }
+        
+        nav {
+            background: var(--bg-card);
+            padding: 1rem;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        nav a {
+            color: var(--text);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            transition: all 0.2s;
+        }
+        
+        nav a:hover, nav a.active {
+            background: rgba(212,175,55,0.2);
+            color: var(--primary);
+        }
+        
+        main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .hero {
+            text-align: center;
+            padding: 3rem 0;
+        }
+        
+        .hero h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .layers {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+        
+        .layer-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 1rem;
+            padding: 2rem;
+            transition: all 0.3s;
+        }
+        
+        .layer-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px);
+        }
+        
+        .layer-card h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+        
+        .layer-card ul {
+            list-style: none;
+            color: var(--text-muted);
+        }
+        
+        .layer-card li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .layer-card li:last-child {
+            border-bottom: none;
+        }
+        
+        .layer-card li::before {
+            content: '→';
+            color: var(--primary);
+            margin-right: 0.5rem;
+        }
+        
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .demo-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 0.5rem;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .demo-card:hover {
+            border-color: var(--primary);
+        }
+        
+        .demo-preview {
+            height: 200px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+        }
+        
+        .demo-info {
+            padding: 1.5rem;
+        }
+        
+        .demo-info h4 {
+            margin-bottom: 0.5rem;
+        }
+        
+        .demo-info p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        
+        .code-example {
+            background: #1e1e1e;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin: 2rem 0;
+        }
+        
+        .code-example pre {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        
+        .code-example .keyword { color: #569cd6; }
+        .code-example .component { color: #4ec9b0; }
+        .code-example .prop { color: #9cdcfe; }
+        .code-example .string { color: #ce9178; }
+        .code-example .comment { color: #6a9955; }
+        
+        footer {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: #000;
+        }
+        
+        .btn-primary:hover {
+            background: #e6c04a;
+        }
+        
+        .btn-secondary {
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(212,175,55,0.1);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Strata</h1>
+        <p class="tagline">The complete solution for layered 3D gaming in React Three Fiber. Background, midground, and foreground - all in one library.</p>
+        <div class="badges">
+            <span class="badge">React Three Fiber</span>
+            <span class="badge">GPU Instancing</span>
+            <span class="badge">Procedural Generation</span>
+            <span class="badge">Mobile Ready</span>
+        </div>
+    </header>
+    
+    <nav>
+        <a href="#" class="active">Home</a>
+        <a href="demos/terrain.html">Terrain</a>
+        <a href="demos/water.html">Water</a>
+        <a href="demos/vegetation.html">Vegetation</a>
+        <a href="demos/sky.html">Sky</a>
+        <a href="demos/volumetrics.html">Volumetrics</a>
+        <a href="demos/characters.html">Characters</a>
+        <a href="demos/full-scene.html">Full Scene</a>
+    </nav>
+    
+    <main>
+        <section class="hero">
+            <h2>Build Stunning 3D Worlds</h2>
+            <p>From procedural terrain to animated characters, Strata provides every layer you need.</p>
+            <div class="cta-buttons">
+                <a href="demos/full-scene.html" class="btn btn-primary">View Full Demo</a>
+                <a href="https://github.com/jbcom/jbcom-oss-ecosystem/tree/main/packages/strata" class="btn btn-secondary">GitHub</a>
+            </div>
+        </section>
+        
+        <section class="layers">
+            <div class="layer-card">
+                <h3>🌅 Background Layer</h3>
+                <ul>
+                    <li>Procedural sky with day/night cycle</li>
+                    <li>Dynamic weather and stars</li>
+                    <li>Atmospheric scattering</li>
+                    <li>Volumetric fog and clouds</li>
+                </ul>
+            </div>
+            
+            <div class="layer-card">
+                <h3>🏞️ Midground Layer</h3>
+                <ul>
+                    <li>Marching cubes terrain</li>
+                    <li>Advanced water with reflections</li>
+                    <li>GPU-instanced vegetation</li>
+                    <li>Biome-based placement</li>
+                </ul>
+            </div>
+            
+            <div class="layer-card">
+                <h3>🎮 Foreground Layer</h3>
+                <ul>
+                    <li>Articulated characters</li>
+                    <li>Shell-based fur rendering</li>
+                    <li>Particle systems</li>
+                    <li>Decals and billboards</li>
+                </ul>
+            </div>
+        </section>
+        
+        <section>
+            <h2 style="text-align: center; margin-bottom: 2rem;">Interactive Demos</h2>
+            <div class="demo-grid">
+                <a href="demos/terrain.html" class="demo-card">
+                    <div class="demo-preview">🏔️</div>
+                    <div class="demo-info">
+                        <h4>Procedural Terrain</h4>
+                        <p>SDF-based terrain with marching cubes, triplanar texturing, and biome blending.</p>
+                    </div>
+                </a>
+                
+                <a href="demos/water.html" class="demo-card">
+                    <div class="demo-preview">🌊</div>
+                    <div class="demo-info">
+                        <h4>Advanced Water</h4>
+                        <p>Gerstner waves, fresnel reflections, caustics, and underwater effects.</p>
+                    </div>
+                </a>
+                
+                <a href="demos/vegetation.html" class="demo-card">
+                    <div class="demo-preview">🌿</div>
+                    <div class="demo-info">
+                        <h4>GPU Vegetation</h4>
+                        <p>Thousands of grass, trees, and rocks with wind animation and LOD.</p>
+                    </div>
+                </a>
+                
+                <a href="demos/sky.html" class="demo-card">
+                    <div class="demo-preview">☀️</div>
+                    <div class="demo-info">
+                        <h4>Procedural Sky</h4>
+                        <p>Day/night cycle, atmospheric scattering, stars, and weather effects.</p>
+                    </div>
+                </a>
+                
+                <a href="demos/volumetrics.html" class="demo-card">
+                    <div class="demo-preview">🌫️</div>
+                    <div class="demo-info">
+                        <h4>Volumetric Effects</h4>
+                        <p>Fog, god rays, dust particles, and underwater overlays.</p>
+                    </div>
+                </a>
+                
+                <a href="demos/characters.html" class="demo-card">
+                    <div class="demo-preview">🦦</div>
+                    <div class="demo-info">
+                        <h4>Characters & Fur</h4>
+                        <p>Articulated characters with shell-based fur and procedural animation.</p>
+                    </div>
+                </a>
+            </div>
+        </section>
+        
+        <section>
+            <h2 style="text-align: center; margin: 3rem 0 2rem;">Quick Start</h2>
+            <div class="code-example">
+<pre><span class="comment">// Install</span>
+npm install @jbcom/strata
+
+<span class="comment">// Use in your React Three Fiber app</span>
+<span class="keyword">import</span> { ProceduralSky, Water, GrassInstances } <span class="keyword">from</span> <span class="string">'@jbcom/strata'</span>;
+
+<span class="keyword">function</span> <span class="component">Scene</span>() {
+  <span class="keyword">return</span> (
+    &lt;&gt;
+      <span class="comment">{/* Background */}</span>
+      &lt;<span class="component">ProceduralSky</span> <span class="prop">timeOfDay</span>={{ <span class="prop">sunAngle</span>: 45 }} /&gt;
+      
+      <span class="comment">{/* Midground */}</span>
+      &lt;<span class="component">Water</span> <span class="prop">size</span>={100} <span class="prop">color</span>=<span class="string">"#006994"</span> /&gt;
+      &lt;<span class="component">GrassInstances</span> <span class="prop">count</span>={10000} <span class="prop">areaSize</span>={50} /&gt;
+      
+      <span class="comment">{/* Your game objects here */}</span>
+    &lt;/&gt;
+  );
+}</pre>
+            </div>
+        </section>
+    </main>
+    
+    <footer>
+        <p>Strata is part of the <a href="https://github.com/jbcom/jbcom-oss-ecosystem">jbcom OSS Ecosystem</a></p>
+        <p style="margin-top: 0.5rem; font-size: 0.85rem;">MIT License • Made with ❤️ for game developers</p>
+    </footer>
+</body>
+</html>

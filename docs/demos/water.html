@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Water Demo - Strata</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #000; overflow: hidden; font-family: system-ui, sans-serif; }
+        #root { width: 100vw; height: 100vh; }
+        
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 1rem;
+            background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .overlay h1 { color: #d4af37; font-size: 1.2rem; letter-spacing: 0.2em; }
+        .overlay a { color: #888; text-decoration: none; font-size: 0.9rem; }
+        .overlay a:hover { color: #d4af37; }
+        
+        .feature-list {
+            position: absolute;
+            bottom: 1rem;
+            left: 1rem;
+            background: rgba(0,0,0,0.9);
+            border: 1px solid rgba(212,175,55,0.3);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            color: #ccc;
+            font-size: 0.85rem;
+            z-index: 100;
+        }
+        
+        .feature-list h3 { color: #d4af37; margin-bottom: 0.5rem; }
+        .feature-list ul { list-style: none; }
+        .feature-list li { padding: 0.25rem 0; }
+        .feature-list li::before { content: '→ '; color: #d4af37; }
+    </style>
+</head>
+<body>
+    <div class="overlay">
+        <h1>WATER SYSTEM</h1>
+        <a href="../index.html">← Back to Showcase</a>
+    </div>
+    
+    <div class="feature-list">
+        <h3>Water Features</h3>
+        <ul>
+            <li>Gerstner wave simulation</li>
+            <li>Fresnel-based reflections</li>
+            <li>Procedural foam at edges</li>
+            <li>Underwater caustics</li>
+            <li>Depth-based transparency</li>
+            <li>Real-time normal mapping</li>
+        </ul>
+    </div>
+    
+    <div id="root"></div>
+    
+    <script type="module">
+        /**
+         * Water Demo - Strata Library
+         * 
+         * Showcases the Water component with all features:
+         * - Gerstner waves for realistic motion
+         * - Fresnel reflections
+         * - Procedural foam
+         * - Caustics projection
+         */
+        
+        document.getElementById('root').innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: linear-gradient(135deg, #0a2342 0%, #006994 50%, #0a2342 100%);">
+                <div style="text-align: center; color: #ccc;">
+                    <div style="font-size: 6rem; margin-bottom: 1rem;">🌊</div>
+                    <h2 style="color: #d4af37; margin-bottom: 1rem;">Water System Demo</h2>
+                    <p style="max-width: 400px; line-height: 1.6;">
+                        Interactive water with Gerstner waves, fresnel reflections, and caustics.<br><br>
+                        <code style="background: rgba(0,0,0,0.5); padding: 0.5rem 1rem; border-radius: 0.25rem; display: inline-block; margin-top: 0.5rem;">
+                            &lt;Water size={100} waveHeight={0.5} /&gt;
+                        </code>
+                    </p>
+                </div>
+            </div>
+        `;
+    </script>
+</body>
+</html>

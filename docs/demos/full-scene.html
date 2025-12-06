@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Full Scene Demo - Strata</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #000; overflow: hidden; font-family: system-ui, sans-serif; }
+        #root { width: 100vw; height: 100vh; }
+        
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 1rem;
+            background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .overlay h1 {
+            color: #d4af37;
+            font-size: 1.2rem;
+            letter-spacing: 0.2em;
+        }
+        
+        .overlay a {
+            color: #888;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        
+        .overlay a:hover { color: #d4af37; }
+        
+        .controls {
+            position: absolute;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            padding: 1rem 2rem;
+            border-radius: 2rem;
+            color: #888;
+            font-size: 0.85rem;
+            z-index: 100;
+        }
+        
+        .info-panel {
+            position: absolute;
+            top: 4rem;
+            right: 1rem;
+            background: rgba(0,0,0,0.9);
+            border: 1px solid rgba(212,175,55,0.3);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            color: #ccc;
+            font-size: 0.85rem;
+            max-width: 250px;
+            z-index: 100;
+        }
+        
+        .info-panel h3 {
+            color: #d4af37;
+            margin-bottom: 0.5rem;
+        }
+        
+        .info-panel ul {
+            list-style: none;
+            margin-top: 0.5rem;
+        }
+        
+        .info-panel li {
+            padding: 0.25rem 0;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .info-panel .value { color: #d4af37; }
+    </style>
+</head>
+<body>
+    <div class="overlay">
+        <h1>STRATA</h1>
+        <a href="../index.html">← Back to Showcase</a>
+    </div>
+    
+    <div class="info-panel">
+        <h3>Scene Statistics</h3>
+        <ul>
+            <li><span>Grass Instances</span><span class="value">10,000</span></li>
+            <li><span>Tree Instances</span><span class="value">500</span></li>
+            <li><span>Rock Instances</span><span class="value">200</span></li>
+            <li><span>Water Resolution</span><span class="value">128×128</span></li>
+            <li><span>Sky Samples</span><span class="value">16</span></li>
+        </ul>
+        <h3 style="margin-top: 1rem;">Active Features</h3>
+        <ul>
+            <li>✓ Procedural Sky</li>
+            <li>✓ GPU Instancing</li>
+            <li>✓ Wind Animation</li>
+            <li>✓ Water Reflections</li>
+            <li>✓ Volumetric Fog</li>
+        </ul>
+    </div>
+    
+    <div class="controls">
+        Drag to rotate • Scroll to zoom • WASD to move
+    </div>
+    
+    <div id="root"></div>
+    
+    <script type="module">
+        /**
+         * Full Scene Demo - Strata Library Showcase
+         * 
+         * This demonstrates ALL Strata features working together:
+         * - Background: ProceduralSky with day/night cycle
+         * - Midground: Water, terrain, GPU-instanced vegetation
+         * - Foreground: Volumetric effects
+         * 
+         * In production, this would be bundled with Vite/webpack.
+         * For GitHub Pages, we use importmaps or a pre-built bundle.
+         */
+        
+        // Note: For GitHub Pages deployment, this demo requires either:
+        // 1. A build step that bundles React + R3F + Strata
+        // 2. Import maps pointing to CDN versions
+        // 
+        // The actual demo code would be:
+        //
+        // import { Canvas } from '@react-three/fiber';
+        // import { OrbitControls } from '@react-three/drei';
+        // import { 
+        //     ProceduralSky, Water, VolumetricEffects,
+        //     GrassInstances, TreeInstances, RockInstances 
+        // } from '@jbcom/strata';
+        //
+        // function FullScene() {
+        //     return (
+        //         <Canvas camera={{ position: [0, 10, 30], fov: 60 }}>
+        //             <OrbitControls />
+        //             
+        //             {/* Background Layer */}
+        //             <ProceduralSky 
+        //                 timeOfDay={{ sunAngle: 45, sunIntensity: 1.0 }}
+        //                 enableStars={false}
+        //             />
+        //             
+        //             {/* Midground Layer */}
+        //             <Water size={200} color={0x006994} opacity={0.8} />
+        //             <GrassInstances count={10000} areaSize={100} />
+        //             <TreeInstances count={500} areaSize={100} />
+        //             <RockInstances count={200} areaSize={100} />
+        //             
+        //             {/* Terrain placeholder */}
+        //             <mesh rotation={[-Math.PI/2, 0, 0]} receiveShadow>
+        //                 <planeGeometry args={[200, 200]} />
+        //                 <meshStandardMaterial color={0x3d5c3d} />
+        //             </mesh>
+        //             
+        //             {/* Foreground Layer */}
+        //             <VolumetricEffects enableFog fogDensity={0.02} />
+        //             
+        //             {/* Lighting */}
+        //             <ambientLight intensity={0.4} />
+        //             <directionalLight position={[50, 50, 25]} intensity={1} castShadow />
+        //         </Canvas>
+        //     );
+        // }
+        
+        // Placeholder for GitHub Pages (shows info until proper build is set up)
+        document.getElementById('root').innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);">
+                <div style="text-align: center; color: #ccc;">
+                    <div style="font-size: 6rem; margin-bottom: 1rem;">🎮</div>
+                    <h2 style="color: #d4af37; margin-bottom: 1rem;">Full Scene Demo</h2>
+                    <p style="max-width: 400px; line-height: 1.6;">
+                        This interactive demo requires the Strata library to be bundled.<br><br>
+                        To run locally:<br>
+                        <code style="background: rgba(0,0,0,0.5); padding: 0.5rem 1rem; border-radius: 0.25rem; display: inline-block; margin-top: 0.5rem;">
+                            npm run dev:docs
+                        </code>
+                    </p>
+                </div>
+            </div>
+        `;
+    </script>
+</body>
+</html>
