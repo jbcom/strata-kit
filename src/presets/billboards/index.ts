@@ -1,6 +1,6 @@
 /**
  * Billboard Preset - Always-face-camera sprites
- * 
+ *
  * Provides billboard rendering for trees, grass, UI elements,
  * and other objects that should always face the camera.
  */
@@ -20,9 +20,7 @@ export interface BillboardOptions {
 /**
  * Create a billboard mesh that always faces the camera
  */
-export function createBillboard(
-    options: BillboardOptions
-): THREE.Mesh {
+export function createBillboard(options: BillboardOptions): THREE.Mesh {
     const {
         texture,
         size = 1,
@@ -30,7 +28,7 @@ export function createBillboard(
         transparent = true,
         opacity = 1.0,
         alphaTest = 0.1,
-        side = THREE.DoubleSide
+        side = THREE.DoubleSide,
     } = options;
 
     // Input validation
@@ -49,25 +47,28 @@ export function createBillboard(
         opacity: opacity,
         alphaTest: alphaTest,
         side: side,
-        depthWrite: !transparent
+        depthWrite: !transparent,
     });
 
     const mesh = new THREE.Mesh(geometry, material);
-    
+
     // Add custom onBeforeRender to face camera
     mesh.onBeforeRender = (renderer, scene, camera) => {
-        if (camera instanceof THREE.PerspectiveCamera || camera instanceof THREE.OrthographicCamera) {
+        if (
+            camera instanceof THREE.PerspectiveCamera ||
+            camera instanceof THREE.OrthographicCamera
+        ) {
             const worldPos = new THREE.Vector3();
             mesh.getWorldPosition(worldPos);
-            
+
             const cameraPos = camera.position.clone();
             const lookAt = new THREE.Vector3().subVectors(cameraPos, worldPos).normalize();
-            
+
             // Create rotation to face camera
             const up = new THREE.Vector3(0, 1, 0);
             const right = new THREE.Vector3().crossVectors(up, lookAt).normalize();
             const newUp = new THREE.Vector3().crossVectors(lookAt, right).normalize();
-            
+
             mesh.lookAt(worldPos.clone().add(lookAt));
         }
     };
@@ -88,14 +89,16 @@ export function createBillboardInstances(
         size = 1,
         color = new THREE.Color(1, 1, 1),
         transparent = true,
-        opacity = 1.0
+        opacity = 1.0,
     } = options;
 
     if (count <= 0) {
         throw new Error('createBillboardInstances: count must be positive');
     }
     if (!positions || positions.length < count) {
-        throw new Error('createBillboardInstances: positions array must have at least count elements');
+        throw new Error(
+            'createBillboardInstances: positions array must have at least count elements'
+        );
     }
 
     const width = typeof size === 'number' ? size : size.width;
@@ -107,7 +110,7 @@ export function createBillboardInstances(
         color: color,
         transparent: transparent,
         opacity: opacity,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
     });
 
     const mesh = new THREE.InstancedMesh(geometry, material, count);
@@ -133,7 +136,7 @@ export function createAnimatedBillboard(
     options: Omit<BillboardOptions, 'texture'> = {}
 ): THREE.Mesh & { update: (deltaTime: number) => void } {
     const mesh = createBillboard({ ...options, texture }) as any;
-    
+
     let currentFrame = 0;
     let frameTime = 0;
     const frameWidth = 1 / frameCount.x;
@@ -144,10 +147,10 @@ export function createAnimatedBillboard(
         if (frameTime >= 1 / frameRate) {
             frameTime = 0;
             currentFrame = (currentFrame + 1) % (frameCount.x * frameCount.y);
-            
+
             const x = currentFrame % frameCount.x;
             const y = Math.floor(currentFrame / frameCount.x);
-            
+
             const uvs = mesh.geometry.attributes.uv.array;
             uvs[0] = x * frameWidth;
             uvs[1] = 1 - (y + 1) * frameHeight;
@@ -157,7 +160,7 @@ export function createAnimatedBillboard(
             uvs[5] = 1 - y * frameHeight;
             uvs[6] = x * frameWidth;
             uvs[7] = 1 - y * frameHeight;
-            
+
             mesh.geometry.attributes.uv.needsUpdate = true;
         }
     };

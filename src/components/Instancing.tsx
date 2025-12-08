@@ -1,12 +1,12 @@
 /**
  * GPU-Driven Instancing System
- * 
+ *
  * Uses drei's Instances component for true GPU-driven instancing
  * with wind animation and LOD calculations performed on the GPU.
- * 
+ *
  * Optimized for mobile, web, and desktop with support for thousands
  * of instances with minimal CPU overhead.
- * 
+ *
  * Lifted from Otterfall procedural rendering system.
  */
 
@@ -14,7 +14,11 @@ import { useRef, useMemo, useEffect } from 'react';
 import { useThree } from '@react-three/fiber';
 import { Instances, Instance } from '@react-three/drei';
 import * as THREE from 'three';
-import { generateInstanceData as coreGenerateInstanceData, InstanceData, BiomeData } from '../core/instancing';
+import {
+    generateInstanceData as coreGenerateInstanceData,
+    InstanceData,
+    BiomeData,
+} from '../core/instancing';
 import { getBiomeAt as sdfGetBiomeAt } from '../core/sdf';
 
 // =============================================================================
@@ -81,11 +85,11 @@ export function GPUInstancedMesh({
     lodDistance = 100,
     frustumCulled = true,
     castShadow = true,
-    receiveShadow = true
+    receiveShadow = true,
 }: GPUInstancedMeshProps) {
-    const meshRef = useRef<THREE.InstancedMesh>(null);
-    const { camera } = useThree();
-    
+    const _meshRef = useRef<THREE.InstancedMesh>(null);
+    const _camera = useThree().camera;
+
     // Input validation
     if (!geometry) {
         throw new Error('GPUInstancedMesh: geometry is required');
@@ -99,11 +103,12 @@ export function GPUInstancedMesh({
     if (!instances || instances.length === 0) {
         throw new Error('GPUInstancedMesh: instances array cannot be empty');
     }
-    
+
     // Use drei's Instances component for GPU-optimized instancing
     // NOTE: Wind and LOD are not yet implemented on GPU - these props are reserved for future implementation
     // Current implementation uses drei's Instances which provides efficient GPU instancing
     // but wind/LOD would require custom vertex shader integration
+    // Reserved for future use: enableWind, windStrength, lodDistance, _meshRef, _camera
     const instanceCount = Math.min(instances.length, count);
     return (
         <Instances
@@ -113,17 +118,19 @@ export function GPUInstancedMesh({
             castShadow={castShadow}
             receiveShadow={receiveShadow}
         >
-            <instancedMesh ref={meshRef as any} args={[geometry as any, material as any]} />
+            {/* drei's Instances expects geometry and material as primitive children */}
+            <primitive object={geometry} attach="geometry" />
+            <primitive object={material} attach="material" />
             {instances.slice(0, instanceCount).map((instance, i) => (
                 <Instance
                     key={i}
-                    position={instance.position as any}
-                    rotation={instance.rotation as any}
-                    scale={instance.scale as any}
+                    position={instance.position as unknown as [number, number, number]}
+                    rotation={[instance.rotation.x, instance.rotation.y, instance.rotation.z]}
+                    scale={instance.scale as unknown as [number, number, number]}
                 />
             ))}
         </Instances>
-    ) as any;
+    );
 }
 
 // =============================================================================
@@ -150,43 +157,36 @@ export function GrassInstances({
     count = 10000,
     areaSize = 100,
     biomes = DEFAULT_BIOMES,
-    heightFunc = () => 0
+    heightFunc = () => 0,
 }: VegetationProps) {
     const geometry = useMemo(() => {
         // Grass blade geometry - tapered quad
         const geo = new THREE.BufferGeometry();
-        
+
         const positions = new Float32Array([
             // Two triangles forming a tapered blade
-            -0.05, 0, 0,
-            0.05, 0, 0,
-            0, 1, 0,
-            
-            0.05, 0, 0,
-            0.03, 1, 0,
-            0, 1, 0,
+            -0.05, 0, 0, 0.05, 0, 0, 0, 1, 0,
+
+            0.05, 0, 0, 0.03, 1, 0, 0, 1, 0,
         ]);
-        
-        const normals = new Float32Array([
-            0, 0, 1, 0, 0, 1, 0, 0, 1,
-            0, 0, 1, 0, 0, 1, 0, 0, 1,
-        ]);
-        
+
+        const normals = new Float32Array([0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1]);
+
         geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         geo.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
-        
+
         return geo;
     }, []);
-    
+
     const material = useMemo(() => {
         return new THREE.MeshStandardMaterial({
             color: 0x4a7c23,
             roughness: 0.8,
             metalness: 0.0,
-            side: THREE.DoubleSide
+            side: THREE.DoubleSide,
         });
     }, []);
-    
+
     const instances = useMemo(() => {
         return coreGenerateInstanceData(
             count,
@@ -200,7 +200,7 @@ export function GrassInstances({
             fbm
         );
     }, [count, areaSize, biomes, heightFunc]);
-    
+
     // Cleanup
     useEffect(() => {
         return () => {
@@ -208,7 +208,7 @@ export function GrassInstances({
             material.dispose();
         };
     }, [geometry, material]);
-    
+
     return (
         <GPUInstancedMesh
             geometry={geometry}
@@ -231,21 +231,21 @@ export function TreeInstances({
     count = 500,
     areaSize = 100,
     biomes = DEFAULT_BIOMES,
-    heightFunc = () => 0
+    heightFunc = () => 0,
 }: VegetationProps) {
     const geometry = useMemo(() => {
         // Simple tree geometry - cone for foliage
         return new THREE.ConeGeometry(1, 3, 6);
     }, []);
-    
+
     const material = useMemo(() => {
         return new THREE.MeshStandardMaterial({
             color: 0x2d5a27,
             roughness: 0.85,
-            metalness: 0.0
+            metalness: 0.0,
         });
     }, []);
-    
+
     const instances = useMemo(() => {
         return coreGenerateInstanceData(
             count,
@@ -259,7 +259,7 @@ export function TreeInstances({
             fbm
         );
     }, [count, areaSize, biomes, heightFunc]);
-    
+
     // Cleanup
     useEffect(() => {
         return () => {
@@ -267,7 +267,7 @@ export function TreeInstances({
             material.dispose();
         };
     }, [geometry, material]);
-    
+
     return (
         <GPUInstancedMesh
             geometry={geometry}
@@ -290,21 +290,21 @@ export function RockInstances({
     count = 200,
     areaSize = 100,
     biomes = DEFAULT_BIOMES,
-    heightFunc = () => 0
+    heightFunc = () => 0,
 }: VegetationProps) {
     const geometry = useMemo(() => {
         // Irregular rock geometry
         return new THREE.DodecahedronGeometry(0.5, 0);
     }, []);
-    
+
     const material = useMemo(() => {
         return new THREE.MeshStandardMaterial({
             color: 0x696969,
             roughness: 0.9,
-            metalness: 0.1
+            metalness: 0.1,
         });
     }, []);
-    
+
     const instances = useMemo(() => {
         return coreGenerateInstanceData(
             count,
@@ -318,7 +318,7 @@ export function RockInstances({
             fbm
         );
     }, [count, areaSize, biomes, heightFunc]);
-    
+
     // Cleanup
     useEffect(() => {
         return () => {
@@ -326,7 +326,7 @@ export function RockInstances({
             material.dispose();
         };
     }, [geometry, material]);
-    
+
     return (
         <GPUInstancedMesh
             geometry={geometry}

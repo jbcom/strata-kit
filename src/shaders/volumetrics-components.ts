@@ -1,6 +1,6 @@
 /**
  * Volumetric Effects Component Shaders
- * 
+ *
  * Shaders for VolumetricFogMesh and UnderwaterOverlay components
  */
 
@@ -131,6 +131,7 @@ export const underwaterOverlayFragmentShader = /* glsl */ `
 `;
 
 export interface VolumetricFogMeshUniforms {
+    [uniform: string]: THREE.IUniform;
     uTime: { value: number };
     uFogColor: { value: number[] };
     uFogDensity: { value: number };
@@ -139,6 +140,7 @@ export interface VolumetricFogMeshUniforms {
 }
 
 export interface UnderwaterOverlayUniforms {
+    [uniform: string]: THREE.IUniform;
     uTime: { value: number };
     uWaterColor: { value: number[] };
     uDensity: { value: number };
@@ -158,7 +160,7 @@ export function createVolumetricFogMeshUniforms(
         uFogColor: { value: color.toArray() },
         uFogDensity: { value: density },
         uFogHeight: { value: height },
-        uCameraPosition: { value: cameraPosition.toArray() }
+        uCameraPosition: { value: cameraPosition.toArray() },
     };
 }
 
@@ -175,6 +177,6 @@ export function createUnderwaterOverlayUniforms(
         uDensity: { value: density },
         uCausticStrength: { value: causticStrength },
         uWaterSurface: { value: waterSurface },
-        uCameraY: { value: cameraY }
+        uCameraY: { value: cameraY },
     };
 }

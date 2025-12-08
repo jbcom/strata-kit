@@ -1,6 +1,6 @@
 /**
  * Shadow System Preset - Advanced shadow rendering
- * 
+ *
  * Provides cascaded shadow maps (CSM), soft shadows, contact shadows,
  * and optimized shadow filtering for realistic lighting.
  */
@@ -30,9 +30,7 @@ export interface ShadowSystem {
 /**
  * Create a cascaded shadow map system
  */
-export function createShadowSystem(
-    options: ShadowSystemOptions
-): ShadowSystem {
+export function createShadowSystem(options: ShadowSystemOptions): ShadowSystem {
     const {
         light,
         camera,
@@ -44,7 +42,7 @@ export function createShadowSystem(
         maxDistance = 100,
         fadeDistance = 10,
         enableSoftShadows = true,
-        enableContactShadows = false
+        enableContactShadows = false,
     } = options;
 
     // Input validation
@@ -72,12 +70,8 @@ export function createShadowSystem(
     light.shadow.normalBias = shadowNormalBias;
     light.shadow.radius = enableSoftShadows ? shadowRadius : 0;
 
-    // Set shadow type
-    if (enableSoftShadows) {
-        light.shadow.type = THREE.PCFSoftShadowMap;
-    } else {
-        light.shadow.type = THREE.BasicShadowMap;
-    }
+    // Note: Shadow type is set on the renderer (renderer.shadowMap.type)
+    // enableSoftShadows is used for the radius above
 
     // Calculate cascade splits
     const cascadeSplits = calculateCascadeSplits(cascades, maxDistance, fadeDistance);
@@ -187,10 +181,7 @@ function updateCascadedShadows(
 /**
  * Get frustum corners at a given distance
  */
-function getFrustumCorners(
-    camera: THREE.PerspectiveCamera,
-    distance: number
-): THREE.Vector3[] {
+function getFrustumCorners(camera: THREE.PerspectiveCamera, distance: number): THREE.Vector3[] {
     const fov = camera.fov * (Math.PI / 180);
     const aspect = camera.aspect;
     const near = camera.near;
@@ -222,7 +213,7 @@ function getFrustumCorners(
         camera.projectionMatrixInverse
     );
 
-    return corners.map(corner => {
+    return corners.map((corner) => {
         return corner.applyMatrix4(matrix);
     });
 }
@@ -241,12 +232,12 @@ export function createContactShadows(
             uCameraNear: { value: camera instanceof THREE.PerspectiveCamera ? camera.near : 0.1 },
             uCameraFar: { value: camera instanceof THREE.PerspectiveCamera ? camera.far : 1000 },
             uContactShadowDistance: { value: 0.1 },
-            uContactShadowBias: { value: 0.01 }
+            uContactShadowBias: { value: 0.01 },
         },
         vertexShader: contactShadowVertexShader,
         fragmentShader: contactShadowFragmentShader,
         transparent: true,
-        depthWrite: false
+        depthWrite: false,
     });
 
     return material;

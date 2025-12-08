@@ -3,12 +3,9 @@
  */
 
 // Core modules (pure TypeScript, no React)
-export {
-    generateInstanceData,
-    createInstancedMesh,
-    type InstanceData,
-    type BiomeData
-} from './instancing';
+export { generateInstanceData, createInstancedMesh } from './instancing';
+export type { InstanceData, BiomeData as InstancingBiomeData } from './instancing';
+
 export * from './water';
 export * from './raymarching';
 export * from './sky';
@@ -23,7 +20,7 @@ export {
     sdCapsule,
     sdTorus,
     sdCone,
-    
+
     // Boolean operations
     opUnion,
     opSubtraction,
@@ -31,29 +28,28 @@ export {
     opSmoothUnion,
     opSmoothSubtraction,
     opSmoothIntersection,
-    
+
     // Noise functions
     noise3D,
     fbm,
     warpedFbm,
-    
+
     // Terrain
     getBiomeAt,
     getTerrainHeight,
     sdCaves,
     sdTerrain,
     sdRock,
-    
+
     // Utilities
-    calcNormal
+    calcNormal,
 } from './sdf';
 export type { BiomeData as SDFBiomeData } from './sdf';
-export type { InstanceData, BiomeData as InstancingBiomeData } from './instancing';
 
 // Marching cubes
 export {
     marchingCubes,
     createGeometryFromMarchingCubes,
-    generateTerrainChunk
+    generateTerrainChunk,
 } from './marching-cubes';
 export type { MarchingCubesResult, MarchingCubesOptions, TerrainChunk } from './marching-cubes';

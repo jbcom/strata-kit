@@ -9,7 +9,7 @@ export {
     advancedWaterVertexShader,
     advancedWaterFragmentShader,
     createWaterUniforms,
-    createAdvancedWaterUniforms
+    createAdvancedWaterUniforms,
 } from './water';
 
 // Terrain shaders
@@ -19,16 +19,11 @@ export {
     simpleTerrainVertexShader,
     simpleTerrainFragmentShader,
     createTerrainUniforms,
-    createSimpleTerrainUniforms
+    createSimpleTerrainUniforms,
 } from './terrain';
 
 // Fur/shell shaders
-export {
-    furVertexShader,
-    furFragmentShader,
-    createFurUniforms,
-    defaultFurConfig
-} from './fur';
+export { furVertexShader, furFragmentShader, createFurUniforms, defaultFurConfig } from './fur';
 export type { FurConfig } from './fur';
 
 // Volumetric shaders
@@ -36,26 +31,17 @@ export {
     volumetricFogShader,
     underwaterShader,
     atmosphereShader,
-    dustParticlesShader
+    dustParticlesShader,
 } from './volumetrics';
 
 // Ray marching shaders
-export {
-    raymarchingVertexShader,
-    raymarchingFragmentShader
-} from './raymarching';
+export { raymarchingVertexShader, raymarchingFragmentShader } from './raymarching';
 
 // Instancing wind shader
-export {
-    instancingWindVertexShader
-} from './instancing-wind';
+export { instancingWindVertexShader } from './instancing-wind';
 
 // Sky shaders
-export {
-    skyVertexShader,
-    skyFragmentShader,
-    createSkyUniforms
-} from './sky';
+export { skyVertexShader, skyFragmentShader, createSkyUniforms } from './sky';
 export type { SkyUniforms } from './sky';
 
 // Volumetric component shaders
@@ -65,9 +51,9 @@ export {
     underwaterOverlayVertexShader,
     underwaterOverlayFragmentShader,
     createVolumetricFogMeshUniforms,
-    createUnderwaterOverlayUniforms
+    createUnderwaterOverlayUniforms,
 } from './volumetrics-components';
 export type {
     VolumetricFogMeshUniforms,
-    UnderwaterOverlayUniforms
+    UnderwaterOverlayUniforms,
 } from './volumetrics-components';

@@ -1,6 +1,6 @@
 /**
  * Water shader - animated rippling water surface with procedural normal mapping
- * 
+ *
  * Lifted from Otterfall procedural rendering system.
  */
 
@@ -144,7 +144,7 @@ export const waterFragmentShader = /* glsl */ `
 
 /**
  * Advanced water shader with caustics
- * 
+ *
  * Lifted from Otterfall prototype.
  */
 export const advancedWaterVertexShader = /* glsl */ `
@@ -266,7 +266,7 @@ export const advancedWaterFragmentShader = /* glsl */ `
  */
 export function createWaterUniforms() {
     return {
-        time: { value: 0 }
+        time: { value: 0 },
     };
 }
 
@@ -279,6 +279,6 @@ export function createAdvancedWaterUniforms() {
         uWaterColor: { value: [0.165, 0.353, 0.541] },
         uDeepWaterColor: { value: [0.102, 0.227, 0.353] },
         uFoamColor: { value: [0.541, 0.706, 0.831] },
-        uCausticIntensity: { value: 0.4 }
+        uCausticIntensity: { value: 0.4 },
     };
 }

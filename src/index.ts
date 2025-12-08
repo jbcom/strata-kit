@@ -1,10 +1,10 @@
 /**
  * @jbcom/strata
- * 
+ *
  * The complete solution for foreground, midground, and background layer
  * 3D gaming in Node.js. Provides terrain, water, vegetation, characters,
  * fur, shells, molecular rendering, and more.
- * 
+ *
  * Organized into presets for easy integration into your game.
  */
 
@@ -51,18 +51,18 @@ export {
     createSkyGeometry,
     // Volumetrics (pure TS)
     createVolumetricFogMeshMaterial,
-    createUnderwaterOverlayMaterial
+    createUnderwaterOverlayMaterial,
 } from './core';
-export type { 
+export type {
     // SDF types
-    BiomeData as SDFBiomeData,
+    SDFBiomeData,
     // Instancing types (same InstanceData, different BiomeData)
     InstanceData,
-    BiomeData as InstancingBiomeData,
+    InstancingBiomeData,
     // Marching cubes types
-    MarchingCubesResult, 
-    MarchingCubesOptions, 
-    TerrainChunk
+    MarchingCubesResult,
+    MarchingCubesOptions,
+    TerrainChunk,
 } from './core';
 
 // React components
@@ -80,19 +80,19 @@ export {
     VolumetricFogMesh,
     UnderwaterOverlay,
     EnhancedFog,
-    Raymarching
+    Raymarching,
 } from './components';
 
 // Presets (organized by layer: background, midground, foreground)
 export * from './presets';
-export type { 
+export type {
     // Re-export InstanceData from components (same as core)
     InstanceData as ComponentInstanceData,
     // Re-export BiomeData from components (same as core InstancingBiomeData)
     BiomeData as ComponentBiomeData,
     // Component-specific types
     TimeOfDayState,
-    WeatherState
+    WeatherState,
 } from './components';
 
 // GLSL shaders

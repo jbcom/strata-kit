@@ -1,12 +1,17 @@
 import { describe, test, expect } from 'vitest';
 import * as THREE from 'three';
-import { createBillboard, createBillboardInstances, createAnimatedBillboard, type BillboardOptions } from '../../../src/presets/billboards';
+import {
+    createBillboard,
+    createBillboardInstances,
+    createAnimatedBillboard,
+    type BillboardOptions,
+} from '../../../src/presets/billboards';
 
 describe('Billboards', () => {
     test('should create billboard with default options', () => {
         const texture = new THREE.Texture();
         const billboard = createBillboard({ texture });
-        
+
         expect(billboard).toBeInstanceOf(THREE.Mesh);
         expect(billboard.geometry).toBeInstanceOf(THREE.PlaneGeometry);
         expect(billboard.material).toBeInstanceOf(THREE.MeshBasicMaterial);
@@ -22,11 +27,11 @@ describe('Billboards', () => {
             transparent: false,
             opacity: 0.8,
             alphaTest: 0.5,
-            side: THREE.FrontSide
+            side: THREE.FrontSide,
         };
 
         const billboard = createBillboard(options);
-        
+
         expect(billboard).toBeDefined();
         const material = billboard.material as THREE.MeshBasicMaterial;
         expect(material.color).toEqual(options.color);
@@ -43,12 +48,10 @@ describe('Billboards', () => {
     test('should create instanced billboards', () => {
         const texture = new THREE.Texture();
         const count = 10;
-        const positions = Array.from({ length: count }, (_, i) => 
-            new THREE.Vector3(i, 0, 0)
-        );
+        const positions = Array.from({ length: count }, (_, i) => new THREE.Vector3(i, 0, 0));
 
         const instances = createBillboardInstances(count, positions, { texture });
-        
+
         expect(instances).toBeInstanceOf(THREE.InstancedMesh);
         expect(instances.count).toBe(count);
     });
@@ -71,7 +74,7 @@ describe('Billboards', () => {
         const frameRate = 10;
 
         const billboard = createAnimatedBillboard(texture, frameCount, frameRate);
-        
+
         expect(billboard).toBeInstanceOf(THREE.Mesh);
         expect(typeof billboard.update).toBe('function');
     });
@@ -82,7 +85,7 @@ describe('Billboards', () => {
         const frameRate = 10;
 
         const billboard = createAnimatedBillboard(texture, frameCount, frameRate);
-        
+
         // Update should not throw
         expect(() => {
             billboard.update(0.1);
@@ -92,7 +95,7 @@ describe('Billboards', () => {
     test('should handle numeric size', () => {
         const texture = new THREE.Texture();
         const billboard = createBillboard({ texture, size: 2.5 });
-        
+
         expect(billboard).toBeDefined();
         const geometry = billboard.geometry as THREE.PlaneGeometry;
         expect(geometry.parameters.width).toBe(2.5);
@@ -101,11 +104,11 @@ describe('Billboards', () => {
 
     test('should handle object size', () => {
         const texture = new THREE.Texture();
-        const billboard = createBillboard({ 
-            texture, 
-            size: { width: 2, height: 3 } 
+        const billboard = createBillboard({
+            texture,
+            size: { width: 2, height: 3 },
         });
-        
+
         expect(billboard).toBeDefined();
         const geometry = billboard.geometry as THREE.PlaneGeometry;
         expect(geometry.parameters.width).toBe(2);

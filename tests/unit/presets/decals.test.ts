@@ -10,11 +10,11 @@ describe('Decals', () => {
             position: new THREE.Vector3(0, 0, 0),
             rotation: new THREE.Euler(0, 0, 0),
             scale: new THREE.Vector3(1, 1, 0.1),
-            texture
+            texture,
         };
 
         const decal = createDecal(geometry, options);
-        
+
         expect(decal).toBeInstanceOf(THREE.Mesh);
         expect(decal.geometry).toBeDefined();
         expect(decal.material).toBeDefined();
@@ -29,7 +29,7 @@ describe('Decals', () => {
                 position: new THREE.Vector3(),
                 rotation: new THREE.Euler(),
                 scale: new THREE.Vector3(),
-                texture
+                texture,
             });
         }).toThrow('geometry is required');
 
@@ -38,7 +38,7 @@ describe('Decals', () => {
                 position: null as any,
                 rotation: new THREE.Euler(),
                 scale: new THREE.Vector3(),
-                texture
+                texture,
             });
         }).toThrow('position is required');
 
@@ -47,7 +47,7 @@ describe('Decals', () => {
                 position: new THREE.Vector3(),
                 rotation: null as any,
                 scale: new THREE.Vector3(),
-                texture
+                texture,
             });
         }).toThrow('rotation is required');
 
@@ -56,7 +56,7 @@ describe('Decals', () => {
                 position: new THREE.Vector3(),
                 rotation: new THREE.Euler(),
                 scale: null as any,
-                texture
+                texture,
             });
         }).toThrow('scale is required');
 
@@ -65,7 +65,7 @@ describe('Decals', () => {
                 position: new THREE.Vector3(),
                 rotation: new THREE.Euler(),
                 scale: new THREE.Vector3(),
-                texture: null as any
+                texture: null as any,
             });
         }).toThrow('texture is required');
     });
@@ -76,7 +76,7 @@ describe('Decals', () => {
         const size = 0.1;
 
         const decal = createBulletHoleDecal(position, normal, size);
-        
+
         expect(decal).toBeInstanceOf(THREE.Mesh);
         expect(decal.position).toEqual(position);
     });
@@ -91,7 +91,7 @@ describe('Decals', () => {
             rotation: new THREE.Euler(),
             scale: new THREE.Vector3(1, 1, 0.1),
             texture,
-            material: customMaterial
+            material: customMaterial,
         });
 
         expect(decal.material).toBe(customMaterial);
@@ -107,7 +107,7 @@ describe('Decals', () => {
             rotation: new THREE.Euler(),
             scale: new THREE.Vector3(1, 1, 0.1),
             texture,
-            normalMap
+            normalMap,
         });
 
         if (decal.material instanceof THREE.MeshPhongMaterial) {

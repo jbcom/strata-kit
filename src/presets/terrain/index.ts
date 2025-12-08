@@ -1,6 +1,6 @@
 /**
  * Terrain Preset - SDF-based terrain generation
- * 
+ *
  * Provides terrain generation using SDFs and marching cubes
  * for creating landscapes, caves, and organic terrain.
  */
@@ -10,14 +10,14 @@ import {
     sdTerrain,
     getTerrainHeight,
     getBiomeAt,
-    type BiomeData as SDFBiomeData
+    type BiomeData as SDFBiomeData,
 } from '../../core/sdf';
 import {
     marchingCubes,
     createGeometryFromMarchingCubes,
     generateTerrainChunk,
     type MarchingCubesOptions,
-    type TerrainChunk
+    type TerrainChunk,
 } from '../../core/marching-cubes';
 
 export type { BiomeData } from '../../core/sdf';
@@ -33,16 +33,14 @@ export interface TerrainOptions {
 /**
  * Create terrain geometry from SDF
  */
-export function createTerrainGeometry(
-    options: TerrainOptions
-): THREE.BufferGeometry {
+export function createTerrainGeometry(options: TerrainOptions): THREE.BufferGeometry {
     const {
         biomes,
         resolution = 64,
         bounds = {
             min: new THREE.Vector3(-50, -10, -50),
-            max: new THREE.Vector3(50, 10, 50)
-        }
+            max: new THREE.Vector3(50, 10, 50),
+        },
     } = options;
 
     if (!biomes || biomes.length === 0) {
@@ -63,15 +61,13 @@ export function createTerrainGeometry(
 /**
  * Create terrain mesh with material
  */
-export function createTerrainMesh(
-    options: TerrainOptions
-): THREE.Mesh {
+export function createTerrainMesh(options: TerrainOptions): THREE.Mesh {
     const {
         material = new THREE.MeshStandardMaterial({
             color: 0x2a5a3a,
             roughness: 0.8,
-            metalness: 0.1
-        })
+            metalness: 0.1,
+        }),
     } = options;
 
     const geometry = createTerrainGeometry(options);
@@ -101,7 +97,7 @@ export function createChunkedTerrain(
     }
 
     const sdf = (p: THREE.Vector3) => sdTerrain(p, biomes);
-    
+
     return chunkPositions.map((position) => {
         return generateTerrainChunk(sdf, position, chunkSize, resolution);
     });
@@ -110,10 +106,6 @@ export function createChunkedTerrain(
 /**
  * Get terrain height at a point (for character positioning, etc.)
  */
-export function getTerrainHeightAt(
-    x: number,
-    z: number,
-    biomes: SDFBiomeData[]
-): number {
+export function getTerrainHeightAt(x: number, z: number, biomes: SDFBiomeData[]): number {
     return getTerrainHeight(x, z, biomes);
 }

@@ -1,17 +1,13 @@
 /**
  * Procedural Sky component
- * 
+ *
  * Lifted from Otterfall biome selector diorama.
  */
 
 import { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import {
-    skyVertexShader,
-    skyFragmentShader,
-    createSkyUniforms
-} from '../shaders/sky';
+import { skyVertexShader, skyFragmentShader, createSkyUniforms } from '../shaders/sky';
 import { createSkyMaterial, createSkyGeometry } from '../core/sky';
 
 export interface TimeOfDayState {
@@ -48,11 +44,11 @@ const defaultTimeOfDay: TimeOfDayState = {
     sunAngle: 60,
     ambientLight: 0.8,
     starVisibility: 0,
-    fogDensity: 0
+    fogDensity: 0,
 };
 
 const defaultWeather: WeatherState = {
-    intensity: 0
+    intensity: 0,
 };
 
 /**
@@ -62,7 +58,7 @@ export function ProceduralSky({
     timeOfDay: timeOfDayProp = {},
     weather: weatherProp = {},
     size = [200, 100],
-    distance = 50
+    distance = 50,
 }: ProceduralSkyProps) {
     const meshRef = useRef<THREE.Mesh>(null);
     const timeOfDay = { ...defaultTimeOfDay, ...timeOfDayProp };
@@ -71,10 +67,10 @@ export function ProceduralSky({
     const material = useMemo(() => {
         return createSkyMaterial({
             timeOfDay,
-            weather
+            weather,
         });
     }, [timeOfDay, weather]);
-    
+
     const geometry = useMemo(() => {
         return createSkyGeometry(size);
     }, [size]);
@@ -88,14 +84,14 @@ export function ProceduralSky({
             material.uniforms.uStarVisibility.value = timeOfDay.starVisibility;
             material.uniforms.uFogDensity.value = timeOfDay.fogDensity;
             material.uniforms.uWeatherIntensity.value = weather.intensity;
-            
+
             // Subtle gyroscopic effect
             const tiltX = Math.sin(state.clock.elapsedTime * 0.1) * 0.02;
             const tiltY = Math.cos(state.clock.elapsedTime * 0.15) * 0.02;
             material.uniforms.uGyroTilt.value.set(tiltX, tiltY);
         }
     });
-    
+
     useEffect(() => {
         return () => {
             material.dispose();
@@ -116,27 +112,27 @@ export function ProceduralSky({
 export function createTimeOfDay(hour: number): TimeOfDayState {
     // Normalize to 0-24
     const normalizedHour = ((hour % 24) + 24) % 24;
-    
+
     // Sun angle: peaks at noon (90°), 0 at 6am/6pm
-    const sunAngle = Math.max(0, Math.sin((normalizedHour - 6) / 12 * Math.PI) * 90);
-    
+    const sunAngle = Math.max(0, Math.sin(((normalizedHour - 6) / 12) * Math.PI) * 90);
+
     // Sun intensity based on time
     let sunIntensity = 0;
     if (normalizedHour >= 6 && normalizedHour <= 18) {
-        sunIntensity = Math.sin((normalizedHour - 6) / 12 * Math.PI);
+        sunIntensity = Math.sin(((normalizedHour - 6) / 12) * Math.PI);
     }
-    
+
     // Star visibility (inverse of sun)
     const starVisibility = Math.max(0, 1 - sunIntensity * 2);
-    
+
     // Ambient light
     const ambientLight = 0.2 + sunIntensity * 0.6;
-    
+
     return {
         sunIntensity,
         sunAngle,
         ambientLight,
         starVisibility,
-        fogDensity: 0
+        fogDensity: 0,
     };
 }

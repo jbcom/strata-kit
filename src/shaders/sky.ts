@@ -1,6 +1,6 @@
 /**
  * Procedural Sky Shaders
- * 
+ *
  * Day/night cycle, stars, weather effects
  */
 
@@ -100,6 +100,7 @@ export const skyFragmentShader = /* glsl */ `
 import * as THREE from 'three';
 
 export interface SkyUniforms {
+    [uniform: string]: THREE.IUniform;
     uTime: { value: number };
     uSunIntensity: { value: number };
     uSunAngle: { value: number };
@@ -111,7 +112,13 @@ export interface SkyUniforms {
 }
 
 export function createSkyUniforms(
-    timeOfDay: { sunIntensity: number; sunAngle: number; ambientLight: number; starVisibility: number; fogDensity: number },
+    timeOfDay: {
+        sunIntensity: number;
+        sunAngle: number;
+        ambientLight: number;
+        starVisibility: number;
+        fogDensity: number;
+    },
     weather: { intensity: number },
     gyroTilt?: THREE.Vector2
 ): SkyUniforms {
@@ -123,6 +130,6 @@ export function createSkyUniforms(
         uStarVisibility: { value: timeOfDay.starVisibility },
         uFogDensity: { value: timeOfDay.fogDensity },
         uWeatherIntensity: { value: weather.intensity },
-        uGyroTilt: { value: gyroTilt || new THREE.Vector2(0, 0) }
+        uGyroTilt: { value: gyroTilt || new THREE.Vector2(0, 0) },
     };
 }

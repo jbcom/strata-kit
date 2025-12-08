@@ -1,111 +1,130 @@
 {
-  "name": "@jbcom/strata",
-  "version": "0.1.0",
-  "description": "Procedural 3D graphics library for React Three Fiber - terrain, water, vegetation, sky, volumetrics, and characters",
-  "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+    "name": "@jbcom/strata",
+    "version": "0.1.0",
+    "description": "Procedural 3D graphics library for React Three Fiber - terrain, water, vegetation, sky, volumetrics, and characters",
+    "type": "module",
+    "main": "./dist/index.js",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        },
+        "./core": {
+            "types": "./dist/core/index.d.ts",
+            "import": "./dist/core/index.js"
+        },
+        "./components": {
+            "types": "./dist/components/index.d.ts",
+            "import": "./dist/components/index.js"
+        },
+        "./shaders": {
+            "types": "./dist/shaders/index.d.ts",
+            "import": "./dist/shaders/index.js"
+        },
+        "./utils": {
+            "types": "./dist/utils/index.d.ts",
+            "import": "./dist/utils/index.js"
+        },
+        "./presets": {
+            "types": "./dist/presets/index.d.ts",
+            "import": "./dist/presets/index.js"
+        }
     },
-    "./core": {
-      "types": "./dist/core/index.d.ts",
-      "import": "./dist/core/index.js"
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc --watch",
+        "clean": "rimraf dist",
+        "docs:dev": "npx serve docs",
+        "docs:build": "echo 'Static docs ready in docs/'",
+        "lint": "eslint src/",
+        "lint:fix": "eslint src/ --fix",
+        "format": "prettier --write src/ tests/",
+        "format:check": "prettier --check src/ tests/",
+        "test": "vitest run",
+        "test:unit": "vitest run --config tests/unit/vitest.config.ts",
+        "test:integration": "vitest run --config tests/integration/vitest.config.ts",
+        "test:watch": "vitest",
+        "test:coverage": "vitest run --coverage",
+        "test:e2e": "playwright test",
+        "test:e2e:ui": "playwright test --ui",
+        "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e",
+        "prepublishOnly": "npm run build && npm run test:unit",
+        "prepare": "husky"
     },
-    "./components": {
-      "types": "./dist/components/index.d.ts",
-      "import": "./dist/components/index.js"
+    "lint-staged": {
+        "*.{ts,tsx}": [
+            "eslint --fix",
+            "prettier --write"
+        ],
+        "*.{js,json,md,yml,yaml}": [
+            "prettier --write"
+        ]
     },
-    "./shaders": {
-      "types": "./dist/shaders/index.d.ts",
-      "import": "./dist/shaders/index.js"
+    "keywords": [
+        "strata",
+        "3d-graphics",
+        "procedural-generation",
+        "three.js",
+        "react-three-fiber",
+        "r3f",
+        "webgl",
+        "sdf",
+        "marching-cubes",
+        "gpu-instancing",
+        "raymarching",
+        "volumetric",
+        "terrain",
+        "water",
+        "fog",
+        "vegetation",
+        "fur",
+        "character-animation",
+        "shaders",
+        "glsl"
+    ],
+    "author": "Jon Bogaty <jon@jonbogaty.com>",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/jbcom/strata"
     },
-    "./utils": {
-      "types": "./dist/utils/index.d.ts",
-      "import": "./dist/utils/index.js"
+    "homepage": "https://github.com/jbcom/strata#readme",
+    "bugs": {
+        "url": "https://github.com/jbcom/strata/issues"
     },
-    "./presets": {
-      "types": "./dist/presets/index.d.ts",
-      "import": "./dist/presets/index.js"
+    "peerDependencies": {
+        "@react-three/drei": ">=9.0.0",
+        "@react-three/fiber": ">=8.0.0",
+        "react": ">=18.0.0",
+        "react-dom": ">=18.0.0",
+        "three": ">=0.150.0"
+    },
+    "devDependencies": {
+        "@playwright/test": "^1.40.0",
+        "@react-three/drei": "^9.114.0",
+        "@react-three/fiber": "^8.15.0",
+        "@testing-library/react": "^14.0.0",
+        "@types/react": "^18.2.0",
+        "@types/react-dom": "^18.2.0",
+        "@types/three": "^0.160.0",
+        "@typescript-eslint/eslint-plugin": "^7.0.0",
+        "@typescript-eslint/parser": "^7.0.0",
+        "@vitest/coverage-v8": "^2.1.0",
+        "eslint": "^8.56.0",
+        "husky": "^9.0.0",
+        "lint-staged": "^15.2.0",
+        "prettier": "^3.2.0",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0",
+        "rimraf": "^5.0.0",
+        "three": "^0.160.0",
+        "typescript": "^5.3.0",
+        "vitest": "^2.1.0"
     }
-  },
-  "files": [
-    "dist",
-    "README.md"
-  ],
-  "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
-    "clean": "rimraf dist",
-    "docs:dev": "npx serve docs",
-    "docs:build": "echo 'Static docs ready in docs/'",
-    "lint": "eslint src/",
-    "test": "vitest run",
-    "test:unit": "vitest run --config tests/unit/vitest.config.ts",
-    "test:integration": "vitest run --config tests/integration/vitest.config.ts",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui",
-    "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e",
-    "prepublishOnly": "npm run build && npm run test:unit"
-  },
-  "keywords": [
-    "strata",
-    "3d-graphics",
-    "procedural-generation",
-    "three.js",
-    "react-three-fiber",
-    "r3f",
-    "webgl",
-    "sdf",
-    "marching-cubes",
-    "gpu-instancing",
-    "raymarching",
-    "volumetric",
-    "terrain",
-    "water",
-    "fog",
-    "vegetation",
-    "fur",
-    "character-animation",
-    "shaders",
-    "glsl"
-  ],
-  "author": "Jon Bogaty <jon@jonbogaty.com>",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/jbcom/strata"
-  },
-  "homepage": "https://github.com/jbcom/strata#readme",
-  "bugs": {
-    "url": "https://github.com/jbcom/strata/issues"
-  },
-  "peerDependencies": {
-    "@react-three/drei": ">=9.0.0",
-    "@react-three/fiber": ">=8.0.0",
-    "react": ">=18.0.0",
-    "react-dom": ">=18.0.0",
-    "three": ">=0.150.0"
-  },
-  "devDependencies": {
-    "@playwright/test": "^1.40.0",
-    "@react-three/drei": "^9.114.0",
-    "@react-three/fiber": "^8.15.0",
-    "@testing-library/react": "^14.0.0",
-    "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0",
-    "@types/three": "^0.160.0",
-    "@vitest/coverage-v8": "^2.1.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "rimraf": "^5.0.0",
-    "three": "^0.160.0",
-    "typescript": "^5.3.0",
-    "vitest": "^2.1.0"
-  }
 }

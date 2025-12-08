@@ -11,7 +11,7 @@ export {
     GrassInstances,
     TreeInstances,
     RockInstances,
-    generateInstanceData
+    generateInstanceData,
 } from './Instancing';
 export type { InstanceData, BiomeData } from './Instancing';
 
@@ -24,7 +24,7 @@ export {
     VolumetricEffects,
     VolumetricFogMesh,
     UnderwaterOverlay,
-    EnhancedFog
+    EnhancedFog,
 } from './VolumetricEffects';
 
 // Ray marching

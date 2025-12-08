@@ -1,6 +1,6 @@
 /**
  * Post-Processing Preset - Screen-space effects
- * 
+ *
  * Provides post-processing effects: bloom, SSAO, color grading,
  * motion blur, depth of field, and more.
  */
@@ -36,30 +36,33 @@ export interface PostProcessingPipeline {
 export function createPostProcessingPipeline(
     options: PostProcessingOptions
 ): PostProcessingPipeline {
+    // Input validation first (before accessing browser-specific APIs)
+    if (!options.renderer) {
+        throw new Error('createPostProcessingPipeline: renderer is required');
+    }
+    if (!options.scene) {
+        throw new Error('createPostProcessingPipeline: scene is required');
+    }
+    if (!options.camera) {
+        throw new Error('createPostProcessingPipeline: camera is required');
+    }
+
     const {
         renderer,
         scene,
         camera,
         effects = [],
-        resolution = { width: window.innerWidth, height: window.innerHeight }
+        resolution = {
+            width: typeof window !== 'undefined' ? window.innerWidth : 1920,
+            height: typeof window !== 'undefined' ? window.innerHeight : 1080,
+        },
     } = options;
-
-    // Input validation
-    if (!renderer) {
-        throw new Error('createPostProcessingPipeline: renderer is required');
-    }
-    if (!scene) {
-        throw new Error('createPostProcessingPipeline: scene is required');
-    }
-    if (!camera) {
-        throw new Error('createPostProcessingPipeline: camera is required');
-    }
 
     // Create render targets
     const rtA = new THREE.WebGLRenderTarget(resolution.width, resolution.height, {
         minFilter: THREE.LinearFilter,
         magFilter: THREE.LinearFilter,
-        format: THREE.RGBAFormat
+        format: THREE.RGBAFormat,
     });
 
     const rtB = rtA.clone();
@@ -97,7 +100,7 @@ export function createPostProcessingPipeline(
 
     // Final render to screen
     const finalMaterial = new THREE.MeshBasicMaterial({
-        map: currentRT.texture
+        map: currentRT.texture,
     });
     const finalQuad = new THREE.Mesh(quadGeometry, finalMaterial);
     quadScene.add(finalQuad);
@@ -142,7 +145,7 @@ export function createPostProcessingPipeline(
     const dispose = () => {
         rtA.dispose();
         rtB.dispose();
-        effectMaterials.forEach(m => m.dispose());
+        effectMaterials.forEach((m) => m.dispose());
         quadGeometry.dispose();
         finalMaterial.dispose();
     };
@@ -203,16 +206,20 @@ function updateEffectUniforms(
 /**
  * Bloom effect
  */
-function createBloomMaterial(effect: { threshold?: number; intensity?: number; radius?: number }): THREE.ShaderMaterial {
+function createBloomMaterial(effect: {
+    threshold?: number;
+    intensity?: number;
+    radius?: number;
+}): THREE.ShaderMaterial {
     return new THREE.ShaderMaterial({
         uniforms: {
             uTexture: { value: null },
             uThreshold: { value: effect.threshold ?? 0.8 },
             uIntensity: { value: effect.intensity ?? 1.0 },
-            uRadius: { value: effect.radius ?? 0.5 }
+            uRadius: { value: effect.radius ?? 0.5 },
         },
         vertexShader: bloomVertexShader,
-        fragmentShader: bloomFragmentShader
+        fragmentShader: bloomFragmentShader,
     });
 }
 
@@ -270,10 +277,10 @@ function createSSAOMaterial(
             uNormalTexture: { value: null },
             uRadius: { value: effect.radius ?? 0.5 },
             uIntensity: { value: effect.intensity ?? 1.0 },
-            uBias: { value: effect.bias ?? 0.025 }
+            uBias: { value: effect.bias ?? 0.025 },
         },
         vertexShader: ssaoVertexShader,
-        fragmentShader: ssaoFragmentShader
+        fragmentShader: ssaoFragmentShader,
     });
 }
 
@@ -319,15 +326,18 @@ const ssaoFragmentShader = /* glsl */ `
 /**
  * Color grading effect
  */
-function createColorGradingMaterial(effect: { lut?: THREE.Texture; intensity?: number }): THREE.ShaderMaterial {
+function createColorGradingMaterial(effect: {
+    lut?: THREE.Texture;
+    intensity?: number;
+}): THREE.ShaderMaterial {
     return new THREE.ShaderMaterial({
         uniforms: {
             uTexture: { value: null },
             uLUT: { value: effect.lut || null },
-            uIntensity: { value: effect.intensity ?? 1.0 }
+            uIntensity: { value: effect.intensity ?? 1.0 },
         },
         vertexShader: colorGradingVertexShader,
-        fragmentShader: colorGradingFragmentShader
+        fragmentShader: colorGradingFragmentShader,
     });
 }
 
@@ -370,16 +380,19 @@ const colorGradingFragmentShader = /* glsl */ `
 /**
  * Motion blur effect
  */
-function createMotionBlurMaterial(effect: { samples?: number; intensity?: number }): THREE.ShaderMaterial {
+function createMotionBlurMaterial(effect: {
+    samples?: number;
+    intensity?: number;
+}): THREE.ShaderMaterial {
     return new THREE.ShaderMaterial({
         uniforms: {
             uTexture: { value: null },
             uPreviousTexture: { value: null },
             uSamples: { value: effect.samples ?? 8 },
-            uIntensity: { value: effect.intensity ?? 0.5 }
+            uIntensity: { value: effect.intensity ?? 0.5 },
         },
         vertexShader: motionBlurVertexShader,
-        fragmentShader: motionBlurFragmentShader
+        fragmentShader: motionBlurFragmentShader,
     });
 }
 
@@ -427,10 +440,10 @@ function createDepthOfFieldMaterial(
             uAperture: { value: aperture },
             uMaxBlur: { value: maxBlur },
             uCameraNear: { value: camera instanceof THREE.PerspectiveCamera ? camera.near : 0.1 },
-            uCameraFar: { value: camera instanceof THREE.PerspectiveCamera ? camera.far : 1000 }
+            uCameraFar: { value: camera instanceof THREE.PerspectiveCamera ? camera.far : 1000 },
         },
         vertexShader: dofVertexShader,
-        fragmentShader: dofFragmentShader
+        fragmentShader: dofFragmentShader,
     });
 }
 
@@ -491,10 +504,10 @@ function createChromaticAberrationMaterial(effect: { offset?: number }): THREE.S
     return new THREE.ShaderMaterial({
         uniforms: {
             uTexture: { value: null },
-            uOffset: { value: effect.offset ?? 0.002 }
+            uOffset: { value: effect.offset ?? 0.002 },
         },
         vertexShader: chromaticAberrationVertexShader,
-        fragmentShader: chromaticAberrationFragmentShader
+        fragmentShader: chromaticAberrationFragmentShader,
     });
 }
 
@@ -529,15 +542,18 @@ const chromaticAberrationFragmentShader = /* glsl */ `
 /**
  * Vignette effect
  */
-function createVignetteMaterial(effect: { offset?: number; darkness?: number }): THREE.ShaderMaterial {
+function createVignetteMaterial(effect: {
+    offset?: number;
+    darkness?: number;
+}): THREE.ShaderMaterial {
     return new THREE.ShaderMaterial({
         uniforms: {
             uTexture: { value: null },
             uOffset: { value: effect.offset ?? 0.5 },
-            uDarkness: { value: effect.darkness ?? 0.5 }
+            uDarkness: { value: effect.darkness ?? 0.5 },
         },
         vertexShader: vignetteVertexShader,
-        fragmentShader: vignetteFragmentShader
+        fragmentShader: vignetteFragmentShader,
     });
 }
 
@@ -575,10 +591,10 @@ function createFilmGrainMaterial(effect: { intensity?: number }): THREE.ShaderMa
         uniforms: {
             uTexture: { value: null },
             uIntensity: { value: effect.intensity ?? 0.1 },
-            uTime: { value: 0 }
+            uTime: { value: 0 },
         },
         vertexShader: filmGrainVertexShader,
-        fragmentShader: filmGrainFragmentShader
+        fragmentShader: filmGrainFragmentShader,
     });
 }
 

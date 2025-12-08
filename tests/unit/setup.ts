@@ -1,6 +1,6 @@
 /**
  * Unit test setup file
- * 
+ *
  * Mocks WebGL and DOM APIs for tests that don't need real rendering
  */
 
@@ -8,7 +8,7 @@
 if (typeof document !== 'undefined') {
     const canvas = document.createElement('canvas');
     const gl = canvas.getContext('webgl') || canvas.getContext('webgl2');
-    
+
     if (!gl) {
         // Create a minimal WebGL mock
         const mockGL = {
@@ -71,12 +71,12 @@ if (typeof document !== 'undefined') {
             LEQUAL: 515,
             DEPTH_COMPONENT: 6402,
             TEXTURE0: 33984,
-            UNPACK_FLIP_Y_WEBGL: 37440
+            UNPACK_FLIP_Y_WEBGL: 37440,
         };
-        
+
         // Override getContext to return mock
         const originalGetContext = HTMLCanvasElement.prototype.getContext;
-        HTMLCanvasElement.prototype.getContext = function(contextType: string) {
+        HTMLCanvasElement.prototype.getContext = function (contextType: string) {
             if (contextType === 'webgl' || contextType === 'webgl2') {
                 return mockGL as any;
             }

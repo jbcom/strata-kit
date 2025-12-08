@@ -40,7 +40,7 @@ describe('Billboards Integration', () => {
             const positions = [
                 new THREE.Vector3(0, 0, 0),
                 new THREE.Vector3(5, 0, 0),
-                new THREE.Vector3(10, 0, 0)
+                new THREE.Vector3(10, 0, 0),
             ];
             const instances = createBillboardInstances(3, positions, { texture });
 

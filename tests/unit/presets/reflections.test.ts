@@ -1,11 +1,11 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import * as THREE from 'three';
-import { 
+import {
     createReflectionProbe,
     createEnvironmentMap,
     applyReflectionProbe,
     ReflectionProbeManager,
-    type ReflectionProbeOptions 
+    type ReflectionProbeOptions,
 } from '../../../src/presets/reflections';
 
 describe('Reflection Probes', () => {
@@ -33,11 +33,11 @@ describe('Reflection Probes', () => {
             return;
         }
         const options: ReflectionProbeOptions = {
-            position: new THREE.Vector3(0, 0, 0)
+            position: new THREE.Vector3(0, 0, 0),
         };
 
         const probe = createReflectionProbe(options);
-        
+
         expect(probe).toBeDefined();
         expect(probe.probe).toBeDefined();
         expect(probe.camera).toBeInstanceOf(THREE.CubeCamera);
@@ -52,11 +52,11 @@ describe('Reflection Probes', () => {
             resolution: 512,
             updateRate: 30,
             boxProjection: true,
-            boxSize: new THREE.Vector3(20, 20, 20)
+            boxSize: new THREE.Vector3(20, 20, 20),
         };
 
         const probe = createReflectionProbe(options);
-        
+
         expect(probe).toBeDefined();
         expect(probe.camera.position).toEqual(options.position);
     });
@@ -99,7 +99,7 @@ describe('Reflection Probes', () => {
         }
         const probe = createReflectionProbe({
             position: new THREE.Vector3(),
-            updateRate: 0 // Update every frame
+            updateRate: 0, // Update every frame
         });
 
         expect(() => {
@@ -109,7 +109,7 @@ describe('Reflection Probes', () => {
 
     test('should dispose reflection probe', () => {
         const probe = createReflectionProbe({ position: new THREE.Vector3() });
-        
+
         expect(() => {
             probe.dispose();
         }).not.toThrow();
@@ -120,9 +120,9 @@ describe('Reflection Probes', () => {
             return;
         }
         const position = new THREE.Vector3(0, 0, 0);
-        
+
         const envMap = createEnvironmentMap(renderer, scene, position, 256);
-        
+
         expect(envMap).toBeDefined();
         expect(envMap).toBeInstanceOf(THREE.CubeTexture);
     });
@@ -151,9 +151,9 @@ describe('Reflection Probes', () => {
     test('should apply reflection probe to material', () => {
         const material = new THREE.MeshStandardMaterial();
         const probe = createReflectionProbe({ position: new THREE.Vector3() }).probe;
-        
+
         applyReflectionProbe(material, probe, 0.8);
-        
+
         expect(material.envMap).toBe(probe);
         expect(material.envMapIntensity).toBe(0.8);
     });
@@ -183,7 +183,7 @@ describe('Reflection Probes', () => {
             return;
         }
         const manager = new ReflectionProbeManager(renderer, scene);
-        
+
         expect(manager).toBeDefined();
     });
 
@@ -205,11 +205,11 @@ describe('Reflection Probes', () => {
             return;
         }
         const manager = new ReflectionProbeManager(renderer, scene);
-        
+
         const probe = manager.addProbe('test', {
-            position: new THREE.Vector3()
+            position: new THREE.Vector3(),
         });
-        
+
         expect(probe).toBeDefined();
         expect(manager.getProbe('test')).toBe(probe);
     });
@@ -219,9 +219,9 @@ describe('Reflection Probes', () => {
             return;
         }
         const manager = new ReflectionProbeManager(renderer, scene);
-        
+
         manager.addProbe('test', { position: new THREE.Vector3() });
-        
+
         expect(() => {
             manager.addProbe('test', { position: new THREE.Vector3() });
         }).toThrow('probe "test" already exists');
@@ -232,10 +232,10 @@ describe('Reflection Probes', () => {
             return;
         }
         const manager = new ReflectionProbeManager(renderer, scene);
-        
+
         manager.addProbe('test', { position: new THREE.Vector3() });
         manager.removeProbe('test');
-        
+
         expect(manager.getProbe('test')).toBeUndefined();
     });
 
@@ -244,10 +244,10 @@ describe('Reflection Probes', () => {
             return;
         }
         const manager = new ReflectionProbeManager(renderer, scene);
-        
+
         manager.addProbe('probe1', { position: new THREE.Vector3(0, 0, 0) });
         manager.addProbe('probe2', { position: new THREE.Vector3(10, 0, 10) });
-        
+
         expect(() => {
             manager.update();
         }).not.toThrow();
@@ -258,14 +258,14 @@ describe('Reflection Probes', () => {
             return;
         }
         const manager = new ReflectionProbeManager(renderer, scene);
-        
+
         manager.addProbe('probe1', { position: new THREE.Vector3() });
         manager.addProbe('probe2', { position: new THREE.Vector3() });
-        
+
         expect(() => {
             manager.dispose();
         }).not.toThrow();
-        
+
         expect(manager.getProbe('probe1')).toBeUndefined();
         expect(manager.getProbe('probe2')).toBeUndefined();
     });

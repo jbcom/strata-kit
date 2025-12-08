@@ -1,8 +1,8 @@
 /**
  * Volumetric Rendering Shaders
- * 
+ *
  * Raymarched volumetric effects for fog, underwater, and atmospheric scattering.
- * 
+ *
  * Lifted from Otterfall procedural rendering system.
  */
 
@@ -75,9 +75,9 @@ export const volumetricFogShader = {
         uResolution: { value: [1920, 1080] },
         uCameraPosition: { value: [0, 0, 0] },
         uProjectionMatrixInverse: { value: null },
-        uViewMatrixInverse: { value: null }
+        uViewMatrixInverse: { value: null },
     },
-    
+
     vertexShader: `
         varying vec2 vUv;
         
@@ -86,7 +86,7 @@ export const volumetricFogShader = {
             gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }
     `,
-    
+
     fragmentShader: `
         uniform sampler2D tDepth;
         uniform sampler2D tDiffuse;
@@ -196,7 +196,7 @@ export const volumetricFogShader = {
             
             gl_FragColor = vec4(finalColor, 1.0);
         }
-    `
+    `,
 };
 
 // =============================================================================
@@ -217,9 +217,9 @@ export const underwaterShader = {
         uCameraNear: { value: 0.1 },
         uCameraFar: { value: 1000.0 },
         uProjectionMatrixInverse: { value: null },
-        uViewMatrixInverse: { value: null }
+        uViewMatrixInverse: { value: null },
     },
-    
+
     vertexShader: `
         varying vec2 vUv;
         
@@ -228,7 +228,7 @@ export const underwaterShader = {
             gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }
     `,
-    
+
     fragmentShader: `
         uniform sampler2D tDiffuse;
         uniform sampler2D tDepth;
@@ -330,7 +330,7 @@ export const underwaterShader = {
             
             gl_FragColor = vec4(underwaterTint, 1.0);
         }
-    `
+    `,
 };
 
 // =============================================================================
@@ -351,9 +351,9 @@ export const atmosphereShader = {
         uCameraNear: { value: 0.1 },
         uCameraFar: { value: 1000.0 },
         uProjectionMatrixInverse: { value: null },
-        uViewMatrixInverse: { value: null }
+        uViewMatrixInverse: { value: null },
     },
-    
+
     vertexShader: `
         varying vec2 vUv;
         
@@ -362,7 +362,7 @@ export const atmosphereShader = {
             gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }
     `,
-    
+
     fragmentShader: `
         uniform sampler2D tDiffuse;
         uniform sampler2D tDepth;
@@ -438,7 +438,7 @@ export const atmosphereShader = {
             
             gl_FragColor = vec4(finalColor, 1.0);
         }
-    `
+    `,
 };
 
 // =============================================================================
@@ -453,9 +453,9 @@ export const dustParticlesShader = {
         uParticleSize: { value: 0.01 },
         uLightDirection: { value: [0.5, 0.8, 0.3] },
         uCameraPosition: { value: [0, 0, 0] },
-        uResolution: { value: [1920, 1080] }
+        uResolution: { value: [1920, 1080] },
     },
-    
+
     vertexShader: `
         varying vec2 vUv;
         
@@ -464,7 +464,7 @@ export const dustParticlesShader = {
             gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }
     `,
-    
+
     fragmentShader: `
         uniform sampler2D tDiffuse;
         uniform float uTime;
@@ -531,5 +531,5 @@ export const dustParticlesShader = {
             
             gl_FragColor = vec4(sceneColor.rgb + dustColor, 1.0);
         }
-    `
+    `,
 };

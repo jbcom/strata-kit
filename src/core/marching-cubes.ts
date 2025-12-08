@@ -1,9 +1,9 @@
 /**
  * Marching Cubes implementation for generating meshes from SDFs
- * 
+ *
  * Marching Cubes is an algorithm for extracting a polygonal mesh of an
  * isosurface from a 3D scalar field (like an SDF).
- * 
+ *
  * Lifted from Otterfall procedural terrain system.
  */
 
@@ -12,38 +12,25 @@ import * as THREE from 'three';
 // Edge table - for each cube configuration, which edges have vertices
 // Bit i of the entry indicates whether edge i is intersected by the isosurface
 const EDGE_TABLE = [
-    0x0, 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
-    0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03, 0xe09, 0xf00,
-    0x190, 0x99, 0x393, 0x29a, 0x596, 0x49f, 0x795, 0x69c,
-    0x99c, 0x895, 0xb9f, 0xa96, 0xd9a, 0xc93, 0xf99, 0xe90,
-    0x230, 0x339, 0x33, 0x13a, 0x636, 0x73f, 0x435, 0x53c,
-    0xa3c, 0xb35, 0x83f, 0x936, 0xe3a, 0xf33, 0xc39, 0xd30,
-    0x3a0, 0x2a9, 0x1a3, 0xaa, 0x7a6, 0x6af, 0x5a5, 0x4ac,
-    0xbac, 0xaa5, 0x9af, 0x8a6, 0xfaa, 0xea3, 0xda9, 0xca0,
-    0x460, 0x569, 0x663, 0x76a, 0x66, 0x16f, 0x265, 0x36c,
-    0xc6c, 0xd65, 0xe6f, 0xf66, 0x86a, 0x963, 0xa69, 0xb60,
-    0x5f0, 0x4f9, 0x7f3, 0x6fa, 0x1f6, 0xff, 0x3f5, 0x2fc,
-    0xdfc, 0xcf5, 0xfff, 0xef6, 0x9fa, 0x8f3, 0xbf9, 0xaf0,
-    0x650, 0x759, 0x453, 0x55a, 0x256, 0x35f, 0x55, 0x15c,
-    0xe5c, 0xf55, 0xc5f, 0xd56, 0xa5a, 0xb53, 0x859, 0x950,
-    0x7c0, 0x6c9, 0x5c3, 0x4ca, 0x3c6, 0x2cf, 0x1c5, 0xcc,
-    0xfcc, 0xec5, 0xdcf, 0xcc6, 0xbca, 0xac3, 0x9c9, 0x8c0,
-    0x8c0, 0x9c9, 0xac3, 0xbca, 0xcc6, 0xdcf, 0xec5, 0xfcc,
-    0xcc, 0x1c5, 0x2cf, 0x3c6, 0x4ca, 0x5c3, 0x6c9, 0x7c0,
-    0x950, 0x859, 0xb53, 0xa5a, 0xd56, 0xc5f, 0xf55, 0xe5c,
-    0x15c, 0x55, 0x35f, 0x256, 0x55a, 0x453, 0x759, 0x650,
-    0xaf0, 0xbf9, 0x8f3, 0x9fa, 0xef6, 0xfff, 0xcf5, 0xdfc,
-    0x2fc, 0x3f5, 0xff, 0x1f6, 0x6fa, 0x7f3, 0x4f9, 0x5f0,
-    0xb60, 0xa69, 0x963, 0x86a, 0xf66, 0xe6f, 0xd65, 0xc6c,
-    0x36c, 0x265, 0x16f, 0x66, 0x76a, 0x663, 0x569, 0x460,
-    0xca0, 0xda9, 0xea3, 0xfaa, 0x8a6, 0x9af, 0xaa5, 0xbac,
-    0x4ac, 0x5a5, 0x6af, 0x7a6, 0xaa, 0x1a3, 0x2a9, 0x3a0,
-    0xd30, 0xc39, 0xf33, 0xe3a, 0x936, 0x83f, 0xb35, 0xa3c,
-    0x53c, 0x435, 0x73f, 0x636, 0x13a, 0x33, 0x339, 0x230,
-    0xe90, 0xf99, 0xc93, 0xd9a, 0xa96, 0xb9f, 0x895, 0x99c,
-    0x69c, 0x795, 0x49f, 0x596, 0x29a, 0x393, 0x99, 0x190,
-    0xf00, 0xe09, 0xd03, 0xc0a, 0xb06, 0xa0f, 0x905, 0x80c,
-    0x70c, 0x605, 0x50f, 0x406, 0x30a, 0x203, 0x109, 0x0
+    0x0, 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c, 0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03,
+    0xe09, 0xf00, 0x190, 0x99, 0x393, 0x29a, 0x596, 0x49f, 0x795, 0x69c, 0x99c, 0x895, 0xb9f, 0xa96,
+    0xd9a, 0xc93, 0xf99, 0xe90, 0x230, 0x339, 0x33, 0x13a, 0x636, 0x73f, 0x435, 0x53c, 0xa3c, 0xb35,
+    0x83f, 0x936, 0xe3a, 0xf33, 0xc39, 0xd30, 0x3a0, 0x2a9, 0x1a3, 0xaa, 0x7a6, 0x6af, 0x5a5, 0x4ac,
+    0xbac, 0xaa5, 0x9af, 0x8a6, 0xfaa, 0xea3, 0xda9, 0xca0, 0x460, 0x569, 0x663, 0x76a, 0x66, 0x16f,
+    0x265, 0x36c, 0xc6c, 0xd65, 0xe6f, 0xf66, 0x86a, 0x963, 0xa69, 0xb60, 0x5f0, 0x4f9, 0x7f3,
+    0x6fa, 0x1f6, 0xff, 0x3f5, 0x2fc, 0xdfc, 0xcf5, 0xfff, 0xef6, 0x9fa, 0x8f3, 0xbf9, 0xaf0, 0x650,
+    0x759, 0x453, 0x55a, 0x256, 0x35f, 0x55, 0x15c, 0xe5c, 0xf55, 0xc5f, 0xd56, 0xa5a, 0xb53, 0x859,
+    0x950, 0x7c0, 0x6c9, 0x5c3, 0x4ca, 0x3c6, 0x2cf, 0x1c5, 0xcc, 0xfcc, 0xec5, 0xdcf, 0xcc6, 0xbca,
+    0xac3, 0x9c9, 0x8c0, 0x8c0, 0x9c9, 0xac3, 0xbca, 0xcc6, 0xdcf, 0xec5, 0xfcc, 0xcc, 0x1c5, 0x2cf,
+    0x3c6, 0x4ca, 0x5c3, 0x6c9, 0x7c0, 0x950, 0x859, 0xb53, 0xa5a, 0xd56, 0xc5f, 0xf55, 0xe5c,
+    0x15c, 0x55, 0x35f, 0x256, 0x55a, 0x453, 0x759, 0x650, 0xaf0, 0xbf9, 0x8f3, 0x9fa, 0xef6, 0xfff,
+    0xcf5, 0xdfc, 0x2fc, 0x3f5, 0xff, 0x1f6, 0x6fa, 0x7f3, 0x4f9, 0x5f0, 0xb60, 0xa69, 0x963, 0x86a,
+    0xf66, 0xe6f, 0xd65, 0xc6c, 0x36c, 0x265, 0x16f, 0x66, 0x76a, 0x663, 0x569, 0x460, 0xca0, 0xda9,
+    0xea3, 0xfaa, 0x8a6, 0x9af, 0xaa5, 0xbac, 0x4ac, 0x5a5, 0x6af, 0x7a6, 0xaa, 0x1a3, 0x2a9, 0x3a0,
+    0xd30, 0xc39, 0xf33, 0xe3a, 0x936, 0x83f, 0xb35, 0xa3c, 0x53c, 0x435, 0x73f, 0x636, 0x13a, 0x33,
+    0x339, 0x230, 0xe90, 0xf99, 0xc93, 0xd9a, 0xa96, 0xb9f, 0x895, 0x99c, 0x69c, 0x795, 0x49f,
+    0x596, 0x29a, 0x393, 0x99, 0x190, 0xf00, 0xe09, 0xd03, 0xc0a, 0xb06, 0xa0f, 0x905, 0x80c, 0x70c,
+    0x605, 0x50f, 0x406, 0x30a, 0x203, 0x109, 0x0,
 ];
 
 // Triangle table - for each cube configuration, which triangles to create
@@ -304,20 +291,35 @@ const TRI_TABLE = [
     [1, 3, 8, 9, 1, 8, -1],
     [0, 9, 1, -1],
     [0, 3, 8, -1],
-    [-1]
+    [-1],
 ];
 
 // Edge to vertex mapping
 const EDGE_VERTICES: [number, number][] = [
-    [0, 1], [1, 2], [2, 3], [3, 0], // Bottom face edges
-    [4, 5], [5, 6], [6, 7], [7, 4], // Top face edges
-    [0, 4], [1, 5], [2, 6], [3, 7]  // Vertical edges
+    [0, 1],
+    [1, 2],
+    [2, 3],
+    [3, 0], // Bottom face edges
+    [4, 5],
+    [5, 6],
+    [6, 7],
+    [7, 4], // Top face edges
+    [0, 4],
+    [1, 5],
+    [2, 6],
+    [3, 7], // Vertical edges
 ];
 
 // Cube vertex positions (relative)
 const CUBE_VERTICES = [
-    [0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1], // Bottom
-    [0, 1, 0], [1, 1, 0], [1, 1, 1], [0, 1, 1]  // Top
+    [0, 0, 0],
+    [1, 0, 0],
+    [1, 0, 1],
+    [0, 0, 1], // Bottom
+    [0, 1, 0],
+    [1, 1, 0],
+    [1, 1, 1],
+    [0, 1, 1], // Top
 ];
 
 export interface MarchingCubesResult {
@@ -327,12 +329,12 @@ export interface MarchingCubesResult {
 }
 
 export interface MarchingCubesOptions {
-    resolution: number;      // Grid resolution
+    resolution: number; // Grid resolution
     bounds: {
         min: THREE.Vector3;
         max: THREE.Vector3;
     };
-    isoLevel?: number;       // Surface level (default 0 for SDFs)
+    isoLevel?: number; // Surface level (default 0 for SDFs)
 }
 
 /**
@@ -343,7 +345,7 @@ export function marchingCubes(
     options: MarchingCubesOptions
 ): MarchingCubesResult {
     const { resolution, bounds, isoLevel = 0 } = options;
-    
+
     // Input validation
     if (resolution <= 0 || !Number.isInteger(resolution)) {
         throw new Error('marchingCubes: resolution must be a positive integer');
@@ -354,24 +356,24 @@ export function marchingCubes(
     if (!bounds.min || !bounds.max) {
         throw new Error('marchingCubes: bounds.min and bounds.max are required');
     }
-    if (bounds.max.x <= bounds.min.x || bounds.max.y <= bounds.min.y || bounds.max.z <= bounds.min.z) {
+    if (
+        bounds.max.x <= bounds.min.x ||
+        bounds.max.y <= bounds.min.y ||
+        bounds.max.z <= bounds.min.z
+    ) {
         throw new Error('marchingCubes: bounds.max must be greater than bounds.min');
     }
-    
+
     const size = bounds.max.clone().sub(bounds.min);
-    const step = new THREE.Vector3(
-        size.x / resolution,
-        size.y / resolution,
-        size.z / resolution
-    );
-    
+    const step = new THREE.Vector3(size.x / resolution, size.y / resolution, size.z / resolution);
+
     // Sample the SDF at grid points
     const gridSize = resolution + 1;
     const values = new Float32Array(gridSize * gridSize * gridSize);
-    
-    const getIndex = (x: number, y: number, z: number) => 
+
+    const getIndex = (x: number, y: number, z: number) =>
         x + y * gridSize + z * gridSize * gridSize;
-    
+
     // Sample grid
     const point = new THREE.Vector3();
     for (let z = 0; z < gridSize; z++) {
@@ -386,44 +388,49 @@ export function marchingCubes(
             }
         }
     }
-    
+
     // Generate triangles
     const vertices: number[] = [];
     const normals: number[] = [];
     const vertexMap = new Map<string, number>();
-    
+
     const interpolate = (
-        v1: THREE.Vector3, val1: number,
-        v2: THREE.Vector3, val2: number
+        v1: THREE.Vector3,
+        val1: number,
+        v2: THREE.Vector3,
+        val2: number
     ): THREE.Vector3 => {
         if (Math.abs(isoLevel - val1) < 0.00001) return v1.clone();
         if (Math.abs(isoLevel - val2) < 0.00001) return v2.clone();
         if (Math.abs(val1 - val2) < 0.00001) return v1.clone();
-        
+
         const t = (isoLevel - val1) / (val2 - val1);
         return new THREE.Vector3().lerpVectors(v1, v2, t);
     };
-    
+
     const addVertex = (pos: THREE.Vector3): number => {
         // Use position as key for deduplication
         const key = `${pos.x.toFixed(6)},${pos.y.toFixed(6)},${pos.z.toFixed(6)}`;
-        
+
         if (vertexMap.has(key)) {
             return vertexMap.get(key)!;
         }
-        
+
         const index = vertices.length / 3;
         vertices.push(pos.x, pos.y, pos.z);
-        
+
         // Calculate normal using gradient of SDF
         const eps = step.x * 0.1;
-        const nx = sdf(new THREE.Vector3(pos.x + eps, pos.y, pos.z)) - 
-                   sdf(new THREE.Vector3(pos.x - eps, pos.y, pos.z));
-        const ny = sdf(new THREE.Vector3(pos.x, pos.y + eps, pos.z)) - 
-                   sdf(new THREE.Vector3(pos.x, pos.y - eps, pos.z));
-        const nz = sdf(new THREE.Vector3(pos.x, pos.y, pos.z + eps)) - 
-                   sdf(new THREE.Vector3(pos.x, pos.y, pos.z - eps));
-        
+        const nx =
+            sdf(new THREE.Vector3(pos.x + eps, pos.y, pos.z)) -
+            sdf(new THREE.Vector3(pos.x - eps, pos.y, pos.z));
+        const ny =
+            sdf(new THREE.Vector3(pos.x, pos.y + eps, pos.z)) -
+            sdf(new THREE.Vector3(pos.x, pos.y - eps, pos.z));
+        const nz =
+            sdf(new THREE.Vector3(pos.x, pos.y, pos.z + eps)) -
+            sdf(new THREE.Vector3(pos.x, pos.y, pos.z - eps));
+
         const len = Math.sqrt(nx * nx + ny * ny + nz * nz);
         if (len > 0.000001) {
             normals.push(nx / len, ny / len, nz / len);
@@ -431,15 +438,15 @@ export function marchingCubes(
             // Default normal when gradient is zero
             normals.push(0, 1, 0);
         }
-        
+
         vertexMap.set(key, index);
         return index;
     };
-    
+
     const indices: number[] = [];
     const cubeVerts = new Array(8).fill(null).map(() => new THREE.Vector3());
     const cubeVals = new Float32Array(8);
-    
+
     // Process each cube
     for (let z = 0; z < resolution; z++) {
         for (let y = 0; y < resolution; y++) {
@@ -454,31 +461,33 @@ export function marchingCubes(
                     );
                     cubeVals[i] = values[getIndex(x + dx, y + dy, z + dz)];
                 }
-                
+
                 // Calculate cube index
                 let cubeIndex = 0;
                 for (let i = 0; i < 8; i++) {
                     if (cubeVals[i] < isoLevel) {
-                        cubeIndex |= (1 << i);
+                        cubeIndex |= 1 << i;
                     }
                 }
-                
+
                 // Skip if entirely inside or outside
                 if (EDGE_TABLE[cubeIndex] === 0) continue;
-                
+
                 // Calculate intersection points on edges
                 const edgeVertices: THREE.Vector3[] = new Array(12);
-                
+
                 for (let i = 0; i < 12; i++) {
                     if (EDGE_TABLE[cubeIndex] & (1 << i)) {
                         const [v1, v2] = EDGE_VERTICES[i];
                         edgeVertices[i] = interpolate(
-                            cubeVerts[v1], cubeVals[v1],
-                            cubeVerts[v2], cubeVals[v2]
+                            cubeVerts[v1],
+                            cubeVals[v1],
+                            cubeVerts[v2],
+                            cubeVals[v2]
                         );
                     }
                 }
-                
+
                 // Generate triangles
                 const triList = TRI_TABLE[cubeIndex];
                 for (let i = 0; triList[i] !== -1; i += 3) {
@@ -490,11 +499,11 @@ export function marchingCubes(
             }
         }
     }
-    
+
     return {
         vertices: new Float32Array(vertices),
         normals: new Float32Array(normals),
-        indices: new Uint32Array(indices)
+        indices: new Uint32Array(indices),
     };
 }
 
@@ -506,24 +515,30 @@ export function createGeometryFromMarchingCubes(result: MarchingCubesResult): TH
         throw new Error('createGeometryFromMarchingCubes: result is required');
     }
     if (!result.vertices || result.vertices.length === 0) {
-        throw new Error('createGeometryFromMarchingCubes: result.vertices must be a non-empty array');
+        throw new Error(
+            'createGeometryFromMarchingCubes: result.vertices must be a non-empty array'
+        );
     }
     if (!result.normals || result.normals.length === 0) {
-        throw new Error('createGeometryFromMarchingCubes: result.normals must be a non-empty array');
+        throw new Error(
+            'createGeometryFromMarchingCubes: result.normals must be a non-empty array'
+        );
     }
     if (result.vertices.length !== result.normals.length) {
-        throw new Error('createGeometryFromMarchingCubes: vertices and normals arrays must have the same length');
+        throw new Error(
+            'createGeometryFromMarchingCubes: vertices and normals arrays must have the same length'
+        );
     }
-    
+
     const geometry = new THREE.BufferGeometry();
-    
+
     geometry.setAttribute('position', new THREE.BufferAttribute(result.vertices, 3));
     geometry.setAttribute('normal', new THREE.BufferAttribute(result.normals, 3));
     geometry.setIndex(new THREE.BufferAttribute(result.indices, 1));
-    
+
     geometry.computeBoundingBox();
     geometry.computeBoundingSphere();
-    
+
     return geometry;
 }
 
@@ -557,7 +572,7 @@ export function generateTerrainChunk(
     if (resolution > 256) {
         throw new Error('generateTerrainChunk: resolution must be <= 256');
     }
-    
+
     const halfSize = chunkSize / 2;
     const bounds = {
         min: new THREE.Vector3(
@@ -569,15 +584,15 @@ export function generateTerrainChunk(
             chunkPosition.x + halfSize,
             chunkPosition.y + halfSize,
             chunkPosition.z + halfSize
-        )
+        ),
     };
-    
+
     const result = marchingCubes(sdf, { resolution, bounds });
     const geometry = createGeometryFromMarchingCubes(result);
-    
+
     return {
         geometry,
         boundingBox: new THREE.Box3(bounds.min, bounds.max),
-        position: chunkPosition.clone()
+        position: chunkPosition.clone(),
     };
 }

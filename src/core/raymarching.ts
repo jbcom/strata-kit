@@ -1,6 +1,6 @@
 /**
  * Ray Marching - Core TypeScript (no React)
- * 
+ *
  * Pure TypeScript functions for ray marching setup
  */
 
@@ -24,7 +24,9 @@ export interface RaymarchingMaterialOptions {
 /**
  * Create ray marching material (pure TypeScript)
  */
-export function createRaymarchingMaterial(options: RaymarchingMaterialOptions): THREE.ShaderMaterial {
+export function createRaymarchingMaterial(
+    options: RaymarchingMaterialOptions
+): THREE.ShaderMaterial {
     const {
         sdfFunction,
         maxSteps = 100,
@@ -36,9 +38,9 @@ export function createRaymarchingMaterial(options: RaymarchingMaterialOptions): 
         cameraPosition = new THREE.Vector3(0, 0, 5),
         cameraMatrix = new THREE.Matrix4(),
         resolution = new THREE.Vector2(800, 600),
-        time = 0
+        time = 0,
     } = options;
-    
+
     // Input validation
     if (!sdfFunction || typeof sdfFunction !== 'string') {
         throw new Error('createRaymarchingMaterial: sdfFunction must be a GLSL string');
@@ -50,15 +52,17 @@ export function createRaymarchingMaterial(options: RaymarchingMaterialOptions): 
         throw new Error('createRaymarchingMaterial: maxDistance must be positive');
     }
     if (minDistance <= 0 || minDistance >= maxDistance) {
-        throw new Error('createRaymarchingMaterial: minDistance must be positive and less than maxDistance');
+        throw new Error(
+            'createRaymarchingMaterial: minDistance must be positive and less than maxDistance'
+        );
     }
-    
+
     // Inject SDF function into fragment shader
     const fragmentShader = raymarchingFragmentShader.replace(
         'float sceneSDF(vec3 p);',
         sdfFunction
     );
-    
+
     return new THREE.ShaderMaterial({
         vertexShader: raymarchingVertexShader,
         fragmentShader,
@@ -72,8 +76,8 @@ export function createRaymarchingMaterial(options: RaymarchingMaterialOptions): 
             uMinDistance: { value: minDistance },
             uBackgroundColor: { value: new THREE.Color(backgroundColor) },
             uFogStrength: { value: fogStrength },
-            uFogColor: { value: new THREE.Color(fogColor) }
-        }
+            uFogColor: { value: new THREE.Color(fogColor) },
+        },
     });
 }
 

@@ -1,9 +1,9 @@
 /**
  * Volumetric Effects Component
- * 
+ *
  * Provides raymarched volumetric fog, underwater effects, and atmospheric scattering
  * using shader-based post-processing.
- * 
+ *
  * Lifted from Otterfall procedural rendering system.
  */
 
@@ -16,11 +16,11 @@ import {
     underwaterOverlayVertexShader,
     underwaterOverlayFragmentShader,
     createVolumetricFogMeshUniforms,
-    createUnderwaterOverlayUniforms
+    createUnderwaterOverlayUniforms,
 } from '../shaders/volumetrics-components';
 import {
     createVolumetricFogMeshMaterial,
-    createUnderwaterOverlayMaterial
+    createUnderwaterOverlayMaterial,
 } from '../core/volumetrics';
 
 // =============================================================================
@@ -32,20 +32,20 @@ import {
  */
 export function EnhancedFog({
     color = new THREE.Color(0.7, 0.8, 0.9),
-    density = 0.02
+    density = 0.02,
 }: {
     color?: THREE.Color;
     density?: number;
 }) {
     const { scene } = useThree();
-    
+
     useEffect(() => {
         scene.fog = new THREE.FogExp2(color.getHex(), density) as any;
         return () => {
             scene.fog = null;
         };
     }, [scene, color, density]);
-    
+
     return null;
 }
 
@@ -64,33 +64,33 @@ export function UnderwaterOverlay({
     waterColor = new THREE.Color(0.0, 0.3, 0.5),
     density = 0.1,
     causticStrength = 0.3,
-    waterSurface = 0
+    waterSurface = 0,
 }: UnderwaterOverlayProps) {
     const { camera } = useThree();
     const overlayRef = useRef<THREE.Mesh>(null);
-    
+
     const material = useMemo(() => {
         return createUnderwaterOverlayMaterial({
             waterColor,
             density,
             causticStrength,
-            waterSurface
+            waterSurface,
         });
     }, [waterColor, density, causticStrength, waterSurface]);
-    
+
     useFrame((state) => {
         if (material && material.uniforms) {
             material.uniforms.uTime.value = state.clock.elapsedTime;
             material.uniforms.uCameraY.value = camera.position.y;
         }
     });
-    
+
     useEffect(() => {
         return () => {
             material.dispose();
         };
     }, [material]);
-    
+
     return (
         <mesh ref={overlayRef} renderOrder={999}>
             <planeGeometry args={[2, 2]} />
@@ -114,20 +114,20 @@ export function VolumetricFogMesh({
     color = new THREE.Color(0.7, 0.8, 0.9),
     density = 0.02,
     height = 10,
-    size = 200
+    size = 200,
 }: VolumetricFogMeshProps) {
     const meshRef = useRef<THREE.Mesh>(null);
     const { camera } = useThree();
-    
+
     const material = useMemo(() => {
         return createVolumetricFogMeshMaterial({
             color,
             density,
             height,
-            cameraPosition: camera.position as any
+            cameraPosition: camera.position as any,
         });
     }, [color, density, height, camera]);
-    
+
     useFrame((state) => {
         if (material && material.uniforms && meshRef.current) {
             material.uniforms.uTime.value = state.clock.elapsedTime;
@@ -135,13 +135,13 @@ export function VolumetricFogMesh({
             meshRef.current.position.set(camera.position.x, 0, camera.position.z);
         }
     });
-    
+
     useEffect(() => {
         return () => {
             material.dispose();
         };
     }, [material]);
-    
+
     return (
         <mesh ref={meshRef as any} position={[0, height / 2, 0]}>
             <boxGeometry args={[size, height, size, 1, 8, 1]} />
@@ -178,7 +178,7 @@ export function VolumetricEffects({
     enableFog = true,
     enableUnderwater = true,
     fogSettings = {},
-    underwaterSettings = {}
+    underwaterSettings = {},
 }: VolumetricEffectsProps) {
     return (
         <>
@@ -190,7 +190,7 @@ export function VolumetricEffects({
                     height={fogSettings.height}
                 />
             )}
-            
+
             {/* Underwater overlay */}
             {enableUnderwater && (
                 <UnderwaterOverlay

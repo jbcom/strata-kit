@@ -1,6 +1,6 @@
 /**
  * Ray marching shader - GPU-based SDF rendering
- * 
+ *
  * Based on marching.js patterns for efficient ray marching
  */
 

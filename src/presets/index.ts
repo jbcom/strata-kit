@@ -1,6 +1,6 @@
 /**
  * Strata Presets - Organized game development primitives
- * 
+ *
  * This module exports all preset systems organized by layer:
  * - Background: Sky, volumetrics, terrain
  * - Midground: Water, vegetation, instancing
@@ -10,13 +10,37 @@
 // Background Layer
 export * from '../core/sky';
 export * from '../core/volumetrics';
-export * from '../core/sdf';
+export {
+    sdSphere,
+    sdBox,
+    sdPlane,
+    sdCapsule,
+    sdTorus,
+    sdCone,
+    opUnion,
+    opSubtraction,
+    opIntersection,
+    opSmoothUnion,
+    opSmoothSubtraction,
+    opSmoothIntersection,
+    noise3D,
+    fbm,
+    warpedFbm,
+    getBiomeAt,
+    getTerrainHeight,
+    sdCaves,
+    sdTerrain,
+    sdRock,
+    calcNormal,
+} from '../core/sdf';
+export type { BiomeData } from '../core/sdf';
 export * from '../core/marching-cubes';
 export * from './terrain';
 
 // Midground Layer
 export * from './water';
-export * from '../core/instancing';
+export { generateInstanceData, createInstancedMesh } from '../core/instancing';
+export type { InstanceData } from '../core/instancing';
 export * from '../core/raymarching';
 export * from './vegetation';
 
@@ -43,5 +67,9 @@ export type { ParticleEmitterOptions, ParticleSystem } from './particles';
 export type { DecalOptions } from './decals';
 export type { BillboardOptions } from './billboards';
 export type { ShadowSystemOptions, ShadowSystem } from './shadows';
-export type { PostProcessingOptions, PostProcessingEffect, PostProcessingPipeline } from './postprocessing';
+export type {
+    PostProcessingOptions,
+    PostProcessingEffect,
+    PostProcessingPipeline,
+} from './postprocessing';
 export type { ReflectionProbeOptions, ReflectionProbe } from './reflections';

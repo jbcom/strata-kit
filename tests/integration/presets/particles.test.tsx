@@ -22,7 +22,7 @@ describe('Particle System Integration', () => {
             const system = createParticleSystem({
                 maxParticles: 100,
                 rate: 10,
-                lifetime: 2.0
+                lifetime: 2.0,
             });
 
             return <primitive object={system.group} />;
@@ -39,10 +39,12 @@ describe('Particle System Integration', () => {
 
     test('should update particle system with useEffect', () => {
         function ParticleScene() {
-            const systemRef = React.useRef(createParticleSystem({
-                maxParticles: 50,
-                rate: 5
-            }));
+            const systemRef = React.useRef(
+                createParticleSystem({
+                    maxParticles: 50,
+                    rate: 5,
+                })
+            );
 
             React.useEffect(() => {
                 const interval = setInterval(() => {

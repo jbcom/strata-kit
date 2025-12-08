@@ -1,16 +1,16 @@
 /**
  * Procedural Water components
- * 
+ *
  * Lifted from Otterfall procedural rendering system.
  */
 
 import { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { 
+import {
     createWaterMaterial,
     createAdvancedWaterMaterial,
-    createWaterGeometry
+    createWaterGeometry,
 } from '../core/water';
 
 interface WaterProps {
@@ -22,11 +22,7 @@ interface WaterProps {
 /**
  * Simple procedural water surface with wave animation
  */
-export function Water({ 
-    position = [0, -0.2, 0], 
-    size = 100,
-    segments = 32
-}: WaterProps) {
+export function Water({ position = [0, -0.2, 0], size = 100, segments = 32 }: WaterProps) {
     const meshRef = useRef<THREE.Mesh | null>(null);
 
     const material = useMemo(() => {
@@ -76,7 +72,7 @@ export function AdvancedWater({
     waterColor = 0x2a5a8a,
     deepWaterColor = 0x1a3a5a,
     foamColor = 0x8ab4d4,
-    causticIntensity = 0.4
+    causticIntensity = 0.4,
 }: AdvancedWaterProps) {
     const waterRef = useRef<THREE.Mesh>(null);
 
@@ -88,12 +84,13 @@ export function AdvancedWater({
     });
 
     const waterMaterial = useMemo(
-        () => createAdvancedWaterMaterial({
-            waterColor,
-            deepWaterColor,
-            foamColor,
-            causticIntensity
-        }),
+        () =>
+            createAdvancedWaterMaterial({
+                waterColor,
+                deepWaterColor,
+                foamColor,
+                causticIntensity,
+            }),
         [waterColor, deepWaterColor, foamColor, causticIntensity]
     );
 
@@ -110,12 +107,7 @@ export function AdvancedWater({
     }, [waterGeometry, waterMaterial]);
 
     return (
-        <mesh
-            ref={waterRef}
-            position={position}
-            rotation={[-Math.PI / 2, 0, 0]}
-            receiveShadow
-        >
+        <mesh ref={waterRef} position={position} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
             <primitive object={waterGeometry} />
             <primitive object={waterMaterial} />
         </mesh>

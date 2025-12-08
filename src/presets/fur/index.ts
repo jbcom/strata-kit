@@ -1,6 +1,6 @@
 /**
  * Fur Preset - Shell-based fur rendering system
- * 
+ *
  * Provides GPU-accelerated fur rendering using shell-based techniques
  * for characters, animals, and organic surfaces.
  */
@@ -38,7 +38,7 @@ export function createFurMaterial(
         tipColor = 0x795548,
         spacing = 0.02,
         windStrength = 0.5,
-        gravityDroop = 0.03
+        gravityDroop = 0.03,
     } = options;
 
     const layerOffset = layerIndex / totalLayers;
@@ -53,11 +53,11 @@ export function createFurMaterial(
             colorTip: { value: new THREE.Color(tipColor) },
             time: { value: 0 },
             windStrength: { value: windStrength },
-            gravityDroop: { value: gravityDroop }
+            gravityDroop: { value: gravityDroop },
         },
         transparent: true,
         depthWrite: false,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
     });
 }
 
@@ -70,7 +70,7 @@ export function createFurSystem(
     options: FurOptions = {}
 ): THREE.Group {
     const { layerCount = 6 } = options;
-    
+
     if (!geometry) {
         throw new Error('createFurSystem: geometry is required');
     }
@@ -82,33 +82,30 @@ export function createFurSystem(
     }
 
     const group = new THREE.Group();
-    
+
     // Base mesh
     const baseMesh = new THREE.Mesh(geometry, baseMaterial);
     baseMesh.castShadow = true;
     group.add(baseMesh);
-    
+
     // Add fur shells
     for (let i = 1; i <= layerCount; i++) {
         const furMaterial = createFurMaterial(i, layerCount, options);
         const shell = new THREE.Mesh(geometry, furMaterial);
         baseMesh.add(shell);
     }
-    
+
     return group;
 }
 
 /**
  * Update fur uniforms for animation
  */
-export function updateFurUniforms(
-    furSystem: THREE.Group,
-    time: number
-): void {
+export function updateFurUniforms(furSystem: THREE.Group, time: number): void {
     if (!furSystem) {
         throw new Error('updateFurUniforms: furSystem is required');
     }
-    
+
     furSystem.traverse((child) => {
         if (child instanceof THREE.Mesh && child.material instanceof THREE.ShaderMaterial) {
             const uniforms = child.material.uniforms;

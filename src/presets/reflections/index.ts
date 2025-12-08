@@ -1,6 +1,6 @@
 /**
  * Reflection Probes Preset - Real-time reflections
- * 
+ *
  * Provides reflection probes for real-time reflections,
  * environment mapping, and glossy surfaces.
  */
@@ -27,9 +27,7 @@ export interface ReflectionProbe {
 /**
  * Create a reflection probe
  */
-export function createReflectionProbe(
-    options: ReflectionProbeOptions
-): ReflectionProbe {
+export function createReflectionProbe(options: ReflectionProbeOptions): ReflectionProbe {
     const {
         position,
         size = 10,
@@ -37,7 +35,7 @@ export function createReflectionProbe(
         updateRate = 0, // 0 = every frame
         boxProjection = false,
         boxSize = new THREE.Vector3(size, size, size),
-        renderObjects
+        renderObjects,
     } = options;
 
     // Input validation
@@ -54,20 +52,22 @@ export function createReflectionProbe(
         throw new Error('createReflectionProbe: updateRate must be non-negative');
     }
 
-    // Create cube camera for reflections
-    const cubeCamera = new THREE.CubeCamera(0.1, 1000, resolution);
-    cubeCamera.position.copy(position);
-
     // Create cube render target
-    const cubeRenderTarget = cubeCamera.renderTarget;
+    const cubeRenderTarget = new THREE.WebGLCubeRenderTarget(resolution, {
+        type: THREE.HalfFloatType,
+    });
+
+    // Create cube camera for reflections
+    const cubeCamera = new THREE.CubeCamera(0.1, 1000, cubeRenderTarget);
+    cubeCamera.position.copy(position);
 
     let lastUpdateTime = 0;
     const updateInterval = updateRate > 0 ? 1 / updateRate : 0;
 
     const update = (renderer: THREE.WebGLRenderer, scene: THREE.Scene) => {
         const currentTime = performance.now() / 1000;
-        
-        if (updateRate === 0 || (currentTime - lastUpdateTime) >= updateInterval) {
+
+        if (updateRate === 0 || currentTime - lastUpdateTime >= updateInterval) {
             // Get objects to render (or use all objects)
             const objectsToRender = renderObjects ? renderObjects(scene) : scene.children;
 
@@ -86,7 +86,7 @@ export function createReflectionProbe(
         probe: cubeRenderTarget.texture,
         camera: cubeCamera,
         update,
-        dispose
+        dispose,
     };
 }
 
@@ -115,7 +115,7 @@ export function createEnvironmentMap(
     const probe = createReflectionProbe({
         position,
         resolution,
-        updateRate: 0 // Update once
+        updateRate: 0, // Update once
     });
 
     probe.update(renderer, scene);
@@ -141,8 +141,10 @@ export function applyReflectionProbe(
         throw new Error('applyReflectionProbe: intensity must be between 0 and 1');
     }
 
-    if (material instanceof THREE.MeshStandardMaterial ||
-        material instanceof THREE.MeshPhysicalMaterial) {
+    if (
+        material instanceof THREE.MeshStandardMaterial ||
+        material instanceof THREE.MeshPhysicalMaterial
+    ) {
         material.envMap = probe;
         material.envMapIntensity = intensity;
         material.needsUpdate = true;
@@ -185,7 +187,7 @@ export function createBoxProjectedReflection(
         material.uniforms.envMap = { value: probe };
         material.uniforms.envBoxPosition = { value: boxPosition };
         material.uniforms.envBoxSize = { value: boxSize };
-        
+
         // Modify fragment shader to include box projection
         // (Full implementation would inject box projection code)
     }

@@ -1,6 +1,6 @@
 /**
  * Terrain shader - PBR textured ground with triplanar mapping and biome-specific elevation
- * 
+ *
  * Lifted from Otterfall procedural rendering system.
  */
 
@@ -352,7 +352,7 @@ export const terrainFragmentShader = /* glsl */ `
 
 /**
  * Simple terrain shader for non-biome use
- * 
+ *
  * Lifted from Otterfall biome selector diorama.
  */
 export const simpleTerrainVertexShader = /* glsl */ `
@@ -477,7 +477,7 @@ export function createTerrainUniforms() {
         mountainAlbedo: { value: null },
         mountainNormal: { value: null },
         mountainRoughness: { value: null },
-        mountainAO: { value: null }
+        mountainAO: { value: null },
     };
 }
 
@@ -488,6 +488,6 @@ export function createSimpleTerrainUniforms() {
     return {
         uGroundColor: { value: [0.3, 0.4, 0.2] },
         uRockColor: { value: [0.4, 0.4, 0.4] },
-        uRoughness: { value: 0.8 }
+        uRoughness: { value: 0.8 },
     };
 }

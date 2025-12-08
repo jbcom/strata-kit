@@ -1,6 +1,6 @@
 /**
  * Decal Preset - Projected decal system
- * 
+ *
  * Provides decal rendering for bullet holes, blood splatters,
  * damage marks, graffiti, and other surface projections.
  */
@@ -21,10 +21,7 @@ export interface DecalOptions {
 /**
  * Create a projected decal
  */
-export function createDecal(
-    geometry: THREE.BufferGeometry,
-    options: DecalOptions
-): THREE.Mesh {
+export function createDecal(geometry: THREE.BufferGeometry, options: DecalOptions): THREE.Mesh {
     const {
         position,
         rotation,
@@ -33,7 +30,7 @@ export function createDecal(
         normalMap,
         material,
         depthTest = true,
-        depthWrite = false
+        depthWrite = false,
     } = options;
 
     // Input validation
@@ -57,16 +54,18 @@ export function createDecal(
     const decalGeometry = projectDecal(geometry, position, rotation, scale);
 
     // Create material
-    const decalMaterial = material || new THREE.MeshPhongMaterial({
-        map: texture,
-        normalMap: normalMap,
-        transparent: true,
-        depthTest: depthTest,
-        depthWrite: depthWrite,
-        polygonOffset: true,
-        polygonOffsetFactor: -4,
-        wireframe: false
-    });
+    const decalMaterial =
+        material ||
+        new THREE.MeshPhongMaterial({
+            map: texture,
+            normalMap: normalMap,
+            transparent: true,
+            depthTest: depthTest,
+            depthWrite: depthWrite,
+            polygonOffset: true,
+            polygonOffsetFactor: -4,
+            wireframe: false,
+        });
 
     const mesh = new THREE.Mesh(decalGeometry, decalMaterial);
     return mesh;
@@ -110,7 +109,7 @@ function projectDecal(
 
     for (let i = 0; i < positionAttribute.count; i++) {
         tempPosition.fromBufferAttribute(positionAttribute, i);
-        
+
         // Transform to decal space
         tempPosition.applyMatrix4(inverseMatrix);
 
@@ -131,10 +130,7 @@ function projectDecal(
             }
 
             // UV mapping
-            uvs.push(
-                tempPosition.x / scale.x + 0.5,
-                tempPosition.y / scale.y + 0.5
-            );
+            uvs.push(tempPosition.x / scale.x + 0.5, tempPosition.y / scale.y + 0.5);
         }
     }
 
@@ -169,11 +165,11 @@ export function createBulletHoleDecal(
     if (texture) {
         canvasTexture = texture;
     } else if (typeof document !== 'undefined') {
-            const canvas = document.createElement('canvas');
+        const canvas = document.createElement('canvas');
         canvas.width = 64;
         canvas.height = 64;
         const ctx = canvas.getContext('2d')!;
-        
+
         // Draw bullet hole
         const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
         gradient.addColorStop(0, 'rgba(0, 0, 0, 1)');
@@ -189,13 +185,10 @@ export function createBulletHoleDecal(
         canvasTexture = new THREE.Texture();
     }
 
-    return createDecal(
-        new THREE.PlaneGeometry(1, 1),
-        {
-            position,
-            rotation,
-            scale: new THREE.Vector3(size, size, 0.01),
-            texture: canvasTexture
-        }
-    );
+    return createDecal(new THREE.PlaneGeometry(1, 1), {
+        position,
+        rotation,
+        scale: new THREE.Vector3(size, size, 0.01),
+        texture: canvasTexture,
+    });
 }

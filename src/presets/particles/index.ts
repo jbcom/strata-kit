@@ -1,6 +1,6 @@
 /**
  * Particle System Preset - GPU-accelerated particle effects
- * 
+ *
  * Provides particle systems for fire, smoke, explosions, magic effects,
  * sparks, debris, and other visual effects.
  */
@@ -13,16 +13,11 @@ export interface ParticleEmitterOptions {
     rate?: number; // particles per second
     shape?: 'point' | 'box' | 'sphere' | 'cone';
     shapeParams?: {
-        // Box
-        width?: number;
-        height?: number;
-        depth?: number;
-        // Sphere
-        radius?: number;
-        // Cone
-        radius?: number;
-        angle?: number;
-        height?: number;
+        width?: number; // Box width
+        height?: number; // Box height or Cone height
+        depth?: number; // Box depth
+        radius?: number; // Sphere or Cone radius
+        angle?: number; // Cone angle
     };
     velocity?: {
         min: THREE.Vector3;
@@ -58,9 +53,7 @@ export interface ParticleSystem {
 /**
  * Create a GPU-accelerated particle system
  */
-export function createParticleSystem(
-    options: ParticleEmitterOptions = {}
-): ParticleSystem {
+export function createParticleSystem(options: ParticleEmitterOptions = {}): ParticleSystem {
     const {
         maxParticles = 1000,
         lifetime = 2.0,
@@ -68,17 +61,17 @@ export function createParticleSystem(
         shape = 'point',
         velocity = {
             min: new THREE.Vector3(-1, 1, -1),
-            max: new THREE.Vector3(1, 3, 1)
+            max: new THREE.Vector3(1, 3, 1),
         },
         acceleration = new THREE.Vector3(0, -9.8, 0),
         color = {
             start: new THREE.Color(1, 1, 1),
-            end: new THREE.Color(1, 0, 0)
+            end: new THREE.Color(1, 0, 0),
         },
         size = { start: 0.1, end: 0.05 },
         opacity = { start: 1.0, end: 0.0 },
         texture,
-        blending = THREE.AdditiveBlending
+        blending = THREE.AdditiveBlending,
     } = options;
 
     // Input validation
@@ -93,7 +86,7 @@ export function createParticleSystem(
     }
 
     const group = new THREE.Group();
-    
+
     // Use instanced rendering for performance
     const geometry = new THREE.PlaneGeometry(1, 1);
     const material = new THREE.ShaderMaterial({
@@ -105,14 +98,14 @@ export function createParticleSystem(
             uSizeStart: { value: size.start },
             uSizeEnd: { value: size.end },
             uOpacityStart: { value: opacity.start },
-            uOpacityEnd: { value: opacity.end }
+            uOpacityEnd: { value: opacity.end },
         },
         vertexShader: particleVertexShader,
         fragmentShader: particleFragmentShader,
         transparent: true,
         depthWrite: false,
         blending,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
     });
 
     const mesh = new THREE.InstancedMesh(geometry, material, maxParticles);
@@ -187,7 +180,7 @@ export function createParticleSystem(
             lifetime: lifetime * THREE.MathUtils.randFloat(0.8, 1.2),
             size: THREE.MathUtils.randFloat(size.start * 0.8, size.start * 1.2),
             rotation: THREE.MathUtils.randFloat(0, Math.PI * 2),
-            rotationSpeed: THREE.MathUtils.randFloat(-2, 2)
+            rotationSpeed: THREE.MathUtils.randFloat(-2, 2),
         });
     };
 
@@ -201,10 +194,13 @@ export function createParticleSystem(
             case 'box':
                 return new THREE.Vector3(
                     THREE.MathUtils.randFloat(-(params?.width || 1) / 2, (params?.width || 1) / 2),
-                    THREE.MathUtils.randFloat(-(params?.height || 1) / 2, (params?.height || 1) / 2),
+                    THREE.MathUtils.randFloat(
+                        -(params?.height || 1) / 2,
+                        (params?.height || 1) / 2
+                    ),
                     THREE.MathUtils.randFloat(-(params?.depth || 1) / 2, (params?.depth || 1) / 2)
                 );
-            case 'sphere':
+            case 'sphere': {
                 const radius = params?.radius || 1;
                 const theta = Math.random() * Math.PI * 2;
                 const phi = Math.acos(2 * Math.random() - 1);
@@ -213,6 +209,7 @@ export function createParticleSystem(
                     radius * Math.sin(phi) * Math.sin(theta),
                     radius * Math.cos(phi)
                 );
+            }
             default:
                 return new THREE.Vector3(0, 0, 0);
         }

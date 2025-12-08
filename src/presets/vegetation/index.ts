@@ -1,6 +1,6 @@
 /**
  * Vegetation Preset - GPU-instanced vegetation system
- * 
+ *
  * Provides optimized vegetation rendering using GPU instancing
  * for grass, trees, rocks, and other natural elements.
  */
@@ -10,7 +10,7 @@ import {
     generateInstanceData,
     createInstancedMesh,
     type InstanceData,
-    type BiomeData
+    type BiomeData,
 } from '../../core/instancing';
 
 export type { InstanceData, BiomeData } from '../../core/instancing';
@@ -31,9 +31,7 @@ export interface VegetationOptions {
 /**
  * Create instanced vegetation mesh
  */
-export function createVegetationMesh(
-    options: VegetationOptions
-): THREE.InstancedMesh {
+export function createVegetationMesh(options: VegetationOptions): THREE.InstancedMesh {
     const {
         count,
         areaSize,
@@ -44,7 +42,7 @@ export function createVegetationMesh(
         material,
         enableWind = true,
         windStrength = 0.5,
-        lodDistance = 100
+        lodDistance = 100,
     } = options;
 
     // Input validation
@@ -65,16 +63,24 @@ export function createVegetationMesh(
     }
 
     // Generate instance data
+    // heightFunction is required, provide a default that returns 0 if not specified
+    const defaultHeightFunc = heightFunction || ((x: number, z: number) => 0);
     const instances = generateInstanceData(
         count,
         areaSize,
+        defaultHeightFunc,
         biomes,
-        heightFunction,
+        undefined, // allowedBiomes
         seed
     );
 
     // Create instanced mesh
-    return createInstancedMesh(geometry, material, instances);
+    return createInstancedMesh({
+        geometry,
+        material,
+        count,
+        instances,
+    });
 }
 
 /**
@@ -94,7 +100,7 @@ export function createGrassInstances(
 ): THREE.InstancedMesh {
     const geometry = new THREE.ConeGeometry(0.05, 0.4, 3);
     geometry.translate(0, 0.2, 0); // Pivot at bottom
-    
+
     const material = new THREE.MeshLambertMaterial({ color: 0x335522 });
 
     return createVegetationMesh({
@@ -107,7 +113,7 @@ export function createGrassInstances(
         material,
         enableWind: options.enableWind ?? true,
         windStrength: options.windStrength ?? 0.5,
-        lodDistance: options.lodDistance ?? 100
+        lodDistance: options.lodDistance ?? 100,
     });
 }
 
@@ -144,7 +150,7 @@ export function createTreeInstances(
         material,
         enableWind: options.enableWind ?? true,
         windStrength: options.windStrength ?? 0.3,
-        lodDistance: options.lodDistance ?? 150
+        lodDistance: options.lodDistance ?? 150,
     });
 }
 
@@ -164,7 +170,7 @@ export function createRockInstances(
     const geometry = new THREE.DodecahedronGeometry(1, 1);
     const material = new THREE.MeshStandardMaterial({
         color: 0x555555,
-        roughness: 0.8
+        roughness: 0.8,
     });
 
     return createVegetationMesh({
@@ -177,6 +183,6 @@ export function createRockInstances(
         material,
         enableWind: false, // Rocks don't sway
         windStrength: 0,
-        lodDistance: options.lodDistance ?? 200
+        lodDistance: options.lodDistance ?? 200,
     });
 }

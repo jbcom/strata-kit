@@ -1,9 +1,9 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import * as THREE from 'three';
-import { 
-    createPostProcessingPipeline, 
+import {
+    createPostProcessingPipeline,
     type PostProcessingOptions,
-    type PostProcessingEffect 
+    type PostProcessingEffect,
 } from '../../../src/presets/postprocessing';
 
 describe('Post-Processing', () => {
@@ -35,11 +35,11 @@ describe('Post-Processing', () => {
             renderer,
             scene,
             camera,
-            effects: []
+            effects: [],
         };
 
         const pipeline = createPostProcessingPipeline(options);
-        
+
         expect(pipeline).toBeDefined();
         expect(typeof pipeline.render).toBe('function');
         expect(typeof pipeline.dispose).toBe('function');
@@ -50,16 +50,16 @@ describe('Post-Processing', () => {
             return;
         }
         const effects: PostProcessingEffect[] = [
-            { type: 'bloom', threshold: 0.8, intensity: 1.0, radius: 0.5 }
+            { type: 'bloom', threshold: 0.8, intensity: 1.0, radius: 0.5 },
         ];
 
         const pipeline = createPostProcessingPipeline({
             renderer,
             scene,
             camera,
-            effects
+            effects,
         });
-        
+
         expect(pipeline).toBeDefined();
     });
 
@@ -71,16 +71,16 @@ describe('Post-Processing', () => {
             { type: 'bloom', threshold: 0.8 },
             { type: 'ssao', radius: 0.5, intensity: 1.0 },
             { type: 'vignette', offset: 0.5, darkness: 0.5 },
-            { type: 'filmGrain', intensity: 0.1 }
+            { type: 'filmGrain', intensity: 0.1 },
         ];
 
         const pipeline = createPostProcessingPipeline({
             renderer,
             scene,
             camera,
-            effects
+            effects,
         });
-        
+
         expect(pipeline).toBeDefined();
     });
 
@@ -89,10 +89,10 @@ describe('Post-Processing', () => {
             createPostProcessingPipeline({
                 renderer: null as any,
                 scene,
-                camera
+                camera,
             });
         }).toThrow('renderer is required');
-        
+
         if (!renderer) {
             return;
         }
@@ -101,7 +101,7 @@ describe('Post-Processing', () => {
             createPostProcessingPipeline({
                 renderer,
                 scene: null as any,
-                camera
+                camera,
             });
         }).toThrow('scene is required');
 
@@ -109,7 +109,7 @@ describe('Post-Processing', () => {
             createPostProcessingPipeline({
                 renderer,
                 scene,
-                camera: null as any
+                camera: null as any,
             });
         }).toThrow('camera is required');
     });
@@ -122,7 +122,7 @@ describe('Post-Processing', () => {
             renderer,
             scene,
             camera,
-            effects: [{ type: 'bloom' }]
+            effects: [{ type: 'bloom' }],
         });
 
         expect(() => {
@@ -138,7 +138,7 @@ describe('Post-Processing', () => {
             renderer,
             scene,
             camera,
-            effects: [{ type: 'bloom' }]
+            effects: [{ type: 'bloom' }],
         });
 
         expect(() => {
@@ -158,17 +158,17 @@ describe('Post-Processing', () => {
             'depthOfField',
             'chromaticAberration',
             'vignette',
-            'filmGrain'
+            'filmGrain',
         ];
 
-        effectTypes.forEach(effectType => {
+        effectTypes.forEach((effectType) => {
             const pipeline = createPostProcessingPipeline({
                 renderer: renderer!,
                 scene,
                 camera,
-                effects: [{ type: effectType } as PostProcessingEffect]
+                effects: [{ type: effectType } as PostProcessingEffect],
             });
-            
+
             expect(pipeline).toBeDefined();
             pipeline.dispose();
         });
@@ -183,9 +183,9 @@ describe('Post-Processing', () => {
             scene,
             camera,
             effects: [],
-            resolution: { width: 1920, height: 1080 }
+            resolution: { width: 1920, height: 1080 },
         });
-        
+
         expect(pipeline).toBeDefined();
         pipeline.dispose();
     });

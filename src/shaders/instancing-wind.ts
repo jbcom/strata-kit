@@ -1,6 +1,6 @@
 /**
  * GPU-Driven Instancing Wind/LOD Shader
- * 
+ *
  * Vertex shader for drei's Instances with wind and LOD support
  */
 

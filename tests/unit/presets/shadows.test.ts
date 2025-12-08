@@ -1,6 +1,10 @@
 import { describe, test, expect, beforeEach } from 'vitest';
 import * as THREE from 'three';
-import { createShadowSystem, createContactShadows, type ShadowSystemOptions } from '../../../src/presets/shadows';
+import {
+    createShadowSystem,
+    createContactShadows,
+    type ShadowSystemOptions,
+} from '../../../src/presets/shadows';
 
 describe('Shadow System', () => {
     let light: THREE.DirectionalLight;
@@ -14,11 +18,11 @@ describe('Shadow System', () => {
     test('should create shadow system with default options', () => {
         const options: ShadowSystemOptions = {
             light,
-            camera
+            camera,
         };
 
         const system = createShadowSystem(options);
-        
+
         expect(system).toBeDefined();
         expect(system.light).toBe(light);
         expect(typeof system.update).toBe('function');
@@ -38,11 +42,11 @@ describe('Shadow System', () => {
             maxDistance: 200,
             fadeDistance: 20,
             enableSoftShadows: true,
-            enableContactShadows: true
+            enableContactShadows: true,
         };
 
         const system = createShadowSystem(options);
-        
+
         expect(system).toBeDefined();
         expect(light.shadow.mapSize.width).toBe(4096);
         expect(light.shadow.mapSize.height).toBe(4096);
@@ -103,29 +107,35 @@ describe('Shadow System', () => {
 
     test('should dispose shadow system', () => {
         const system = createShadowSystem({ light, camera });
-        
+
         expect(() => {
             system.dispose();
         }).not.toThrow();
-        
+
         expect(light.castShadow).toBe(false);
     });
 
-    test('should configure soft shadows', () => {
-        const systemSoft = createShadowSystem({ 
-            light, 
-            camera, 
-            enableSoftShadows: true 
+    test('should configure soft shadows via radius', () => {
+        // Note: Shadow type is set on the renderer (renderer.shadowMap.type), not on individual lights.
+        // enableSoftShadows controls whether the shadow radius is applied (true) or set to 0 (false).
+        const systemSoft = createShadowSystem({
+            light,
+            camera,
+            enableSoftShadows: true,
+            shadowRadius: 4,
         });
-        expect(light.shadow.type).toBe(THREE.PCFSoftShadowMap);
+        // Soft shadows use the radius value
+        expect(light.shadow.radius).toBe(4);
         systemSoft.dispose();
 
-        const systemHard = createShadowSystem({ 
-            light, 
-            camera, 
-            enableSoftShadows: false 
+        const systemHard = createShadowSystem({
+            light,
+            camera,
+            enableSoftShadows: false,
+            shadowRadius: 4,
         });
-        expect(light.shadow.type).toBe(THREE.BasicShadowMap);
+        // Hard shadows set radius to 0 (renderer.shadowMap.type controls actual shadow type)
+        expect(light.shadow.radius).toBe(0);
         systemHard.dispose();
     });
 
@@ -137,11 +147,11 @@ describe('Shadow System', () => {
         const renderer = new THREE.WebGLRenderer();
         const scene = new THREE.Scene();
         const material = createContactShadows(renderer, scene, camera);
-        
+
         expect(material).toBeInstanceOf(THREE.ShaderMaterial);
         expect(material.uniforms).toBeDefined();
         expect(material.uniforms.uContactShadowDistance).toBeDefined();
-        
+
         renderer.dispose();
     });
 });

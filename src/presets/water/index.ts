@@ -1,15 +1,15 @@
 /**
  * Water Materials - Core TypeScript (no React)
- * 
+ *
  * Pure TypeScript functions for creating water materials
  */
 
 import * as THREE from 'three';
-import { 
-    waterVertexShader, 
+import {
+    waterVertexShader,
     waterFragmentShader,
     advancedWaterVertexShader,
-    advancedWaterFragmentShader
+    advancedWaterFragmentShader,
 } from '../../shaders/water';
 
 export interface WaterMaterialOptions {
@@ -29,11 +29,11 @@ export interface AdvancedWaterMaterialOptions {
  */
 export function createWaterMaterial(options: WaterMaterialOptions = {}): THREE.ShaderMaterial {
     const { time = 0 } = options;
-    
+
     if (typeof time !== 'number' || !isFinite(time)) {
         throw new Error('createWaterMaterial: time must be a finite number');
     }
-    
+
     return new THREE.ShaderMaterial({
         vertexShader: waterVertexShader,
         fragmentShader: waterFragmentShader,
@@ -49,15 +49,17 @@ export function createWaterMaterial(options: WaterMaterialOptions = {}): THREE.S
 /**
  * Create advanced water material (pure TypeScript)
  */
-export function createAdvancedWaterMaterial(options: AdvancedWaterMaterialOptions = {}): THREE.ShaderMaterial {
+export function createAdvancedWaterMaterial(
+    options: AdvancedWaterMaterialOptions = {}
+): THREE.ShaderMaterial {
     const {
         waterColor = 0x2a5a8a,
         deepWaterColor = 0x1a3a5a,
         foamColor = 0x8ab4d4,
         causticIntensity = 0.4,
-        time = 0
+        time = 0,
     } = options;
-    
+
     // Input validation
     if (typeof time !== 'number' || !isFinite(time)) {
         throw new Error('createAdvancedWaterMaterial: time must be a finite number');
@@ -65,7 +67,7 @@ export function createAdvancedWaterMaterial(options: AdvancedWaterMaterialOption
     if (causticIntensity < 0 || causticIntensity > 1) {
         throw new Error('createAdvancedWaterMaterial: causticIntensity must be between 0 and 1');
     }
-    
+
     return new THREE.ShaderMaterial({
         uniforms: {
             uTime: { value: time },

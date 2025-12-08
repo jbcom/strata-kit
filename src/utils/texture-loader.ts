@@ -1,12 +1,19 @@
 /**
  * Texture loading utilities
- * 
+ *
  * Lifted from Otterfall terrain material loader.
  */
 
 import * as THREE from 'three';
 
-export type BiomeType = 'marsh' | 'forest' | 'desert' | 'tundra' | 'savanna' | 'mountain' | 'scrubland';
+export type BiomeType =
+    | 'marsh'
+    | 'forest'
+    | 'desert'
+    | 'tundra'
+    | 'savanna'
+    | 'mountain'
+    | 'scrubland';
 
 export interface TerrainTextures {
     albedo: THREE.Texture;
@@ -29,7 +36,7 @@ export function loadTexture(path: string, renderer: THREE.WebGLRenderer): THREE.
     if (!renderer) {
         throw new Error('loadTexture: renderer is required');
     }
-    
+
     // Check cache first
     if (textureCache.has(path)) {
         return textureCache.get(path)!;
@@ -43,7 +50,7 @@ export function loadTexture(path: string, renderer: THREE.WebGLRenderer): THREE.
     texture.minFilter = THREE.LinearMipmapLinearFilter;
     texture.magFilter = THREE.LinearFilter;
     texture.generateMipmaps = true;
-    
+
     // Use maximum anisotropic filtering for better quality at angles
     const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
     texture.anisotropy = maxAnisotropy;
@@ -72,7 +79,7 @@ export function loadBiomeTextures(
     if (!basePath || typeof basePath !== 'string') {
         throw new Error('loadBiomeTextures: basePath must be a non-empty string');
     }
-    
+
     const biomePath = `${basePath}/${biome}`;
 
     return {
@@ -99,12 +106,12 @@ export function createTerrainMaterial(
         normalMap: textures.normal,
         roughnessMap: textures.roughness,
         aoMap: textures.ao,
-        
+
         // Default PBR values
         color: options.color || new THREE.Color(0xffffff),
         metalness: options.metalness || 0.0,
         roughness: options.roughnessScale || 1.0,
-        
+
         // Enable AO map on second UV channel
         aoMapIntensity: 1.0,
     });
@@ -127,14 +134,17 @@ export async function preloadBiomeTextures(
     if (!renderer) {
         throw new Error('preloadBiomeTextures: renderer is required');
     }
-    
+
     // Create separate loader per biome to avoid race conditions
-    const loadTextureAsync = (path: string, loader: THREE.TextureLoader): Promise<THREE.Texture> => {
+    const loadTextureAsync = (
+        path: string,
+        loader: THREE.TextureLoader
+    ): Promise<THREE.Texture> => {
         // Check cache first
         if (textureCache.has(path)) {
             return Promise.resolve(textureCache.get(path)!);
         }
-        
+
         return new Promise<THREE.Texture>((resolve, reject) => {
             loader.load(
                 path,
@@ -159,7 +169,7 @@ export async function preloadBiomeTextures(
     const loadPromises = biomes.map(async (biome) => {
         const loader = new THREE.TextureLoader(); // Separate loader per biome
         const biomePath = basePath ? `${basePath}/${biome}` : `/textures/terrain/${biome}`;
-        
+
         try {
             const [albedo, normal, roughness, ao] = await Promise.all([
                 loadTextureAsync(`${biomePath}/albedo.jpg`, loader),
@@ -176,13 +186,13 @@ export async function preloadBiomeTextures(
 
     const results = await Promise.all(loadPromises);
     const texturesMap = new Map<BiomeType, TerrainTextures>();
-    
+
     for (const result of results) {
         if (result) {
             texturesMap.set(result[0], result[1]);
         }
     }
-    
+
     return texturesMap;
 }
 
@@ -190,7 +200,7 @@ export async function preloadBiomeTextures(
  * Clear texture cache to free memory
  */
 export function clearTextureCache(): void {
-    textureCache.forEach(texture => texture.dispose());
+    textureCache.forEach((texture) => texture.dispose());
     textureCache.clear();
 }
 
@@ -201,15 +211,23 @@ export function clearTextureCache(): void {
 /**
  * Standard texture types in PBR workflows
  */
-export type StandardTextureType = 
-    | 'albedo' | 'diffuse' | 'basecolor'
-    | 'normal' 
-    | 'roughness' | 'smoothness'
-    | 'metallic' | 'metalness'
-    | 'ao' | 'ambient_occlusion'
-    | 'height' | 'displacement'
-    | 'emissive' | 'emission'
-    | 'opacity' | 'alpha';
+export type StandardTextureType =
+    | 'albedo'
+    | 'diffuse'
+    | 'basecolor'
+    | 'normal'
+    | 'roughness'
+    | 'smoothness'
+    | 'metallic'
+    | 'metalness'
+    | 'ao'
+    | 'ambient_occlusion'
+    | 'height'
+    | 'displacement'
+    | 'emissive'
+    | 'emission'
+    | 'opacity'
+    | 'alpha';
 
 /**
  * Common texture provider naming patterns
@@ -223,9 +241,9 @@ export const TEXTURE_PROVIDER_PATTERNS = {
         metallic: 'Metalness',
         ao: 'AmbientOcclusion',
         height: 'Displacement',
-        normalDX: 'NormalDX' // DirectX format
+        normalDX: 'NormalDX', // DirectX format
     },
-    
+
     // Poly Haven naming
     polyHaven: {
         albedo: 'diff',
@@ -234,9 +252,9 @@ export const TEXTURE_PROVIDER_PATTERNS = {
         metallic: 'metal',
         ao: 'ao',
         height: 'disp',
-        normalDX: 'nor_dx'
+        normalDX: 'nor_dx',
     },
-    
+
     // Generic/custom
     generic: {
         albedo: 'albedo',
@@ -245,8 +263,8 @@ export const TEXTURE_PROVIDER_PATTERNS = {
         metallic: 'metallic',
         ao: 'ao',
         height: 'height',
-        emissive: 'emissive'
-    }
+        emissive: 'emissive',
+    },
 };
 
 /**
@@ -261,21 +279,24 @@ export function loadTextureSet(
 ): Partial<TerrainTextures> & { metallic?: THREE.Texture; height?: THREE.Texture } {
     const patterns = TEXTURE_PROVIDER_PATTERNS[provider];
     const textures: Record<string, THREE.Texture> = {};
-    
+
     const tryLoad = (key: string, suffix: string) => {
         try {
             const path = `${basePath}/${materialName}_${suffix}.${extension}`;
             textures[key] = loadTexture(path, renderer);
         } catch (error) {
             // Texture not available or failed to load; this may be expected for some materials.
-            console.warn(`Failed to load texture for key "${key}" at path "${basePath}/${materialName}_${suffix}.${extension}":`, error);
+            console.warn(
+                `Failed to load texture for key "${key}" at path "${basePath}/${materialName}_${suffix}.${extension}":`,
+                error
+            );
         }
     };
-    
+
     tryLoad('albedo', patterns.albedo);
     tryLoad('normal', patterns.normal);
     tryLoad('roughness', patterns.roughness);
-    
+
     if ('metallic' in patterns) {
         tryLoad('metallic', patterns.metallic as string);
     }
@@ -285,6 +306,6 @@ export function loadTextureSet(
     if ('height' in patterns) {
         tryLoad('height', patterns.height as string);
     }
-    
+
     return textures as Partial<TerrainTextures>;
 }

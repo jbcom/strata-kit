@@ -1,6 +1,6 @@
 /**
  * SDF Core API Tests
- * 
+ *
  * Tests the public contract of SDF functions
  */
 
@@ -19,7 +19,7 @@ import {
     opSmoothUnion,
     noise3D,
     fbm,
-    calcNormal
+    calcNormal,
 } from '../../../src/core/sdf';
 
 describe('SDF Primitives', () => {
@@ -94,8 +94,11 @@ describe('SDF Operations', () => {
     it('opSubtraction subtracts second from first', () => {
         const d1 = 5;
         const d2 = 3;
-        expect(opSubtraction(d1, d2)).toBe(5);
-        expect(opSubtraction(d1, -d2)).toBe(2);
+        // opSubtraction(a, b) = max(a, -b) - keeps points outside shape a OR inside shape b
+        expect(opSubtraction(d1, d2)).toBe(5); // max(5, -3) = 5
+        expect(opSubtraction(d1, -d2)).toBe(5); // max(5, 3) = 5
+        expect(opSubtraction(-1, 2)).toBe(-1); // max(-1, -2) = -1
+        expect(opSubtraction(2, -1)).toBe(2); // max(2, 1) = 2
     });
 
     it('opIntersection returns maximum distance', () => {
@@ -147,7 +150,9 @@ describe('Noise Functions', () => {
         });
 
         it('respects octaves parameter', () => {
-            const x = 1, y = 2, z = 3;
+            const x = 1,
+                y = 2,
+                z = 3;
             const fbm1 = fbm(x, y, z, 1);
             const fbm4 = fbm(x, y, z, 4);
             // More octaves should produce different (not necessarily larger) values

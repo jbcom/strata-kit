@@ -1,7 +1,7 @@
 /**
  * Fur shell shader - layered alpha-tested shells for volumetric fur effect
  * Enhanced with improved wind animation and mobile optimization
- * 
+ *
  * Lifted from Otterfall procedural rendering system.
  */
 
@@ -92,7 +92,7 @@ export function createFurUniforms(layerOffset: number = 0) {
         spacing: { value: 0.02 },
         time: { value: 0 },
         colorBase: { value: [0.3, 0.2, 0.1] },
-        colorTip: { value: [0.6, 0.5, 0.3] }
+        colorTip: { value: [0.6, 0.5, 0.3] },
     };
 }
 
@@ -117,5 +117,5 @@ export const defaultFurConfig: FurConfig = {
     layers: 16,
     spacing: 0.02,
     colorBase: [0.3, 0.2, 0.1],
-    colorTip: [0.6, 0.5, 0.3]
+    colorTip: [0.6, 0.5, 0.3],
 };

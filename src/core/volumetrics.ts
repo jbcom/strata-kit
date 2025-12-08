@@ -1,6 +1,6 @@
 /**
  * Volumetric Effects - Core TypeScript (no React)
- * 
+ *
  * Pure TypeScript functions for creating volumetric effect materials
  */
 
@@ -11,7 +11,7 @@ import {
     underwaterOverlayVertexShader,
     underwaterOverlayFragmentShader,
     createVolumetricFogMeshUniforms,
-    createUnderwaterOverlayUniforms
+    createUnderwaterOverlayUniforms,
 } from '../shaders/volumetrics-components';
 
 export interface VolumetricFogMeshMaterialOptions {
@@ -42,9 +42,9 @@ export function createVolumetricFogMeshMaterial(
         density = 0.02,
         height = 10,
         cameraPosition = new THREE.Vector3(0, 0, 0),
-        time = 0
+        time = 0,
     } = options;
-    
+
     // Input validation
     if (density < 0) {
         throw new Error('createVolumetricFogMeshMaterial: density must be non-negative');
@@ -52,10 +52,10 @@ export function createVolumetricFogMeshMaterial(
     if (height <= 0) {
         throw new Error('createVolumetricFogMeshMaterial: height must be positive');
     }
-    
+
     const uniforms = createVolumetricFogMeshUniforms(color, density, height, cameraPosition);
     uniforms.uTime.value = time;
-    
+
     return new THREE.ShaderMaterial({
         uniforms,
         vertexShader: volumetricFogMeshVertexShader,
@@ -63,7 +63,7 @@ export function createVolumetricFogMeshMaterial(
         transparent: true,
         depthWrite: false,
         side: THREE.DoubleSide,
-        blending: THREE.NormalBlending
+        blending: THREE.NormalBlending,
     });
 }
 
@@ -79,9 +79,9 @@ export function createUnderwaterOverlayMaterial(
         causticStrength = 0.3,
         waterSurface = 0,
         cameraY = 0,
-        time = 0
+        time = 0,
     } = options;
-    
+
     // Input validation
     if (density < 0) {
         throw new Error('createUnderwaterOverlayMaterial: density must be non-negative');
@@ -89,7 +89,7 @@ export function createUnderwaterOverlayMaterial(
     if (causticStrength < 0 || causticStrength > 1) {
         throw new Error('createUnderwaterOverlayMaterial: causticStrength must be between 0 and 1');
     }
-    
+
     const uniforms = createUnderwaterOverlayUniforms(
         waterColor,
         density,
@@ -98,7 +98,7 @@ export function createUnderwaterOverlayMaterial(
         cameraY
     );
     uniforms.uTime.value = time;
-    
+
     return new THREE.ShaderMaterial({
         uniforms,
         vertexShader: underwaterOverlayVertexShader,
@@ -106,6 +106,6 @@ export function createUnderwaterOverlayMaterial(
         transparent: true,
         depthWrite: false,
         depthTest: false,
-        blending: THREE.NormalBlending
+        blending: THREE.NormalBlending,
     });
 }
