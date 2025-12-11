@@ -4,6 +4,7 @@ expertMode = true
 
 [nix]
 channel = "stable-25_05"
+packages = ["mesa", "xorg.xorgserver", "xorg.libX11", "xorg.libXext", "mesa-demos", "chromium"]
 
 [workflows]
 runButton = "Project"
