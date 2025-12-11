@@ -221,8 +221,15 @@ The project uses a multi-environment configuration system in `config/environment
 
 ### GitHub Copilot Staging
 - VS Code MCP configuration in `.vscode/settings.json`
-- Playwright MCP server for browser automation
+- Playwright MCP server for browser automation (HTTP mode on port 8080)
 - Multi-browser testing (Chromium, Firefox, WebKit)
+
+### Playwright MCP Server
+The Playwright MCP server runs as a background workflow on startup:
+- **Port**: 8080
+- **Health Check**: `curl http://localhost:8080/health`
+- **MCP Endpoint**: `http://localhost:8080/mcp`
+- **Version**: @executeautomation/playwright-mcp-server
 
 ### Running E2E Tests
 ```bash

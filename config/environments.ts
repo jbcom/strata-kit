@@ -8,6 +8,10 @@
  * - production: GitHub Pages static hosting
  */
 
+/* eslint-disable @typescript-eslint/no-require-imports */
+declare const process: { env: Record<string, string | undefined> };
+declare function require(id: string): unknown;
+
 export type Environment = 'local' | 'development' | 'staging' | 'production';
 
 export interface EnvironmentConfig {
