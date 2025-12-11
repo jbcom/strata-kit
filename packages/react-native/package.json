@@ -1,0 +1,35 @@
+{
+  "name": "@strata/react-native",
+  "version": "0.1.0",
+  "description": "Strata React Native plugin for device detection, input handling, and haptics",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src --ext .ts,.tsx",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": ">=17.0.0",
+    "react-native": ">=0.70.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-native": "^0.72.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": [
+    "react-native",
+    "strata",
+    "device-detection",
+    "haptics",
+    "input",
+    "gamepad"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/strata-js/strata.git",
+    "directory": "packages/react-native"
+  }
+}
