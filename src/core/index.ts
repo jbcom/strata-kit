@@ -6,6 +6,36 @@
 export { generateInstanceData, createInstancedMesh } from './instancing';
 export type { InstanceData, BiomeData as InstancingBiomeData } from './instancing';
 
+// Weather system
+export {
+    WeatherSystem,
+    WindSimulation,
+    createWeatherSystem,
+    createWindSimulation,
+    calculateTemperature,
+    getPrecipitationType,
+} from './weather';
+export type {
+    WeatherType,
+    WeatherStateConfig,
+    WeatherTransition,
+    WindConfig,
+    TemperatureConfig,
+} from './weather';
+
+// Particles (pure TypeScript)
+export {
+    ParticleEmitter,
+    createParticleEmitter,
+} from './particles';
+export type {
+    ParticleEmitterConfig,
+    EmissionShape,
+    ParticleForces,
+    ParticleBehavior,
+    EmitterShapeParams,
+} from './particles';
+
 export * from './water';
 export * from './raymarching';
 export * from './sky';
@@ -53,3 +83,28 @@ export {
     generateTerrainChunk,
 } from './marching-cubes';
 export type { MarchingCubesResult, MarchingCubesOptions, TerrainChunk } from './marching-cubes';
+
+// Camera utilities
+export {
+    lerp,
+    lerpVector3,
+    slerp,
+    smoothDamp,
+    smoothDampVector3,
+    CameraShake,
+    FOVTransition,
+    easeInOutCubic,
+    easeOutCubic,
+    easeInCubic,
+    easeOutElastic,
+    evaluateCatmullRom,
+    calculateLookAhead,
+    calculateHeadBob,
+    calculateScreenShakeIntensity,
+} from './camera';
+export type {
+    CameraShakeConfig,
+    FOVTransitionConfig,
+    CameraPath,
+    ScreenShakeIntensity,
+} from './camera';

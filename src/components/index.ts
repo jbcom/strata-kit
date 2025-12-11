@@ -29,3 +29,34 @@ export {
 
 // Ray marching
 export { Raymarching } from './Raymarching';
+
+// Particles
+export { ParticleEmitter, ParticleBurst } from './Particles';
+export type { ParticleEmitterProps, ParticleEmitterRef, ParticleBurstProps } from './Particles';
+
+// Weather
+export { Rain, Snow, Lightning, WeatherSystem as WeatherEffects } from './Weather';
+export type { RainProps, SnowProps, LightningProps, WeatherSystemProps } from './Weather';
+
+// Camera
+export {
+    FollowCamera,
+    OrbitCamera,
+    FPSCamera,
+    CinematicCamera,
+    CameraShake,
+    useCameraTransition,
+} from './Camera';
+export type {
+    FollowCameraProps,
+    FollowCameraRef,
+    OrbitCameraProps,
+    OrbitCameraRef,
+    FPSCameraProps,
+    FPSCameraRef,
+    CinematicCameraProps,
+    CinematicCameraRef,
+    CameraShakeProps,
+    CameraShakeRef,
+    CameraTransitionProps,
+} from './Camera';

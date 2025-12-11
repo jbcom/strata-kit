@@ -52,6 +52,32 @@ export {
     // Volumetrics (pure TS)
     createVolumetricFogMeshMaterial,
     createUnderwaterOverlayMaterial,
+    // Particles (pure TS)
+    ParticleEmitter as CoreParticleEmitter,
+    createParticleEmitter,
+    // Weather (pure TS)
+    WeatherSystem as CoreWeatherSystem,
+    WindSimulation,
+    createWeatherSystem,
+    createWindSimulation,
+    calculateTemperature,
+    getPrecipitationType,
+    // Camera utilities (pure TS)
+    lerp,
+    lerpVector3,
+    slerp,
+    smoothDamp,
+    smoothDampVector3,
+    CameraShake as CoreCameraShake,
+    FOVTransition,
+    easeInOutCubic,
+    easeOutCubic,
+    easeInCubic,
+    easeOutElastic,
+    evaluateCatmullRom,
+    calculateLookAhead,
+    calculateHeadBob,
+    calculateScreenShakeIntensity,
 } from './core';
 export type {
     // SDF types
@@ -63,6 +89,23 @@ export type {
     MarchingCubesResult,
     MarchingCubesOptions,
     TerrainChunk,
+    // Particle types
+    ParticleEmitterConfig,
+    EmissionShape,
+    ParticleForces,
+    ParticleBehavior,
+    EmitterShapeParams,
+    // Weather types
+    WeatherType,
+    WeatherStateConfig,
+    WeatherTransition,
+    WindConfig,
+    TemperatureConfig,
+    // Camera types
+    CameraShakeConfig,
+    FOVTransitionConfig,
+    CameraPath,
+    ScreenShakeIntensity,
 } from './core';
 
 // React components
@@ -81,6 +124,19 @@ export {
     UnderwaterOverlay,
     EnhancedFog,
     Raymarching,
+    ParticleEmitter,
+    ParticleBurst,
+    Rain,
+    Snow,
+    Lightning,
+    WeatherEffects,
+    // Camera components
+    FollowCamera,
+    OrbitCamera,
+    FPSCamera,
+    CinematicCamera,
+    CameraShake,
+    useCameraTransition,
 } from './components';
 
 // Presets (organized by layer: background, midground, foreground)
@@ -93,6 +149,27 @@ export type {
     // Component-specific types
     TimeOfDayState,
     WeatherState,
+    // Particle component types
+    ParticleEmitterProps,
+    ParticleEmitterRef,
+    ParticleBurstProps,
+    // Weather component types
+    RainProps,
+    SnowProps,
+    LightningProps,
+    WeatherSystemProps,
+    // Camera component types
+    FollowCameraProps,
+    FollowCameraRef,
+    OrbitCameraProps,
+    OrbitCameraRef,
+    FPSCameraProps,
+    FPSCameraRef,
+    CinematicCameraProps,
+    CinematicCameraRef,
+    CameraShakeProps,
+    CameraShakeRef,
+    CameraTransitionProps,
 } from './components';
 
 // GLSL shaders

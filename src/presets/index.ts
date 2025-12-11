@@ -57,6 +57,9 @@ export * from './shadows';
 export * from './postprocessing';
 export * from './reflections';
 
+// Weather
+export * from './weather';
+
 // Re-export types
 export type { FurOptions, FurUniforms } from './fur';
 export type { CharacterJoints, CharacterOptions, CharacterState } from './characters';
@@ -73,3 +76,8 @@ export type {
     PostProcessingPipeline,
 } from './postprocessing';
 export type { ReflectionProbeOptions, ReflectionProbe } from './reflections';
+export type { WeatherPreset, WeatherPresetName } from './weather';
+
+// Camera presets
+export * from './camera';
+export type { CameraPreset, CameraPresetName } from './camera';
