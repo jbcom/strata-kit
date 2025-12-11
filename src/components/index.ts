@@ -19,6 +19,10 @@ export type { InstanceData, BiomeData } from './Instancing';
 export { ProceduralSky, createTimeOfDay } from './Sky';
 export type { TimeOfDayState, WeatherState } from './Sky';
 
+// Clouds
+export { CloudLayer, CloudSky, VolumetricClouds } from './Clouds';
+export type { CloudLayerProps, CloudSkyProps, VolumetricCloudsProps } from './Clouds';
+
 // Volumetric effects
 export {
     VolumetricEffects,

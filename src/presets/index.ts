@@ -60,6 +60,9 @@ export * from './reflections';
 // Weather
 export * from './weather';
 
+// Clouds
+export * from './clouds';
+
 // Re-export types
 export type { FurOptions, FurUniforms } from './fur';
 export type { CharacterJoints, CharacterOptions, CharacterState } from './characters';
@@ -77,6 +80,7 @@ export type {
 } from './postprocessing';
 export type { ReflectionProbeOptions, ReflectionProbe } from './reflections';
 export type { WeatherPreset, WeatherPresetName } from './weather';
+export type { CloudPreset, CloudPresetName } from './clouds';
 
 // Camera presets
 export * from './camera';

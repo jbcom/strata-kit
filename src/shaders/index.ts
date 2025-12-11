@@ -57,3 +57,14 @@ export type {
     VolumetricFogMeshUniforms,
     UnderwaterOverlayUniforms,
 } from './volumetrics-components';
+
+// Cloud shaders
+export {
+    cloudLayerVertexShader,
+    cloudLayerFragmentShader,
+    volumetricCloudVertexShader,
+    volumetricCloudFragmentShader,
+    createCloudLayerUniforms,
+    createVolumetricCloudUniforms,
+} from './clouds';
+export type { CloudLayerUniforms, VolumetricCloudUniforms } from './clouds';

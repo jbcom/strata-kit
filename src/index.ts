@@ -52,6 +52,16 @@ export {
     // Volumetrics (pure TS)
     createVolumetricFogMeshMaterial,
     createUnderwaterOverlayMaterial,
+    // Clouds (pure TS)
+    createCloudLayerMaterial,
+    createVolumetricCloudMaterial,
+    createCloudLayerGeometry,
+    createVolumetricCloudGeometry,
+    adaptCloudColorsForTimeOfDay,
+    calculateWindOffset,
+    fbmNoise2D,
+    sampleCloudDensity,
+    createDefaultCloudSkyConfig,
     // Particles (pure TS)
     ParticleEmitter as CoreParticleEmitter,
     createParticleEmitter,
@@ -106,6 +116,13 @@ export type {
     FOVTransitionConfig,
     CameraPath,
     ScreenShakeIntensity,
+    // Cloud types
+    CloudLayerConfig,
+    WindConfig as CloudWindConfig,
+    DayNightConfig,
+    CloudMaterialOptions,
+    VolumetricCloudOptions,
+    CloudSkyConfig,
 } from './core';
 
 // React components
@@ -119,6 +136,9 @@ export {
     generateInstanceData,
     ProceduralSky,
     createTimeOfDay,
+    CloudLayer,
+    CloudSky,
+    VolumetricClouds,
     VolumetricEffects,
     VolumetricFogMesh,
     UnderwaterOverlay,
@@ -158,6 +178,10 @@ export type {
     SnowProps,
     LightningProps,
     WeatherSystemProps,
+    // Cloud component types
+    CloudLayerProps,
+    CloudSkyProps,
+    VolumetricCloudsProps,
     // Camera component types
     FollowCameraProps,
     FollowCameraRef,

@@ -40,6 +40,7 @@ export * from './water';
 export * from './raymarching';
 export * from './sky';
 export * from './volumetrics';
+export * from './clouds';
 
 // SDF primitives and operations
 export {
