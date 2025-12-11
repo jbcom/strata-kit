@@ -28,6 +28,7 @@ const PostProcessingDemo = lazy(() => import('./pages/demos/PostProcessingDemo')
 const AnimationDemo = lazy(() => import('./pages/demos/AnimationDemo'));
 const StateDemo = lazy(() => import('./pages/demos/StateDemo'));
 const UIDemo = lazy(() => import('./pages/demos/UIDemo'));
+const ShadersDemo = lazy(() => import('./pages/demos/ShadersDemo'));
 
 function Loading() {
   return (
@@ -85,6 +86,7 @@ function App() {
           <Route path="/demos/animation" element={<AnimationDemo />} />
           <Route path="/demos/state" element={<StateDemo />} />
           <Route path="/demos/ui" element={<UIDemo />} />
+          <Route path="/demos/shaders" element={<ShadersDemo />} />
         </Routes>
       </Suspense>
     </Layout>

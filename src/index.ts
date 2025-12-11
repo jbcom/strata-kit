@@ -503,6 +503,15 @@ export {
     Notification,
     Minimap,
     Crosshair,
+    // Shader components
+    ToonMesh,
+    HologramMesh,
+    DissolveMesh,
+    Forcefield,
+    Outline,
+    GradientMesh,
+    GlitchMesh,
+    CrystalMesh,
 } from './components';
 
 // Presets (organized by layer: background, midground, foreground)
@@ -680,6 +689,22 @@ export type {
     NotificationProps,
     MinimapProps,
     CrosshairProps,
+    // Shader component types
+    ToonMeshProps,
+    ToonMeshRef,
+    HologramMeshProps,
+    HologramMeshRef,
+    DissolveMeshProps,
+    DissolveMeshRef,
+    ForcefieldProps,
+    ForcefieldRef,
+    OutlineProps,
+    GradientMeshProps,
+    GradientMeshRef,
+    GlitchMeshProps,
+    GlitchMeshRef,
+    CrystalMeshProps,
+    CrystalMeshRef,
 } from './components';
 
 // Hooks

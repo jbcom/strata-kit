@@ -340,3 +340,32 @@ export type {
     MinimapProps,
     CrosshairProps,
 } from './UI';
+
+// Shader Components
+export {
+    ToonMesh,
+    HologramMesh,
+    DissolveMesh,
+    Forcefield,
+    Outline,
+    GradientMesh,
+    GlitchMesh,
+    CrystalMesh,
+} from './Shaders';
+export type {
+    ToonMeshProps,
+    ToonMeshRef,
+    HologramMeshProps,
+    HologramMeshRef,
+    DissolveMeshProps,
+    DissolveMeshRef,
+    ForcefieldProps,
+    ForcefieldRef,
+    OutlineProps,
+    GradientMeshProps,
+    GradientMeshRef,
+    GlitchMeshProps,
+    GlitchMeshRef,
+    CrystalMeshProps,
+    CrystalMeshRef,
+} from './Shaders';

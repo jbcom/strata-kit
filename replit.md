@@ -1,18 +1,18 @@
 # Strata - Comprehensive 3D Gaming Library for React Three Fiber
 
 ## Overview
-Strata is a world-class procedural 3D graphics and game development library for React Three Fiber. It provides production-ready components for terrain, water, vegetation, sky, volumetrics, characters, particles, weather, cameras, AI, audio, and interactive controls.
+Strata is a world-class procedural 3D graphics and game development library for React Three Fiber. It provides production-ready components for terrain, water, vegetation, sky, volumetrics, characters, particles, weather, cameras, AI, audio, physics, post-processing, animation, state management, UI, shaders, and interactive controls.
 
 ## Project Structure
 - `src/` - TypeScript source code for the library
   - `components/` - React Three Fiber components
-  - `core/` - Core algorithms (marching cubes, SDF, particles, weather, audio, AI)
+  - `core/` - Core algorithms (marching cubes, SDF, particles, weather, audio, AI, physics, animation, state, UI)
   - `presets/` - Pre-configured setups for various effects
-  - `shaders/` - GLSL shader code
-  - `hooks/` - React hooks (useYuka for AI behaviors)
+  - `shaders/` - GLSL shader code and custom materials
+  - `hooks/` - React hooks (useYuka for AI behaviors, useGameState, useUndo, etc.)
   - `utils/` - Utility functions
 - `docs-site/` - Vite + React documentation site with interactive demos
-  - `src/pages/demos/` - Live demo pages for each feature
+  - `src/pages/demos/` - Live demo pages for each feature (24 demos)
   - Uses Material UI for UI chrome
   - Dogfoods @jbcom/strata components
 - `tests/` - Unit, integration, and e2e tests
@@ -72,7 +72,7 @@ Strata is a world-class procedural 3D graphics and game development library for 
 - Scattering intensity based on viewing angle
 - Presets: cathedral, forest canopy, underwater, dusty room
 
-#### 3D Joystick/Trigger System (nipplejs replacement)
+#### 3D Joystick/Trigger System
 - `Joystick3D` - Real 3D joystick with depth and shadows
 - `GroundSwitch` - Metallic lever with haptic feedback
 - `PressurePlate` - Floor depress button
@@ -97,17 +97,60 @@ Strata is a world-class procedural 3D graphics and game development library for 
 - Distance models: linear, inverse, exponential
 - Presets: forest, cave, city, underwater, combat
 
+#### Physics System (@react-three/rapier)
+- `CharacterController` - FPS/third-person character with WASD, jumping, slopes
+- `VehicleBody` - Car-like physics with wheels and suspension
+- `Destructible` - Breakable objects that shatter
+- `Buoyancy` - Floating objects with water simulation
+- `Ragdoll` - Full ragdoll body with joints
+- Presets: fps, thirdPerson, platformer, car, truck
+
+#### Post-Processing Effects
+- `CinematicEffects`, `DreamyEffects`, `HorrorEffects`, `NeonEffects`
+- `RealisticEffects`, `VintageEffects`, `DynamicDOF`
+- Bloom, depth of field, vignette, chromatic aberration, noise
+- Mood presets: cinematic, dreamy, horror, neon, vintage, noir, sci-fi
+
+#### Procedural Animation
+- `IKChain`, `IKLimb` - Inverse kinematics (FABRIK, CCD, two-bone)
+- `SpringBone`, `TailPhysics` - Spring dynamics for secondary motion
+- `LookAt`, `HeadTracker` - Head/eye tracking
+- `ProceduralWalk` - Procedural foot placement
+- `BreathingAnimation`, `BlinkController` - Subtle animations
+- Presets: humanArm, humanLeg, spiderLeg, tentacle, walk, run
+
+#### State Management
+- `GameStateProvider`, `useGameState` - React context for game state
+- `useSaveLoad`, `useUndo`, `useCheckpoint` - Save/load, undo/redo
+- `AutoSave` - Automatic save at intervals
+- `StateDebugger` - Debug overlay
+- Presets: RPG, puzzle, platformer, sandbox templates
+
+#### UI System (HUD)
+- `HealthBar`, `Nameplate`, `DamageNumber` - Entity UI
+- `ProgressBar3D` - 3D mesh-based progress bars
+- `Inventory` - Grid-based drag-and-drop inventory
+- `DialogBox` - Typewriter effect with choices
+- `Minimap`, `Crosshair`, `Tooltip`, `Notification`
+- Presets: rpg, fps, mmo, visual_novel
+
+#### Shader Library
+- `ToonMesh`, `HologramMesh`, `DissolveMesh` - Custom materials
+- `Forcefield`, `GlitchMesh`, `CrystalMesh`, `GradientMesh`
+- ShaderChunks: noise, lighting, UV, color, animation, effects
+- Presets: anime, comic, matrix, fire, ice, magic
+
 ## Development Commands
 - `pnpm run build` - Compile TypeScript to dist/
 - `pnpm run dev` - Watch mode for development
-- `pnpm run test` - Run all tests (496 tests)
+- `pnpm run test` - Run all tests (778 tests)
 - `pnpm run lint` - Run ESLint
 - `pnpm run format` - Format code with Prettier
 
 ## Documentation Site
 Run `cd docs-site && pnpm dev` to start the documentation server on port 5000.
 
-### Demo Pages
+### Demo Pages (24 total)
 - `/` - Homepage with hero scene
 - `/demos/terrain` - SDF terrain with marching cubes
 - `/demos/water` - Water and AdvancedWater components
@@ -122,10 +165,16 @@ Run `cd docs-site && pnpm dev` to start the documentation server on port 5000.
 - `/demos/camera` - Camera systems
 - `/demos/decals` - Decals and billboards
 - `/demos/lod` - Level of detail system
-- `/demos/godrays` - Volumetric lighting
+- `/demos/god-rays` - Volumetric lighting
 - `/demos/input` - 3D joystick and triggers
 - `/demos/ai` - YukaJS AI agents
 - `/demos/audio` - Spatial audio
+- `/demos/physics` - Physics with @react-three/rapier
+- `/demos/postprocessing` - Post-processing effects
+- `/demos/animation` - Procedural animation (IK, springs)
+- `/demos/state` - State management
+- `/demos/ui` - Game HUD components
+- `/demos/shaders` - Custom shader materials
 
 ## API Design Principles
 - Components accept `THREE.ColorRepresentation` (strings, hex numbers, Color objects)
@@ -133,11 +182,14 @@ Run `cd docs-site && pnpm dev` to start the documentation server on port 5000.
 - Components support `forwardRef` for animation hooks
 - Consistent naming across all components
 - Framework-agnostic core logic (can be used outside React)
+- Comprehensive JSDoc documentation on all exports
 
 ## Dependencies
 - React Three Fiber / Drei
 - Three.js
 - Yuka (game AI)
+- @react-three/rapier (physics)
+- @react-three/postprocessing (effects)
 - Material UI (docs site)
 - Vite (docs site bundler)
 - Vitest for testing
@@ -145,6 +197,7 @@ Run `cd docs-site && pnpm dev` to start the documentation server on port 5000.
 - pnpm workspace
 
 ## Test Coverage
-- 496 unit tests covering all features
+- 778 unit tests covering all features
+- 24 demo pages with e2e tests across 5 browsers
 - Core systems, presets, and utilities fully tested
 - TypeScript compilation verified

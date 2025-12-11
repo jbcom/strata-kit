@@ -380,3 +380,31 @@ export type {
     NameplateConfig,
     ScreenPosition,
 } from './ui';
+
+// Shader utilities
+export {
+    ShaderChunks,
+    createTimeUniform,
+    createProgressUniform,
+    createColorUniform,
+    createVector2Uniform,
+    createVector3Uniform,
+    composeShaderChunks,
+    buildVertexShader,
+    buildFragmentShader,
+    noiseSnippet,
+    lightingSnippet,
+    colorSnippet,
+    animationSnippet,
+} from './shaders';
+export type {
+    ShaderUniform,
+    ShaderUniforms,
+    ShaderChunkCategory,
+    NoiseChunk,
+    LightingChunk,
+    UVChunk,
+    ColorChunk,
+    AnimationChunk,
+    EffectsChunk,
+} from './shaders';

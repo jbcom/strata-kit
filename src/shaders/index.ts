@@ -86,3 +86,36 @@ export type {
     VolumetricSpotlightUniforms,
     VolumetricPointLightUniforms,
 } from './godRays';
+
+// Custom shader materials
+export {
+    createToonMaterial,
+    createHologramMaterial,
+    createDissolveMaterial,
+    createForcefieldMaterial,
+    createGlitchMaterial,
+    createCrystalMaterial,
+    createOutlineMaterial,
+    createGradientMaterial,
+    createScanlineMaterial,
+} from './materials';
+export type {
+    ToonMaterialOptions,
+    HologramMaterialOptions,
+    DissolveMaterialOptions,
+    ForcefieldMaterialOptions,
+    GlitchMaterialOptions,
+    CrystalMaterialOptions,
+    OutlineMaterialOptions,
+    GradientMaterialOptions,
+    ScanlineMaterialOptions,
+    ToonOptions,
+    HologramOptions,
+    DissolveOptions,
+    ForcefieldOptions,
+    GlitchOptions,
+    CrystalOptions,
+    OutlineOptions,
+    GradientOptions,
+    ScanlineOptions,
+} from './materials';

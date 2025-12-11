@@ -19,6 +19,12 @@ const DEMO_PAGES = [
   { path: '/demos/input', name: 'Input' },
   { path: '/demos/ai', name: 'AI' },
   { path: '/demos/audio', name: 'Audio' },
+  { path: '/demos/physics', name: 'Physics' },
+  { path: '/demos/postprocessing', name: 'Post Processing' },
+  { path: '/demos/animation', name: 'Animation' },
+  { path: '/demos/state', name: 'State Management' },
+  { path: '/demos/ui', name: 'UI' },
+  { path: '/demos/shaders', name: 'Shaders' },
 ];
 
 async function collectConsoleErrors(page: Page): Promise<string[]> {
