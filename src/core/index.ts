@@ -189,24 +189,32 @@ export type {
 
 // Audio system
 export {
-    AudioManager,
-    AudioSource,
-    AmbientSource,
-    SoundPool,
-    ReverbEffect,
-    EnvironmentEffect,
-    createAudioManager,
-    calculateDistanceAttenuation,
-    environmentPresets,
+    Howl,
+    Howler,
+    SoundManager,
+    SpatialAudio,
+    createSoundManager,
+    createSpatialAudio,
+    ENVIRONMENT_PRESETS,
+    DEFAULT_SPATIAL_CONFIG,
+    isAudioContextUnlocked,
+    unlockAudioContext,
+    setupAutoUnlock,
+    getAudioContext,
+    suspendAudioContext,
+    resumeAudioContext,
 } from './audio';
 export type {
+    AudioConfig,
+    SoundConfig,
+    SpatialConfig,
+    AudioBus,
+    AudioMixer,
     DistanceModel,
-    EnvironmentType,
-    AudioSourceConfig,
-    ReverbConfig,
-    EnvironmentConfig,
-    SoundPoolConfig,
-    AudioManagerConfig,
+    AudioFormat,
+    EnvironmentPreset,
+    EnvironmentEffectConfig,
+    AudioListenerState,
 } from './audio';
 
 // Physics system
