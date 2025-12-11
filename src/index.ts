@@ -187,6 +187,22 @@ export {
     lutConfigs,
     blendPostProcessingPresets,
     getTimeOfDayEffects,
+    // Animation (pure TS)
+    FABRIKSolver,
+    CCDSolver,
+    TwoBoneIKSolver,
+    LookAtController,
+    SpringDynamics,
+    SpringChain,
+    ProceduralGait,
+    createBoneChain,
+    createBoneChainFromLengths,
+    clampAngle,
+    dampedSpring,
+    dampedSpringVector3,
+    hermiteInterpolate,
+    sampleCurve,
+    calculateBoneRotation,
 } from './core';
 export type {
     // SDF types
@@ -285,6 +301,16 @@ export type {
     BrightnessContrastSettings,
     SepiaSettings,
     LUTConfig,
+    // Animation types
+    BoneChain,
+    BoneConstraint,
+    IKSolverResult,
+    SpringConfig,
+    SpringState,
+    GaitConfig,
+    GaitState,
+    LookAtConfig,
+    LookAtState,
 } from './core';
 
 // React components
@@ -378,6 +404,16 @@ export {
     VintageEffects,
     DynamicDOF,
     MotionBlurEffect,
+    // Animation components
+    IKChain,
+    IKLimb,
+    LookAt,
+    SpringBone,
+    ProceduralWalk,
+    HeadTracker,
+    TailPhysics,
+    BreathingAnimation,
+    BlinkController,
 } from './components';
 
 // Presets (organized by layer: background, midground, foreground)
@@ -508,6 +544,25 @@ export type {
     DynamicDOFProps,
     DynamicDOFRef,
     MotionBlurEffectProps,
+    // Animation component types
+    IKChainProps,
+    IKChainRef,
+    IKLimbProps,
+    IKLimbRef,
+    LookAtProps,
+    LookAtRef,
+    SpringBoneProps,
+    SpringBoneRef,
+    ProceduralWalkProps,
+    ProceduralWalkRef,
+    HeadTrackerProps,
+    HeadTrackerRef,
+    TailPhysicsProps,
+    TailPhysicsRef,
+    BreathingAnimationProps,
+    BreathingAnimationRef,
+    BlinkControllerProps,
+    BlinkControllerRef,
 } from './components';
 
 // Hooks

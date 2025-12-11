@@ -248,3 +248,36 @@ export type {
     DynamicDOFRef,
     MotionBlurEffectProps,
 } from './PostProcessing';
+
+// Animation
+export {
+    IKChain,
+    IKLimb,
+    LookAt,
+    SpringBone,
+    ProceduralWalk,
+    HeadTracker,
+    TailPhysics,
+    BreathingAnimation,
+    BlinkController,
+} from './Animation';
+export type {
+    IKChainProps,
+    IKChainRef,
+    IKLimbProps,
+    IKLimbRef,
+    LookAtProps,
+    LookAtRef,
+    SpringBoneProps,
+    SpringBoneRef,
+    ProceduralWalkProps,
+    ProceduralWalkRef,
+    HeadTrackerProps,
+    HeadTrackerRef,
+    TailPhysicsProps,
+    TailPhysicsRef,
+    BreathingAnimationProps,
+    BreathingAnimationRef,
+    BlinkControllerProps,
+    BlinkControllerRef,
+} from './Animation';

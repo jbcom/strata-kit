@@ -276,3 +276,33 @@ export type {
     SepiaSettings,
     LUTConfig,
 } from './postProcessing';
+
+// Animation system
+export {
+    FABRIKSolver,
+    CCDSolver,
+    TwoBoneIKSolver,
+    LookAtController,
+    SpringDynamics,
+    SpringChain,
+    ProceduralGait,
+    createBoneChain,
+    createBoneChainFromLengths,
+    clampAngle,
+    dampedSpring,
+    dampedSpringVector3,
+    hermiteInterpolate,
+    sampleCurve,
+    calculateBoneRotation,
+} from './animation';
+export type {
+    BoneChain,
+    BoneConstraint,
+    IKSolverResult,
+    SpringConfig,
+    SpringState,
+    GaitConfig,
+    GaitState,
+    LookAtConfig,
+    LookAtState,
+} from './animation';
