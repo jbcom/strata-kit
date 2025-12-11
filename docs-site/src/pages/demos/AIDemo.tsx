@@ -59,20 +59,23 @@ function PatrolAgent({ waypoints, color }: { waypoints: [number, number, number]
 function FlockingAgent({ 
   index, 
   totalAgents, 
-  vehicles 
+  vehicles,
+  allVehiclesReady,
 }: { 
   index: number; 
   totalAgents: number; 
-  vehicles: React.MutableRefObject<YUKA.Vehicle[]>;
+  vehicles: React.MutableRefObject<(YUKA.Vehicle | null)[]>;
+  allVehiclesReady: boolean;
 }) {
   const vehicleRef = useRef<YukaVehicleRef>(null);
-  const angle = (index / totalAgents) * Math.PI * 2;
-  const radius = 3 + Math.random() * 2;
-  const startPos: [number, number, number] = [
+  const behaviorsAddedRef = useRef(false);
+  const angle = useMemo(() => (index / totalAgents) * Math.PI * 2, [index, totalAgents]);
+  const radius = useMemo(() => 3 + (index * 0.5), [index]);
+  const startPos = useMemo<[number, number, number]>(() => [
     Math.cos(angle) * radius,
     0,
     Math.sin(angle) * radius,
-  ];
+  ], [angle, radius]);
 
   useEffect(() => {
     if (!vehicleRef.current) return;
@@ -80,42 +83,100 @@ function FlockingAgent({
     const vehicle = vehicleRef.current.vehicle;
     vehicles.current[index] = vehicle;
 
-    const alignment = new YUKA.AlignmentBehavior();
-    alignment.weight = 1;
-    vehicleRef.current.addBehavior(alignment);
-
-    const cohesion = new YUKA.CohesionBehavior();
-    cohesion.weight = 0.5;
-    vehicleRef.current.addBehavior(cohesion);
-
-    const separation = new YUKA.SeparationBehavior();
-    separation.weight = 1.5;
-    vehicleRef.current.addBehavior(separation);
-
-    const wander = new YUKA.WanderBehavior();
-    wander.weight = 0.5;
-    vehicleRef.current.addBehavior(wander);
-
     return () => {
-      vehicles.current[index] = null as any;
+      vehicles.current[index] = null;
       vehicleRef.current?.clearBehaviors();
     };
   }, [index, vehicles]);
 
+  useEffect(() => {
+    if (!vehicleRef.current || !allVehiclesReady || behaviorsAddedRef.current) return;
+    
+    const vehicle = vehicleRef.current.vehicle;
+    
+    const neighbors = vehicles.current.filter((v): v is YUKA.Vehicle => v !== null && v !== vehicle);
+    
+    if (neighbors.length === 0) return;
+    
+    vehicle.neighborhoodRadius = 5;
+    
+    const alignment = new YUKA.AlignmentBehavior();
+    alignment.weight = 0.8;
+    vehicleRef.current.addBehavior(alignment);
+
+    const cohesion = new YUKA.CohesionBehavior();
+    cohesion.weight = 0.4;
+    vehicleRef.current.addBehavior(cohesion);
+
+    const separation = new YUKA.SeparationBehavior();
+    separation.weight = 1.2;
+    vehicleRef.current.addBehavior(separation);
+
+    const wander = new YUKA.WanderBehavior();
+    wander.weight = 0.3;
+    wander.radius = 1;
+    wander.distance = 2;
+    wander.jitter = 0.5;
+    vehicleRef.current.addBehavior(wander);
+    
+    behaviorsAddedRef.current = true;
+  }, [allVehiclesReady, vehicles]);
+
+  useFrame(() => {
+    if (!vehicleRef.current || !allVehiclesReady) return;
+    
+    const vehicle = vehicleRef.current.vehicle;
+    const neighbors = vehicles.current.filter((v): v is YUKA.Vehicle => v !== null && v !== vehicle);
+    
+    vehicle.neighbors.length = 0;
+    for (const neighbor of neighbors) {
+      const distance = vehicle.position.distanceTo(neighbor.position);
+      if (distance < vehicle.neighborhoodRadius) {
+        vehicle.neighbors.push(neighbor);
+      }
+    }
+    
+    if (vehicle.position.length() > 20) {
+      vehicle.velocity.multiplyScalar(0.95);
+      const toCenter = vehicle.position.clone().negate().normalize();
+      vehicle.position.add(toCenter.multiplyScalar(0.1));
+    }
+  });
+
   return (
-    <YukaVehicle ref={vehicleRef} maxSpeed={2} maxForce={5} position={startPos}>
+    <YukaVehicle ref={vehicleRef} maxSpeed={2} maxForce={3} position={startPos}>
       <AgentMesh color="#3498db" scale={0.6} />
     </YukaVehicle>
   );
 }
 
 function FlockingGroup({ count }: { count: number }) {
-  const vehicles = useRef<YUKA.Vehicle[]>([]);
+  const vehicles = useRef<(YUKA.Vehicle | null)[]>(new Array(count).fill(null));
+  const [allVehiclesReady, setAllVehiclesReady] = useState(false);
+  const frameCountRef = useRef(0);
+
+  useFrame(() => {
+    if (allVehiclesReady) return;
+    
+    frameCountRef.current++;
+    if (frameCountRef.current > 10) {
+      const allReady = vehicles.current.filter(v => v !== null).length === count;
+      if (allReady) {
+        setAllVehiclesReady(true);
+      }
+    }
+  });
 
   return (
     <group position={[10, 0, -10]}>
       {Array.from({ length: count }).map((_, i) => (
-        <FlockingAgent key={i} index={i} totalAgents={count} vehicles={vehicles} />
+        <FlockingAgent 
+          key={i} 
+          index={i} 
+          totalAgents={count} 
+          vehicles={vehicles}
+          allVehiclesReady={allVehiclesReady}
+        />
       ))}
     </group>
   );
