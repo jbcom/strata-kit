@@ -1,7 +1,9 @@
 /**
  * Camera components for Strata
  * 
- * React Three Fiber camera components with various behaviors.
+ * React Three Fiber camera components with various behaviors including
+ * follow cameras, orbit controls, first-person, cinematic paths, and shake effects.
+ * @module components/Camera
  */
 
 import { useRef, useEffect, useMemo, useCallback, forwardRef, useImperativeHandle } from 'react';
@@ -20,6 +22,18 @@ import {
     easeInOutCubic,
 } from '../core/camera';
 
+/**
+ * Props for the FollowCamera component
+ * 
+ * @property target - Object to follow (Vector3 position or Object3D ref)
+ * @property offset - Camera offset from target [x, y, z]
+ * @property smoothTime - Smoothing duration for position updates
+ * @property lookAheadDistance - How far ahead to look based on velocity
+ * @property lookAheadSmoothing - Smoothing for look-ahead calculations
+ * @property rotationSmoothing - Smoothing for camera rotation
+ * @property fov - Field of view in degrees
+ * @property makeDefault - Set as the default scene camera
+ */
 export interface FollowCameraProps {
     target: THREE.Vector3 | React.RefObject<THREE.Object3D>;
     offset?: [number, number, number];
@@ -31,11 +45,42 @@ export interface FollowCameraProps {
     makeDefault?: boolean;
 }
 
+/**
+ * Ref interface for FollowCamera imperative control
+ */
 export interface FollowCameraRef {
     getCamera: () => THREE.PerspectiveCamera | null;
     setOffset: (offset: [number, number, number]) => void;
 }
 
+/**
+ * Smooth follow camera that tracks a target with velocity-based look-ahead.
+ * Ideal for third-person games and character following.
+ * 
+ * @example
+ * ```tsx
+ * // Follow a player character
+ * const playerRef = useRef<THREE.Mesh>(null);
+ * 
+ * <FollowCamera
+ *   target={playerRef}
+ *   offset={[0, 5, 10]}
+ *   smoothTime={0.3}
+ * />
+ * <mesh ref={playerRef}>
+ *   <boxGeometry />
+ * </mesh>
+ * 
+ * // Follow a moving position
+ * <FollowCamera
+ *   target={new THREE.Vector3(x, y, z)}
+ *   lookAheadDistance={3}
+ * />
+ * ```
+ * 
+ * @param props - FollowCameraProps configuration
+ * @returns React element containing the camera
+ */
 export const FollowCamera = forwardRef<FollowCameraRef, FollowCameraProps>(({
     target,
     offset = [0, 5, 10],
@@ -118,6 +163,23 @@ export const FollowCamera = forwardRef<FollowCameraRef, FollowCameraProps>(({
 
 FollowCamera.displayName = 'FollowCamera';
 
+/**
+ * Props for the OrbitCamera component
+ * 
+ * @property target - Point to orbit around [x, y, z]
+ * @property minDistance - Minimum zoom distance
+ * @property maxDistance - Maximum zoom distance
+ * @property minPolarAngle - Minimum vertical angle (radians)
+ * @property maxPolarAngle - Maximum vertical angle (radians)
+ * @property autoRotate - Enable automatic rotation
+ * @property autoRotateSpeed - Speed of auto-rotation
+ * @property enableDamping - Enable smooth damping
+ * @property dampingFactor - Damping amount
+ * @property enableZoom - Allow zooming
+ * @property enablePan - Allow panning
+ * @property fov - Field of view in degrees
+ * @property makeDefault - Set as default camera
+ */
 export interface OrbitCameraProps {
     target?: [number, number, number];
     minDistance?: number;
@@ -134,12 +196,44 @@ export interface OrbitCameraProps {
     makeDefault?: boolean;
 }
 
+/**
+ * Ref interface for OrbitCamera imperative control
+ */
 export interface OrbitCameraRef {
     getCamera: () => THREE.PerspectiveCamera | null;
     getControls: () => any;
     setTarget: (target: [number, number, number]) => void;
 }
 
+/**
+ * Orbit camera with mouse/touch controls for scene exploration.
+ * Wraps drei's OrbitControls with a managed camera.
+ * 
+ * @example
+ * ```tsx
+ * // Basic orbit camera
+ * <OrbitCamera />
+ * 
+ * // Product viewer with constraints
+ * <OrbitCamera
+ *   target={[0, 1, 0]}
+ *   minDistance={2}
+ *   maxDistance={10}
+ *   maxPolarAngle={Math.PI / 2}
+ *   enablePan={false}
+ * />
+ * 
+ * // Auto-rotating showcase
+ * <OrbitCamera
+ *   autoRotate={true}
+ *   autoRotateSpeed={1}
+ *   enableDamping={true}
+ * />
+ * ```
+ * 
+ * @param props - OrbitCameraProps configuration
+ * @returns React element containing camera and controls
+ */
 export const OrbitCamera = forwardRef<OrbitCameraRef, OrbitCameraProps>(({
     target = [0, 0, 0],
     minDistance = 2,
@@ -197,6 +291,18 @@ export const OrbitCamera = forwardRef<OrbitCameraRef, OrbitCameraProps>(({
 
 OrbitCamera.displayName = 'OrbitCamera';
 
+/**
+ * Props for the FPSCamera component
+ * 
+ * @property position - Initial camera position [x, y, z]
+ * @property sensitivity - Mouse look sensitivity
+ * @property headBobEnabled - Enable walking head bob effect
+ * @property headBobFrequency - Frequency of head bob oscillation
+ * @property headBobAmplitude - Amplitude of head bob movement
+ * @property fov - Field of view in degrees
+ * @property makeDefault - Set as default camera
+ * @property movementSpeed - WASD movement speed
+ */
 export interface FPSCameraProps {
     position?: [number, number, number];
     sensitivity?: number;
@@ -208,6 +314,9 @@ export interface FPSCameraProps {
     movementSpeed?: number;
 }
 
+/**
+ * Ref interface for FPSCamera imperative control
+ */
 export interface FPSCameraRef {
     getCamera: () => THREE.PerspectiveCamera | null;
     setPosition: (position: [number, number, number]) => void;
@@ -215,6 +324,34 @@ export interface FPSCameraRef {
     getMoving: () => boolean;
 }
 
+/**
+ * First-person camera with mouse look and WASD movement.
+ * Requires pointer lock for mouse control.
+ * 
+ * @example
+ * ```tsx
+ * // Basic FPS camera
+ * <FPSCamera position={[0, 1.7, 5]} />
+ * 
+ * // With head bob and custom sensitivity
+ * <FPSCamera
+ *   position={[0, 1.8, 0]}
+ *   sensitivity={0.003}
+ *   headBobEnabled={true}
+ *   headBobAmplitude={0.08}
+ *   movementSpeed={8}
+ * />
+ * 
+ * // Disable head bob for vehicles
+ * <FPSCamera
+ *   headBobEnabled={false}
+ *   fov={90}
+ * />
+ * ```
+ * 
+ * @param props - FPSCameraProps configuration
+ * @returns React element containing the FPS camera
+ */
 export const FPSCamera = forwardRef<FPSCameraRef, FPSCameraProps>(({
     position = [0, 1.7, 0],
     sensitivity = 0.002,
@@ -320,6 +457,21 @@ export const FPSCamera = forwardRef<FPSCameraRef, FPSCameraProps>(({
 
 FPSCamera.displayName = 'FPSCamera';
 
+/**
+ * Props for the CinematicCamera component
+ * 
+ * @property path - Array of Vector3 waypoints for the camera path
+ * @property duration - Total duration of the path in seconds
+ * @property tension - Catmull-Rom spline tension (0-1)
+ * @property closed - Whether the path loops back to start
+ * @property lookAt - Target to look at (position or object ref)
+ * @property autoPlay - Start playing immediately
+ * @property loop - Loop the animation
+ * @property fov - Base field of view
+ * @property fovKeyframes - FOV changes over time
+ * @property makeDefault - Set as default camera
+ * @property onComplete - Callback when animation completes
+ */
 export interface CinematicCameraProps {
     path: THREE.Vector3[];
     duration?: number;
@@ -334,6 +486,9 @@ export interface CinematicCameraProps {
     onComplete?: () => void;
 }
 
+/**
+ * Ref interface for CinematicCamera imperative control
+ */
 export interface CinematicCameraRef {
     getCamera: () => THREE.PerspectiveCamera | null;
     play: () => void;
@@ -343,6 +498,40 @@ export interface CinematicCameraRef {
     getProgress: () => number;
 }
 
+/**
+ * Spline-based cinematic camera for cutscenes and flythroughs.
+ * Follows a Catmull-Rom spline path with optional FOV animation.
+ * 
+ * @example
+ * ```tsx
+ * // Flythrough camera
+ * <CinematicCamera
+ *   path={[
+ *     new THREE.Vector3(0, 5, 20),
+ *     new THREE.Vector3(10, 8, 10),
+ *     new THREE.Vector3(15, 3, 0),
+ *     new THREE.Vector3(0, 5, -10)
+ *   ]}
+ *   duration={10}
+ *   autoPlay={true}
+ * />
+ * 
+ * // Look at target with FOV animation
+ * <CinematicCamera
+ *   path={pathPoints}
+ *   lookAt={targetRef}
+ *   fovKeyframes={[
+ *     { time: 0, fov: 60 },
+ *     { time: 0.5, fov: 30 },
+ *     { time: 1, fov: 60 }
+ *   ]}
+ *   onComplete={() => setShowUI(true)}
+ * />
+ * ```
+ * 
+ * @param props - CinematicCameraProps configuration
+ * @returns React element containing the cinematic camera
+ */
 export const CinematicCamera = forwardRef<CinematicCameraRef, CinematicCameraProps>(({
     path,
     duration = 5,
@@ -443,6 +632,18 @@ export const CinematicCamera = forwardRef<CinematicCameraRef, CinematicCameraPro
 
 CinematicCamera.displayName = 'CinematicCamera';
 
+/**
+ * Props for the CameraShake component
+ * 
+ * @property intensity - Overall shake intensity multiplier
+ * @property decay - How quickly shake fades (higher = faster)
+ * @property maxYaw - Maximum yaw rotation in radians
+ * @property maxPitch - Maximum pitch rotation in radians
+ * @property maxRoll - Maximum roll rotation in radians
+ * @property yawFrequency - Yaw oscillation frequency
+ * @property pitchFrequency - Pitch oscillation frequency
+ * @property rollFrequency - Roll oscillation frequency
+ */
 export interface CameraShakeProps {
     intensity?: number;
     decay?: number;
@@ -454,12 +655,44 @@ export interface CameraShakeProps {
     rollFrequency?: number;
 }
 
+/**
+ * Ref interface for CameraShake imperative control
+ */
 export interface CameraShakeRef {
     addTrauma: (amount: number) => void;
     setTrauma: (amount: number) => void;
     getTrauma: () => number;
 }
 
+/**
+ * Trauma-based camera shake effect for impacts and explosions.
+ * Uses Perlin noise for natural-feeling shake patterns.
+ * 
+ * @example
+ * ```tsx
+ * // Basic camera shake
+ * const shakeRef = useRef<CameraShakeRef>(null);
+ * 
+ * <CameraShake ref={shakeRef} intensity={1} />
+ * 
+ * // Trigger shake on explosion
+ * const handleExplosion = () => {
+ *   shakeRef.current?.addTrauma(0.5);
+ * };
+ * 
+ * // Earthquake effect with slow decay
+ * <CameraShake
+ *   decay={0.5}
+ *   maxYaw={0.15}
+ *   maxPitch={0.15}
+ *   maxRoll={0.05}
+ *   yawFrequency={10}
+ * />
+ * ```
+ * 
+ * @param props - CameraShakeProps configuration
+ * @returns null (modifies existing camera)
+ */
 export const CameraShake = forwardRef<CameraShakeRef, CameraShakeProps>(({
     intensity = 1,
     decay = 1.5,
@@ -505,6 +738,9 @@ export const CameraShake = forwardRef<CameraShakeRef, CameraShakeProps>(({
 
 CameraShake.displayName = 'CameraShake';
 
+/**
+ * Props for camera transition configuration
+ */
 export interface CameraTransitionProps {
     from: THREE.Vector3;
     to: THREE.Vector3;
@@ -515,6 +751,29 @@ export interface CameraTransitionProps {
     onComplete?: () => void;
 }
 
+/**
+ * Hook for smooth camera position transitions.
+ * Useful for switching between camera positions or cut scenes.
+ * 
+ * @example
+ * ```tsx
+ * const { startTransition } = useCameraTransition();
+ * 
+ * // Transition to new viewpoint
+ * const handleViewChange = () => {
+ *   startTransition({
+ *     from: camera.position.clone(),
+ *     to: new THREE.Vector3(10, 5, 10),
+ *     fromLookAt: currentTarget,
+ *     toLookAt: newTarget,
+ *     duration: 2,
+ *     onComplete: () => console.log('Transition complete')
+ *   });
+ * };
+ * ```
+ * 
+ * @returns Object containing startTransition function
+ */
 export function useCameraTransition() {
     const { camera } = useThree();
     const transitionRef = useRef<{

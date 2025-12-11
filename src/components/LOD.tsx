@@ -3,6 +3,7 @@
  *
  * Provides React components for distance-based level of detail rendering.
  * Supports mesh switching, impostor billboards, and specialized vegetation LOD.
+ * @module components/LOD
  */
 
 import React, { useRef, useMemo, useEffect, useCallback, forwardRef, useImperativeHandle, useState } from 'react';
@@ -28,6 +29,22 @@ import {
 } from '../core/lod';
 import { updateBillboardRotation } from '../core/decals';
 
+/**
+ * Props for the LODMesh component
+ * 
+ * @property levels - Array of LOD levels with distance thresholds and geometry
+ * @property baseMaterial - Material to use if level doesn't specify one
+ * @property position - World position of the mesh
+ * @property rotation - Rotation of the mesh
+ * @property scale - Scale (number or Vector3)
+ * @property hysteresis - Buffer zone to prevent LOD flicker
+ * @property transitionDuration - Duration of LOD transitions
+ * @property fadeMode - Transition mode ('instant', 'crossfade', 'dither')
+ * @property castShadow - Whether mesh casts shadows
+ * @property receiveShadow - Whether mesh receives shadows
+ * @property frustumCulled - Enable frustum culling
+ * @property onLevelChange - Callback when LOD level changes
+ */
 export interface LODMeshProps {
     levels: Array<{
         distance: number;
@@ -47,12 +64,52 @@ export interface LODMeshProps {
     onLevelChange?: (level: number) => void;
 }
 
+/**
+ * Ref interface for LODMesh imperative control
+ */
 export interface LODMeshRef {
     group: THREE.Group | null;
     currentLevel: number;
     getDistance: () => number;
 }
 
+/**
+ * Distance-based level of detail mesh component.
+ * Automatically switches between geometry detail levels based on camera distance.
+ * 
+ * @example
+ * ```tsx
+ * // Three-level LOD mesh
+ * <LODMesh
+ *   levels={[
+ *     { distance: 0, geometry: highDetailGeo },
+ *     { distance: 20, geometry: mediumDetailGeo },
+ *     { distance: 50, geometry: lowDetailGeo }
+ *   ]}
+ *   baseMaterial={material}
+ *   position={[0, 0, 0]}
+ * />
+ * 
+ * // With crossfade transitions
+ * <LODMesh
+ *   levels={lodLevels}
+ *   fadeMode="crossfade"
+ *   transitionDuration={0.5}
+ *   onLevelChange={(level) => console.log('LOD:', level)}
+ * />
+ * 
+ * // Per-level materials
+ * <LODMesh
+ *   levels={[
+ *     { distance: 0, geometry: highGeo, material: highMat },
+ *     { distance: 30, geometry: lowGeo, material: lowMat }
+ *   ]}
+ * />
+ * ```
+ * 
+ * @param props - LODMeshProps configuration
+ * @returns React element containing the LOD mesh group
+ */
 export const LODMesh = forwardRef<LODMeshRef, LODMeshProps>(
     (
         {
@@ -201,6 +258,17 @@ export const LODMesh = forwardRef<LODMeshRef, LODMeshProps>(
 
 LODMesh.displayName = 'LODMesh';
 
+/**
+ * Props for the LODGroup component
+ * 
+ * @property children - Child elements to show/hide based on LOD
+ * @property levels - LOD levels with distance and which children to show
+ * @property hysteresis - LOD switching buffer
+ * @property position - Group position
+ * @property rotation - Group rotation
+ * @property scale - Group scale
+ * @property onLevelChange - Callback on level change
+ */
 export interface LODGroupProps {
     children: React.ReactNode;
     levels: Array<{
@@ -214,12 +282,51 @@ export interface LODGroupProps {
     onLevelChange?: (level: number) => void;
 }
 
+/**
+ * Ref interface for LODGroup imperative control
+ */
 export interface LODGroupRef {
     group: THREE.Group | null;
     currentLevel: number;
     forceLevel: (level: number) => void;
 }
 
+/**
+ * LOD group component that shows/hides children based on distance.
+ * More flexible than LODMesh for complex multi-object LOD setups.
+ * 
+ * @example
+ * ```tsx
+ * // Show different children at each LOD
+ * <LODGroup
+ *   levels={[
+ *     { distance: 0, childIndices: [0] },
+ *     { distance: 30, childIndices: [1] },
+ *     { distance: 60, childIndices: [2] }
+ *   ]}
+ * >
+ *   <HighDetailModel />
+ *   <MediumDetailModel />
+ *   <LowDetailModel />
+ * </LODGroup>
+ * 
+ * // Complex building with multiple LOD levels
+ * <LODGroup
+ *   levels={[
+ *     { distance: 0, childIndices: [0, 1, 2] },
+ *     { distance: 50, childIndices: [3] }
+ *   ]}
+ * >
+ *   <BuildingBase />
+ *   <BuildingDetails />
+ *   <InteriorFurniture />
+ *   <SimplifiedBuilding />
+ * </LODGroup>
+ * ```
+ * 
+ * @param props - LODGroupProps configuration
+ * @returns React element containing the LOD group
+ */
 export const LODGroup = forwardRef<LODGroupRef, LODGroupProps>(
     (
         {
@@ -314,6 +421,23 @@ export const LODGroup = forwardRef<LODGroupRef, LODGroupProps>(
 
 LODGroup.displayName = 'LODGroup';
 
+/**
+ * Props for the Impostor component
+ * 
+ * @property texture - Impostor sprite atlas texture
+ * @property position - World position
+ * @property size - Billboard size (number or [width, height])
+ * @property views - Number of view angles in the atlas
+ * @property billboardMode - 'spherical' or 'cylindrical' facing
+ * @property opacity - Opacity (0-1)
+ * @property transparent - Enable transparency
+ * @property alphaTest - Alpha cutoff threshold
+ * @property depthWrite - Write to depth buffer
+ * @property color - Tint color
+ * @property renderOrder - Render order for sorting
+ * @property castShadow - Cast shadows
+ * @property receiveShadow - Receive shadows
+ */
 export interface ImpostorProps {
     texture: THREE.Texture;
     position?: THREE.Vector3 | [number, number, number];
@@ -330,12 +454,51 @@ export interface ImpostorProps {
     receiveShadow?: boolean;
 }
 
+/**
+ * Ref interface for Impostor imperative control
+ */
 export interface ImpostorRef {
     mesh: THREE.Mesh | null;
     currentView: number;
     updateView: () => void;
 }
 
+/**
+ * View-dependent impostor billboard for distant LOD replacement.
+ * Automatically selects the correct view from a sprite atlas based on camera angle.
+ * 
+ * @example
+ * ```tsx
+ * // 8-view tree impostor
+ * <Impostor
+ *   texture={treeImpostorAtlas}
+ *   position={[10, 0, 10]}
+ *   size={5}
+ *   views={8}
+ * />
+ * 
+ * // Cylindrical building impostor
+ * <Impostor
+ *   texture={buildingAtlas}
+ *   position={buildingPos}
+ *   size={[10, 15]}
+ *   views={16}
+ *   billboardMode="cylindrical"
+ * />
+ * 
+ * // Character impostor for crowds
+ * <Impostor
+ *   texture={characterAtlas}
+ *   position={npcPosition}
+ *   size={[1, 2]}
+ *   views={8}
+ *   alphaTest={0.5}
+ * />
+ * ```
+ * 
+ * @param props - ImpostorProps configuration
+ * @returns React element containing the impostor mesh
+ */
 export const Impostor = forwardRef<ImpostorRef, ImpostorProps>(
     (
         {
@@ -447,6 +610,21 @@ export const Impostor = forwardRef<ImpostorRef, ImpostorProps>(
 
 Impostor.displayName = 'Impostor';
 
+/**
+ * Props for the LODVegetation component
+ * 
+ * @property count - Number of vegetation instances
+ * @property instances - Array of instance transforms
+ * @property highDetailGeometry - Highest detail geometry
+ * @property mediumDetailGeometry - Medium detail geometry (auto-generated if not provided)
+ * @property lowDetailGeometry - Low detail geometry (auto-generated if not provided)
+ * @property impostorTexture - Texture for furthest impostor LOD
+ * @property material - Material for all mesh LOD levels
+ * @property lodConfig - Distance thresholds for LOD switching
+ * @property castShadow - Whether to cast shadows
+ * @property receiveShadow - Whether to receive shadows
+ * @property frustumCulled - Enable frustum culling
+ */
 export interface LODVegetationProps {
     count: number;
     instances: Array<{
@@ -465,6 +643,9 @@ export interface LODVegetationProps {
     frustumCulled?: boolean;
 }
 
+/**
+ * Ref interface for LODVegetation imperative control
+ */
 export interface LODVegetationRef {
     group: THREE.Group | null;
     visibleCounts: { high: number; medium: number; low: number; impostor: number };
@@ -479,6 +660,52 @@ interface VegetationInstance {
     visible: boolean;
 }
 
+/**
+ * Specialized LOD system for large-scale vegetation rendering.
+ * Manages thousands of instances with automatic geometry simplification and impostors.
+ * 
+ * @example
+ * ```tsx
+ * // Forest with auto-generated LOD levels
+ * <LODVegetation
+ *   count={1000}
+ *   instances={treeInstances}
+ *   highDetailGeometry={treeGeometry}
+ *   impostorTexture={treeImpostor}
+ *   material={treeMaterial}
+ * />
+ * 
+ * // Custom LOD distances
+ * <LODVegetation
+ *   count={500}
+ *   instances={bushInstances}
+ *   highDetailGeometry={bushGeo}
+ *   mediumDetailGeometry={bushGeoMed}
+ *   lowDetailGeometry={bushGeoLow}
+ *   lodConfig={{
+ *     highDetailDistance: 10,
+ *     mediumDetailDistance: 30,
+ *     lowDetailDistance: 60,
+ *     cullDistance: 200
+ *   }}
+ * />
+ * 
+ * // Grass patches
+ * <LODVegetation
+ *   count={5000}
+ *   instances={grassInstances}
+ *   highDetailGeometry={grassBladeGeo}
+ *   lodConfig={{
+ *     highDetailDistance: 5,
+ *     cullDistance: 50
+ *   }}
+ *   castShadow={false}
+ * />
+ * ```
+ * 
+ * @param props - LODVegetationProps configuration
+ * @returns React element containing all vegetation instances
+ */
 export const LODVegetation = forwardRef<LODVegetationRef, LODVegetationProps>(
     (
         {

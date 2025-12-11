@@ -2,6 +2,8 @@
  * Audio Components
  *
  * React components for spatial audio in Three.js scenes.
+ * Provides positional audio, ambient audio, audio zones, and environmental effects.
+ * @module components/Audio
  */
 
 import { useRef, useEffect, useImperativeHandle, forwardRef, createContext, useContext, useMemo, useCallback, useState } from 'react';
@@ -17,6 +19,12 @@ import {
     createAudioManager,
 } from '../core/audio';
 
+/**
+ * Context value provided by AudioProvider
+ * 
+ * @property manager - The AudioManager instance
+ * @property isReady - Whether the audio system is initialized
+ */
 export interface AudioContextValue {
     manager: AudioManager;
     isReady: boolean;
@@ -24,6 +32,21 @@ export interface AudioContextValue {
 
 const AudioContext = createContext<AudioContextValue | null>(null);
 
+/**
+ * Hook to access the audio context within an AudioProvider.
+ * Must be used inside an AudioProvider component tree.
+ * 
+ * @example
+ * ```tsx
+ * function AudioControlPanel() {
+ *   const { manager, isReady } = useAudioContext();
+ *   // Control audio functionality
+ * }
+ * ```
+ * 
+ * @returns AudioContextValue with manager and ready state
+ * @throws Error if used outside AudioProvider
+ */
 export function useAudioContext(): AudioContextValue {
     const context = useContext(AudioContext);
     if (!context) {
@@ -32,17 +55,57 @@ export function useAudioContext(): AudioContextValue {
     return context;
 }
 
+/**
+ * Hook to get the AudioManager instance (nullable).
+ * Safe to use without error when outside AudioProvider.
+ * 
+ * @example
+ * ```tsx
+ * function AudioControls() {
+ *   const manager = useAudioManager();
+ *   if (!manager) return null;
+ *   // Use manager
+ * }
+ * ```
+ * 
+ * @returns AudioManager or null if not in context
+ */
 export function useAudioManager(): AudioManager | null {
     const context = useContext(AudioContext);
     return context?.manager ?? null;
 }
 
+/**
+ * Props for the AudioProvider component
+ * 
+ * @property children - Child components that can use audio
+ * @property maxSounds - Maximum concurrent sounds
+ * @property enableHRTF - Enable head-related transfer function for spatial audio
+ */
 export interface AudioProviderProps {
     children: React.ReactNode;
     maxSounds?: number;
     enableHRTF?: boolean;
 }
 
+/**
+ * Context provider that manages the audio system and handles autoplay restrictions.
+ * Must wrap all audio-related components in your scene.
+ * 
+ * @example
+ * ```tsx
+ * <Canvas>
+ *   <AudioProvider maxSounds={32} enableHRTF={true}>
+ *     <AudioListener />
+ *     <AmbientAudio url="/music/background.mp3" autoplay />
+ *     <PositionalAudio url="/sfx/waterfall.mp3" position={[10, 0, 5]} />
+ *   </AudioProvider>
+ * </Canvas>
+ * ```
+ * 
+ * @param props - AudioProviderProps
+ * @returns Provider component for audio context
+ */
 export function AudioProvider({ children, maxSounds = 32, enableHRTF = true }: AudioProviderProps) {
     const [isReady, setIsReady] = useState(false);
     const managerRef = useRef<AudioManager | null>(null);
@@ -77,10 +140,31 @@ export function AudioProvider({ children, maxSounds = 32, enableHRTF = true }: A
     return <AudioContext.Provider value={value}>{children}</AudioContext.Provider>;
 }
 
+/**
+ * Props for the AudioListener component
+ * 
+ * @property camera - Optional custom camera (defaults to scene camera)
+ */
 export interface AudioListenerProps {
     camera?: THREE.Camera;
 }
 
+/**
+ * Audio listener that syncs with the camera for 3D spatial audio.
+ * Updates listener position and orientation each frame.
+ * 
+ * @example
+ * ```tsx
+ * // Use default scene camera
+ * <AudioListener />
+ * 
+ * // Use custom camera
+ * <AudioListener camera={customCameraRef.current} />
+ * ```
+ * 
+ * @param props - AudioListenerProps
+ * @returns null (logic only component)
+ */
 export function AudioListener({ camera: propCamera }: AudioListenerProps) {
     const { camera: defaultCamera } = useThree();
     const manager = useAudioManager();
@@ -110,6 +194,22 @@ export function AudioListener({ camera: propCamera }: AudioListenerProps) {
     return null;
 }
 
+/**
+ * Props for the PositionalAudio component
+ * 
+ * @property url - URL of the audio file
+ * @property position - Position in 3D space [x, y, z]
+ * @property loop - Whether to loop the audio
+ * @property autoplay - Start playing immediately
+ * @property volume - Volume level (0-1)
+ * @property refDistance - Distance at which volume starts to decrease
+ * @property maxDistance - Maximum audible distance
+ * @property rolloffFactor - How quickly volume decreases with distance
+ * @property distanceModel - Distance attenuation model
+ * @property playbackRate - Playback speed multiplier
+ * @property onLoad - Callback when audio loads
+ * @property onEnd - Callback when audio ends
+ */
 export interface PositionalAudioProps {
     url: string;
     position?: [number, number, number];
@@ -125,6 +225,16 @@ export interface PositionalAudioProps {
     onEnd?: () => void;
 }
 
+/**
+ * Ref interface for PositionalAudio imperative control
+ * 
+ * @property play - Start playback
+ * @property pause - Pause playback
+ * @property stop - Stop and reset playback
+ * @property setVolume - Set volume with optional fade
+ * @property setPosition - Update 3D position
+ * @property isPlaying - Check if currently playing
+ */
 export interface PositionalAudioRef {
     play: () => void;
     pause: () => void;
@@ -134,6 +244,39 @@ export interface PositionalAudioRef {
     isPlaying: () => boolean;
 }
 
+/**
+ * 3D positional audio source with distance-based attenuation.
+ * Sound volume decreases as the listener moves away from the source.
+ * 
+ * @example
+ * ```tsx
+ * // Waterfall sound at a fixed position
+ * <PositionalAudio
+ *   url="/sounds/waterfall.mp3"
+ *   position={[10, 0, 5]}
+ *   loop={true}
+ *   autoplay={true}
+ *   refDistance={5}
+ *   maxDistance={50}
+ * />
+ * 
+ * // Interactive sound with ref control
+ * const audioRef = useRef<PositionalAudioRef>(null);
+ * 
+ * <PositionalAudio
+ *   ref={audioRef}
+ *   url="/sounds/bell.mp3"
+ *   position={bellPosition}
+ *   onLoad={() => console.log('Bell sound loaded')}
+ * />
+ * 
+ * // Trigger sound
+ * const ringBell = () => audioRef.current?.play();
+ * ```
+ * 
+ * @param props - PositionalAudioProps configuration
+ * @returns null (audio only component)
+ */
 export const PositionalAudio = forwardRef<PositionalAudioRef, PositionalAudioProps>(({
     url,
     position = [0, 0, 0],
@@ -210,6 +353,16 @@ export const PositionalAudio = forwardRef<PositionalAudioRef, PositionalAudioPro
 
 PositionalAudio.displayName = 'PositionalAudio';
 
+/**
+ * Props for the AmbientAudio component
+ * 
+ * @property url - URL of the audio file
+ * @property volume - Volume level (0-1)
+ * @property loop - Whether to loop the audio
+ * @property autoplay - Start playing immediately
+ * @property fadeTime - Duration for auto-fade on play
+ * @property onLoad - Callback when audio loads
+ */
 export interface AmbientAudioProps {
     url: string;
     volume?: number;
@@ -219,6 +372,16 @@ export interface AmbientAudioProps {
     onLoad?: () => void;
 }
 
+/**
+ * Ref interface for AmbientAudio imperative control
+ * 
+ * @property play - Start playback
+ * @property stop - Stop playback
+ * @property fadeIn - Fade in over duration
+ * @property fadeOut - Fade out over duration
+ * @property setVolume - Set volume with optional fade
+ * @property isPlaying - Check if currently playing
+ */
 export interface AmbientAudioRef {
     play: () => void;
     stop: () => void;
@@ -228,6 +391,38 @@ export interface AmbientAudioRef {
     isPlaying: () => boolean;
 }
 
+/**
+ * Non-positional ambient audio for background music and atmosphere.
+ * Plays at constant volume regardless of listener position.
+ * 
+ * @example
+ * ```tsx
+ * // Background music
+ * <AmbientAudio
+ *   url="/music/ambient.mp3"
+ *   volume={0.5}
+ *   loop={true}
+ *   autoplay={true}
+ *   fadeTime={2}
+ * />
+ * 
+ * // Controlled ambient sound
+ * const ambientRef = useRef<AmbientAudioRef>(null);
+ * 
+ * <AmbientAudio
+ *   ref={ambientRef}
+ *   url="/music/exploration.mp3"
+ *   loop={true}
+ * />
+ * 
+ * // Fade in when entering area
+ * const enterForest = () => ambientRef.current?.fadeIn(3);
+ * const exitForest = () => ambientRef.current?.fadeOut(2);
+ * ```
+ * 
+ * @param props - AmbientAudioProps configuration
+ * @returns null (audio only component)
+ */
 export const AmbientAudio = forwardRef<AmbientAudioRef, AmbientAudioProps>(({
     url,
     volume = 1,
@@ -288,6 +483,22 @@ export const AmbientAudio = forwardRef<AmbientAudioRef, AmbientAudioProps>(({
 
 AmbientAudio.displayName = 'AmbientAudio';
 
+/**
+ * Props for the AudioZone component
+ * 
+ * @property position - Center position of the zone [x, y, z]
+ * @property geometry - Zone shape ('box' or 'sphere')
+ * @property size - Size for box zones [width, height, depth]
+ * @property radius - Radius for sphere zones
+ * @property audioUrl - Optional ambient audio to play in zone
+ * @property audioVolume - Volume for zone audio
+ * @property audioLoop - Whether zone audio loops
+ * @property fadeTime - Fade duration when entering/exiting
+ * @property onEnter - Callback when listener enters zone
+ * @property onExit - Callback when listener exits zone
+ * @property debug - Show zone visualization
+ * @property children - Child components
+ */
 export interface AudioZoneProps {
     position?: [number, number, number];
     geometry: 'box' | 'sphere';
@@ -303,11 +514,47 @@ export interface AudioZoneProps {
     children?: React.ReactNode;
 }
 
+/**
+ * Ref interface for AudioZone
+ * 
+ * @property isInside - Check if listener is inside zone
+ * @property getAudio - Get the zone's audio ref
+ */
 export interface AudioZoneRef {
     isInside: () => boolean;
     getAudio: () => AmbientAudioRef | null;
 }
 
+/**
+ * Spatial audio zone that triggers audio when listener enters.
+ * Automatically fades audio in/out based on listener position.
+ * 
+ * @example
+ * ```tsx
+ * // Cave zone with echo audio
+ * <AudioZone
+ *   position={[0, 0, -20]}
+ *   geometry="sphere"
+ *   radius={15}
+ *   audioUrl="/sounds/cave-ambience.mp3"
+ *   fadeTime={1}
+ *   onEnter={() => setEnvironment('cave')}
+ *   onExit={() => setEnvironment('outdoor')}
+ * />
+ * 
+ * // Debug visualization
+ * <AudioZone
+ *   position={[10, 0, 10]}
+ *   geometry="box"
+ *   size={[20, 10, 20]}
+ *   audioUrl="/sounds/market.mp3"
+ *   debug={true}
+ * />
+ * ```
+ * 
+ * @param props - AudioZoneProps configuration
+ * @returns React element with optional visualization
+ */
 export const AudioZone = forwardRef<AudioZoneRef, AudioZoneProps>(({
     position = [0, 0, 0],
     geometry,
@@ -398,6 +645,21 @@ export const AudioZone = forwardRef<AudioZoneRef, AudioZoneProps>(({
 
 AudioZone.displayName = 'AudioZone';
 
+/**
+ * Props for the AudioEmitter component
+ * 
+ * @property url - URL of the audio file
+ * @property position - Static position [x, y, z]
+ * @property follow - Object to follow for dynamic position
+ * @property loop - Whether to loop
+ * @property autoplay - Start playing immediately
+ * @property volume - Volume level (0-1)
+ * @property refDistance - Distance at which volume starts decreasing
+ * @property maxDistance - Maximum audible distance
+ * @property rolloffFactor - Distance attenuation factor
+ * @property distanceModel - Attenuation curve type
+ * @property onLoad - Callback when loaded
+ */
 export interface AudioEmitterProps {
     url: string;
     position?: [number, number, number];
@@ -412,6 +674,9 @@ export interface AudioEmitterProps {
     onLoad?: () => void;
 }
 
+/**
+ * Ref interface for AudioEmitter
+ */
 export interface AudioEmitterRef {
     play: () => void;
     stop: () => void;
@@ -421,6 +686,38 @@ export interface AudioEmitterRef {
     isPlaying: () => boolean;
 }
 
+/**
+ * Positional audio emitter that can follow an object.
+ * Useful for sounds attached to moving entities.
+ * 
+ * @example
+ * ```tsx
+ * // Engine sound following a car
+ * const carRef = useRef<THREE.Group>(null);
+ * 
+ * <group ref={carRef}>
+ *   <Car />
+ * </group>
+ * <AudioEmitter
+ *   url="/sounds/engine.mp3"
+ *   follow={carRef}
+ *   loop={true}
+ *   autoplay={true}
+ *   refDistance={5}
+ * />
+ * 
+ * // Footsteps following player
+ * <AudioEmitter
+ *   url="/sounds/footsteps.mp3"
+ *   follow={playerRef}
+ *   loop={true}
+ *   volume={0.6}
+ * />
+ * ```
+ * 
+ * @param props - AudioEmitterProps configuration
+ * @returns null (audio only component)
+ */
 export const AudioEmitter = forwardRef<AudioEmitterRef, AudioEmitterProps>(({
     url,
     position = [0, 0, 0],
@@ -513,6 +810,15 @@ export const AudioEmitter = forwardRef<AudioEmitterRef, AudioEmitterProps>(({
 
 AudioEmitter.displayName = 'AudioEmitter';
 
+/**
+ * Props for the AudioEnvironment component
+ * 
+ * @property type - Environment preset
+ * @property reverbDecay - Reverb decay time in seconds
+ * @property reverbWet - Reverb wet/dry mix (0-1)
+ * @property lowpassFrequency - Low pass filter frequency
+ * @property highpassFrequency - High pass filter frequency
+ */
 export interface AudioEnvironmentProps {
     type: 'outdoor' | 'indoor' | 'cave' | 'underwater' | 'none';
     reverbDecay?: number;
@@ -521,6 +827,34 @@ export interface AudioEnvironmentProps {
     highpassFrequency?: number;
 }
 
+/**
+ * Audio environment component for reverb and filter effects.
+ * Applies global audio processing based on environment type.
+ * 
+ * @example
+ * ```tsx
+ * // Cave environment with echo
+ * <AudioEnvironment
+ *   type="cave"
+ *   reverbDecay={4}
+ *   reverbWet={0.6}
+ * />
+ * 
+ * // Underwater muffled sound
+ * <AudioEnvironment
+ *   type="underwater"
+ *   lowpassFrequency={800}
+ * />
+ * 
+ * // Dynamic environment switching
+ * <AudioEnvironment
+ *   type={isIndoors ? 'indoor' : 'outdoor'}
+ * />
+ * ```
+ * 
+ * @param props - AudioEnvironmentProps configuration
+ * @returns null (effect only component)
+ */
 export function AudioEnvironment({
     type,
     reverbDecay,
@@ -550,6 +884,14 @@ export function AudioEnvironment({
     return null;
 }
 
+/**
+ * Props for the FootstepAudio component
+ * 
+ * @property surfaces - Map of surface type to audio URL
+ * @property defaultSurface - Fallback surface type
+ * @property volume - Footstep volume
+ * @property poolSize - Sound pool size per surface
+ */
 export interface FootstepAudioProps {
     surfaces: Record<string, string>;
     defaultSurface?: string;
@@ -557,10 +899,46 @@ export interface FootstepAudioProps {
     poolSize?: number;
 }
 
+/**
+ * Ref interface for FootstepAudio
+ * 
+ * @property playFootstep - Play footstep sound for a surface type
+ */
 export interface FootstepAudioRef {
     playFootstep: (surface?: string, position?: THREE.Vector3) => void;
 }
 
+/**
+ * Footstep audio system with multiple surface types and sound pooling.
+ * Prevents audio overlap with reusable sound pools.
+ * 
+ * @example
+ * ```tsx
+ * const footstepRef = useRef<FootstepAudioRef>(null);
+ * 
+ * <FootstepAudio
+ *   ref={footstepRef}
+ *   surfaces={{
+ *     grass: '/sounds/footstep-grass.mp3',
+ *     stone: '/sounds/footstep-stone.mp3',
+ *     wood: '/sounds/footstep-wood.mp3',
+ *     metal: '/sounds/footstep-metal.mp3'
+ *   }}
+ *   defaultSurface="stone"
+ *   volume={0.7}
+ *   poolSize={4}
+ * />
+ * 
+ * // Trigger footstep based on ground type
+ * const onStep = () => {
+ *   const surface = detectGroundMaterial();
+ *   footstepRef.current?.playFootstep(surface, playerPosition);
+ * };
+ * ```
+ * 
+ * @param props - FootstepAudioProps configuration
+ * @returns null (audio only component)
+ */
 export const FootstepAudio = forwardRef<FootstepAudioRef, FootstepAudioProps>(({
     surfaces,
     defaultSurface = 'default',
@@ -611,6 +989,17 @@ export const FootstepAudio = forwardRef<FootstepAudioRef, FootstepAudioProps>(({
 
 FootstepAudio.displayName = 'FootstepAudio';
 
+/**
+ * Props for the WeatherAudio component
+ * 
+ * @property rainUrl - Rain sound URL
+ * @property thunderUrl - Thunder sound URL
+ * @property windUrl - Wind sound URL
+ * @property rainIntensity - Rain volume (0-1)
+ * @property windIntensity - Wind volume (0-1)
+ * @property thunderActive - Enable random thunder
+ * @property fadeTime - Volume fade duration
+ */
 export interface WeatherAudioProps {
     rainUrl?: string;
     thunderUrl?: string;
@@ -621,6 +1010,35 @@ export interface WeatherAudioProps {
     fadeTime?: number;
 }
 
+/**
+ * Weather audio system for rain, wind, and thunder effects.
+ * Volumes can be dynamically adjusted based on weather intensity.
+ * 
+ * @example
+ * ```tsx
+ * // Storm with dynamic intensity
+ * const [stormIntensity, setStormIntensity] = useState(0);
+ * 
+ * <WeatherAudio
+ *   rainUrl="/sounds/rain-loop.mp3"
+ *   windUrl="/sounds/wind-loop.mp3"
+ *   thunderUrl="/sounds/thunder.mp3"
+ *   rainIntensity={stormIntensity * 0.8}
+ *   windIntensity={stormIntensity * 0.5}
+ *   thunderActive={stormIntensity > 0.7}
+ *   fadeTime={2}
+ * />
+ * 
+ * // Gentle rain
+ * <WeatherAudio
+ *   rainUrl="/sounds/light-rain.mp3"
+ *   rainIntensity={0.4}
+ * />
+ * ```
+ * 
+ * @param props - WeatherAudioProps configuration
+ * @returns React element with ambient audio components
+ */
 export function WeatherAudio({
     rainUrl,
     thunderUrl,

@@ -202,3 +202,24 @@ export type {
     FootstepAudioRef,
     WeatherAudioProps,
 } from './Audio';
+
+// Physics
+export {
+    CharacterController,
+    VehicleBody,
+    Destructible,
+    Buoyancy,
+    Ragdoll,
+} from './Physics';
+export type {
+    CharacterControllerProps,
+    CharacterControllerRef,
+    VehicleBodyProps,
+    VehicleBodyRef,
+    DestructibleProps,
+    DestructibleRef,
+    BuoyancyProps,
+    BuoyancyRef,
+    RagdollProps,
+    RagdollRef,
+} from './Physics';

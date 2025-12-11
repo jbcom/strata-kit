@@ -2,6 +2,7 @@
  * GPU-Based Particle System React Components
  *
  * Provides React components for particle effects using GPU-instanced rendering.
+ * @module components/Particles
  */
 
 import { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
@@ -18,6 +19,35 @@ import {
 
 export type { EmissionShape, ParticleForces, ParticleBehavior, EmitterShapeParams };
 
+/**
+ * Props for the ParticleEmitter component
+ * 
+ * @property position - Emitter position in world space
+ * @property positionVariance - Random variance applied to particle spawn positions
+ * @property velocity - Initial velocity direction and speed
+ * @property velocityVariance - Random variance applied to initial velocity
+ * @property maxParticles - Maximum number of particles in the system
+ * @property emissionRate - Particles emitted per second
+ * @property lifetime - Base particle lifetime in seconds
+ * @property lifetimeVariance - Random variance applied to lifetime
+ * @property startColor - Particle color at spawn
+ * @property endColor - Particle color at death
+ * @property startSize - Particle size at spawn
+ * @property endSize - Particle size at death
+ * @property sizeVariance - Random variance applied to size
+ * @property startOpacity - Opacity at spawn
+ * @property endOpacity - Opacity at death
+ * @property shape - Emission shape ('point', 'sphere', 'box', 'cone', 'disk')
+ * @property shapeParams - Parameters for the emission shape
+ * @property forces - Physics forces (gravity, wind, turbulence)
+ * @property behavior - Particle behavior modifiers
+ * @property texture - Optional texture for particle sprites
+ * @property blending - Blend mode for particles
+ * @property depthWrite - Whether particles write to depth buffer
+ * @property sortParticles - Whether to sort particles by depth
+ * @property autoStart - Start emitting immediately
+ * @property paused - Pause particle emission
+ */
 export interface ParticleEmitterProps {
     position?: [number, number, number] | THREE.Vector3;
     positionVariance?: [number, number, number] | THREE.Vector3;
@@ -46,6 +76,16 @@ export interface ParticleEmitterProps {
     paused?: boolean;
 }
 
+/**
+ * Ref interface for imperative ParticleEmitter control
+ * 
+ * @property emitter - The underlying core emitter instance
+ * @property emit - Emit a specific number of particles
+ * @property burst - Emit a burst of particles instantly
+ * @property reset - Reset the emitter, clearing all particles
+ * @property setPosition - Update emitter position
+ * @property setEmissionRate - Update emission rate
+ */
 export interface ParticleEmitterRef {
     emitter: CoreParticleEmitter;
     emit: (count: number) => void;
@@ -61,6 +101,36 @@ function toVector3(value: [number, number, number] | THREE.Vector3 | undefined, 
     return new THREE.Vector3(value[0], value[1], value[2]);
 }
 
+/**
+ * GPU-accelerated particle emitter component for creating particle effects.
+ * Uses instanced rendering for high performance with thousands of particles.
+ * 
+ * @example
+ * ```tsx
+ * // Basic fire effect
+ * <ParticleEmitter
+ *   position={[0, 0, 0]}
+ *   velocity={[0, 2, 0]}
+ *   startColor={0xff4400}
+ *   endColor={0xff0000}
+ *   startSize={0.3}
+ *   endSize={0.05}
+ *   lifetime={1.5}
+ *   emissionRate={100}
+ * />
+ * 
+ * // With forces and custom shape
+ * <ParticleEmitter
+ *   shape="cone"
+ *   shapeParams={{ radius: 1, angle: 45 }}
+ *   forces={{ gravity: [0, -9.8, 0], wind: [1, 0, 0] }}
+ *   maxParticles={5000}
+ * />
+ * ```
+ * 
+ * @param props - ParticleEmitterProps configuration
+ * @returns React element containing the particle system
+ */
 export const ParticleEmitter = forwardRef<ParticleEmitterRef, ParticleEmitterProps>(({
     position = [0, 0, 0],
     positionVariance,
@@ -196,12 +266,51 @@ export const ParticleEmitter = forwardRef<ParticleEmitterRef, ParticleEmitterPro
 
 ParticleEmitter.displayName = 'ParticleEmitter';
 
+/**
+ * Props for the ParticleBurst component
+ * 
+ * @property count - Number of particles to emit per burst
+ * @property trigger - When changed to truthy value, triggers a burst
+ * @property onComplete - Callback fired when burst particles have all died
+ */
 export interface ParticleBurstProps extends Omit<ParticleEmitterProps, 'emissionRate' | 'autoStart'> {
     count?: number;
     trigger?: boolean | number;
     onComplete?: () => void;
 }
 
+/**
+ * Particle burst component for one-shot particle effects.
+ * Useful for explosions, impacts, and other instantaneous effects.
+ * 
+ * @example
+ * ```tsx
+ * // Explosion effect triggered by state
+ * const [explode, setExplode] = useState(false);
+ * 
+ * <ParticleBurst
+ *   trigger={explode}
+ *   count={200}
+ *   position={hitPosition}
+ *   velocity={[0, 5, 0]}
+ *   velocityVariance={[3, 3, 3]}
+ *   startColor={0xffff00}
+ *   endColor={0xff0000}
+ *   lifetime={0.8}
+ *   onComplete={() => setExplode(false)}
+ * />
+ * 
+ * // Multiple bursts with unique keys
+ * <ParticleBurst
+ *   trigger={burstCount}
+ *   count={50}
+ *   shape="sphere"
+ * />
+ * ```
+ * 
+ * @param props - ParticleBurstProps configuration
+ * @returns React element containing the burst particle system
+ */
 export const ParticleBurst = forwardRef<ParticleEmitterRef, ParticleBurstProps>(({
     count = 100,
     trigger = false,

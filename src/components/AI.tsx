@@ -3,6 +3,7 @@
  *
  * Integrates Yuka game AI library with React Three Fiber.
  * Provides steering behaviors, pathfinding, FSM, and perception.
+ * @module components/AI
  */
 
 import React, {
@@ -19,10 +20,14 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import * as YUKA from 'yuka';
 
-// =============================================================================
-// TYPES
-// =============================================================================
-
+/**
+ * Context value provided by YukaEntityManager
+ * 
+ * @property manager - The Yuka EntityManager instance
+ * @property time - Yuka Time instance for delta time
+ * @property register - Function to register entities
+ * @property unregister - Function to unregister entities
+ */
 export interface YukaEntityManagerContextValue {
     manager: YUKA.EntityManager;
     time: YUKA.Time;
@@ -30,6 +35,17 @@ export interface YukaEntityManagerContextValue {
     unregister: (entity: YUKA.GameEntity) => void;
 }
 
+/**
+ * Props for the YukaVehicle component
+ * 
+ * @property maxSpeed - Maximum speed of the vehicle
+ * @property maxForce - Maximum steering force
+ * @property mass - Mass affecting momentum
+ * @property position - Initial position [x, y, z]
+ * @property rotation - Initial rotation [x, y, z]
+ * @property children - Child components to render
+ * @property onUpdate - Callback called each frame with vehicle and delta
+ */
 export interface YukaVehicleProps {
     maxSpeed?: number;
     maxForce?: number;
@@ -40,6 +56,14 @@ export interface YukaVehicleProps {
     onUpdate?: (vehicle: YUKA.Vehicle, delta: number) => void;
 }
 
+/**
+ * Ref interface for YukaVehicle imperative control
+ * 
+ * @property vehicle - The underlying Yuka Vehicle instance
+ * @property addBehavior - Add a steering behavior
+ * @property removeBehavior - Remove a steering behavior
+ * @property clearBehaviors - Remove all behaviors
+ */
 export interface YukaVehicleRef {
     vehicle: YUKA.Vehicle;
     addBehavior: (behavior: YUKA.SteeringBehavior) => void;
@@ -47,6 +71,15 @@ export interface YukaVehicleRef {
     clearBehaviors: () => void;
 }
 
+/**
+ * Props for the YukaPath component
+ * 
+ * @property waypoints - Array of waypoint positions [[x,y,z], ...]
+ * @property loop - Whether the path loops back to start
+ * @property visible - Show path visualization
+ * @property color - Color of the path line
+ * @property lineWidth - Width of the path line
+ */
 export interface YukaPathProps {
     waypoints: Array<[number, number, number]>;
     loop?: boolean;
@@ -55,10 +88,23 @@ export interface YukaPathProps {
     lineWidth?: number;
 }
 
+/**
+ * Ref interface for YukaPath
+ * 
+ * @property path - The underlying Yuka Path instance
+ */
 export interface YukaPathRef {
     path: YUKA.Path;
 }
 
+/**
+ * Configuration for a state in the state machine
+ * 
+ * @property name - Unique state name
+ * @property onEnter - Called when entering this state
+ * @property onExecute - Called each frame while in this state
+ * @property onExit - Called when exiting this state
+ */
 export interface StateConfig {
     name: string;
     onEnter?: (entity: YUKA.GameEntity) => void;
@@ -66,6 +112,14 @@ export interface StateConfig {
     onExit?: (entity: YUKA.GameEntity) => void;
 }
 
+/**
+ * Props for the YukaStateMachine component
+ * 
+ * @property entity - The entity this state machine controls
+ * @property states - Array of state configurations
+ * @property initialState - Name of the starting state
+ * @property globalState - Optional state that runs alongside current state
+ */
 export interface YukaStateMachineProps {
     entity?: YUKA.GameEntity;
     states: StateConfig[];
@@ -73,6 +127,14 @@ export interface YukaStateMachineProps {
     globalState?: StateConfig;
 }
 
+/**
+ * Ref interface for YukaStateMachine imperative control
+ * 
+ * @property stateMachine - The underlying Yuka StateMachine
+ * @property changeTo - Transition to a named state
+ * @property revert - Return to previous state
+ * @property getCurrentState - Get current state name
+ */
 export interface YukaStateMachineRef {
     stateMachine: YUKA.StateMachine<YUKA.GameEntity>;
     changeTo: (stateName: string) => void;
@@ -80,6 +142,14 @@ export interface YukaStateMachineRef {
     getCurrentState: () => string | null;
 }
 
+/**
+ * Props for the YukaNavMesh component
+ * 
+ * @property geometry - Three.js geometry to create nav mesh from
+ * @property visible - Show nav mesh visualization
+ * @property wireframe - Show as wireframe
+ * @property color - Color of the visualization
+ */
 export interface YukaNavMeshProps {
     geometry: THREE.BufferGeometry;
     visible?: boolean;
@@ -87,6 +157,14 @@ export interface YukaNavMeshProps {
     color?: THREE.ColorRepresentation;
 }
 
+/**
+ * Ref interface for YukaNavMesh imperative control
+ * 
+ * @property navMesh - The underlying Yuka NavMesh
+ * @property findPath - Find path between two points
+ * @property getRandomRegion - Get a random walkable region
+ * @property getClosestRegion - Get closest region to a point
+ */
 export interface YukaNavMeshRef {
     navMesh: YUKA.NavMesh;
     findPath: (from: THREE.Vector3, to: THREE.Vector3) => THREE.Vector3[];
@@ -94,12 +172,23 @@ export interface YukaNavMeshRef {
     getClosestRegion: (point: THREE.Vector3) => YUKA.Polygon | null;
 }
 
-// =============================================================================
-// CONTEXT
-// =============================================================================
-
 const YukaContext = createContext<YukaEntityManagerContextValue | null>(null);
 
+/**
+ * Hook to access the Yuka context within a YukaEntityManager.
+ * Must be used inside a YukaEntityManager component tree.
+ * 
+ * @example
+ * ```tsx
+ * function AIComponent() {
+ *   const { manager, register } = useYukaContext();
+ *   // Access Yuka functionality
+ * }
+ * ```
+ * 
+ * @returns YukaEntityManagerContextValue with manager and registration functions
+ * @throws Error if used outside YukaEntityManager
+ */
 export function useYukaContext(): YukaEntityManagerContextValue {
     const context = useContext(YukaContext);
     if (!context) {
@@ -107,10 +196,6 @@ export function useYukaContext(): YukaEntityManagerContextValue {
     }
     return context;
 }
-
-// =============================================================================
-// HELPER: Sync Yuka matrix to Three.js
-// =============================================================================
 
 function syncYukaToThree(yukaEntity: YUKA.GameEntity, threeObject: THREE.Object3D): void {
     const matrix = yukaEntity.worldMatrix;
@@ -132,14 +217,37 @@ function threeVector3ToYuka(threeVec: THREE.Vector3): YUKA.Vector3 {
     return new YUKA.Vector3(threeVec.x, threeVec.y, threeVec.z);
 }
 
-// =============================================================================
-// YUKA ENTITY MANAGER - Context Provider
-// =============================================================================
-
+/**
+ * Props for the YukaEntityManager component
+ * 
+ * @property children - Child components that can use Yuka AI
+ */
 export interface YukaEntityManagerProps {
     children?: ReactNode;
 }
 
+/**
+ * Context provider that manages Yuka AI entities and updates them each frame.
+ * Must wrap all Yuka-related components in your scene.
+ * 
+ * @example
+ * ```tsx
+ * <Canvas>
+ *   <YukaEntityManager>
+ *     <YukaVehicle maxSpeed={5}>
+ *       <mesh>
+ *         <boxGeometry />
+ *         <meshStandardMaterial />
+ *       </mesh>
+ *     </YukaVehicle>
+ *     <YukaPath waypoints={[[0,0,0], [10,0,0], [10,0,10]]} />
+ *   </YukaEntityManager>
+ * </Canvas>
+ * ```
+ * 
+ * @param props - YukaEntityManagerProps
+ * @returns Provider component for Yuka AI context
+ */
 export function YukaEntityManager({ children }: YukaEntityManagerProps): JSX.Element {
     const managerRef = useRef<YUKA.EntityManager>(new YUKA.EntityManager());
     const timeRef = useRef<YUKA.Time>(new YUKA.Time());
@@ -170,10 +278,43 @@ export function YukaEntityManager({ children }: YukaEntityManagerProps): JSX.Ele
     return <YukaContext.Provider value={contextValue}>{children}</YukaContext.Provider>;
 }
 
-// =============================================================================
-// YUKA VEHICLE - Steering Agent
-// =============================================================================
-
+/**
+ * Autonomous vehicle agent with steering behaviors.
+ * Syncs Yuka AI transforms to Three.js objects automatically.
+ * 
+ * @example
+ * ```tsx
+ * // Basic wandering agent
+ * const vehicleRef = useRef<YukaVehicleRef>(null);
+ * 
+ * useEffect(() => {
+ *   const wander = new YUKA.WanderBehavior();
+ *   vehicleRef.current?.addBehavior(wander);
+ * }, []);
+ * 
+ * <YukaVehicle
+ *   ref={vehicleRef}
+ *   maxSpeed={3}
+ *   position={[0, 0, 0]}
+ * >
+ *   <mesh><boxGeometry /></mesh>
+ * </YukaVehicle>
+ * 
+ * // Path following agent
+ * <YukaVehicle
+ *   maxSpeed={5}
+ *   onUpdate={(vehicle) => {
+ *     const follow = new YUKA.FollowPathBehavior(path);
+ *     vehicle.steering.add(follow);
+ *   }}
+ * >
+ *   <EnemyModel />
+ * </YukaVehicle>
+ * ```
+ * 
+ * @param props - YukaVehicleProps configuration
+ * @returns React element containing the vehicle group
+ */
 export const YukaVehicle = forwardRef<YukaVehicleRef, YukaVehicleProps>(function YukaVehicle(
     {
         maxSpeed = 5,
@@ -241,10 +382,38 @@ export const YukaVehicle = forwardRef<YukaVehicleRef, YukaVehicleProps>(function
     return <group ref={groupRef}>{children}</group>;
 });
 
-// =============================================================================
-// YUKA PATH - Visualizes and provides path
-// =============================================================================
-
+/**
+ * Path definition component for AI agents to follow.
+ * Provides waypoints for FollowPathBehavior and path visualization.
+ * 
+ * @example
+ * ```tsx
+ * // Patrol path with visualization
+ * const pathRef = useRef<YukaPathRef>(null);
+ * 
+ * <YukaPath
+ *   ref={pathRef}
+ *   waypoints={[
+ *     [0, 0, 0],
+ *     [10, 0, 0],
+ *     [10, 0, 10],
+ *     [0, 0, 10]
+ *   ]}
+ *   loop={true}
+ *   visible={true}
+ *   color="#00ff00"
+ * />
+ * 
+ * // Use with FollowPathBehavior
+ * useEffect(() => {
+ *   const follow = new YUKA.FollowPathBehavior(pathRef.current.path);
+ *   vehicleRef.current?.addBehavior(follow);
+ * }, []);
+ * ```
+ * 
+ * @param props - YukaPathProps configuration
+ * @returns React element with optional path visualization
+ */
 export const YukaPath = forwardRef<YukaPathRef, YukaPathProps>(function YukaPath(
     { waypoints, loop = false, visible = false, color = 0x00ff00, lineWidth = 2 },
     ref
@@ -291,10 +460,6 @@ export const YukaPath = forwardRef<YukaPathRef, YukaPathProps>(function YukaPath
     );
 });
 
-// =============================================================================
-// YUKA STATE MACHINE - FSM Wrapper
-// =============================================================================
-
 class YukaState extends YUKA.State<YUKA.GameEntity> {
     name: string;
     private _onEnter?: (entity: YUKA.GameEntity) => void;
@@ -322,6 +487,46 @@ class YukaState extends YUKA.State<YUKA.GameEntity> {
     }
 }
 
+/**
+ * Finite State Machine component for AI behavior control.
+ * Manages state transitions with enter/execute/exit callbacks.
+ * 
+ * @example
+ * ```tsx
+ * // Enemy AI with patrol and chase states
+ * const stateRef = useRef<YukaStateMachineRef>(null);
+ * 
+ * const states: StateConfig[] = [
+ *   {
+ *     name: 'patrol',
+ *     onEnter: () => console.log('Starting patrol'),
+ *     onExecute: (entity) => {
+ *       if (canSeePlayer(entity)) {
+ *         stateRef.current?.changeTo('chase');
+ *       }
+ *     }
+ *   },
+ *   {
+ *     name: 'chase',
+ *     onEnter: () => console.log('Chasing player!'),
+ *     onExecute: (entity) => {
+ *       if (!canSeePlayer(entity)) {
+ *         stateRef.current?.revert();
+ *       }
+ *     }
+ *   }
+ * ];
+ * 
+ * <YukaStateMachine
+ *   ref={stateRef}
+ *   states={states}
+ *   initialState="patrol"
+ * />
+ * ```
+ * 
+ * @param props - YukaStateMachineProps configuration
+ * @returns null (logic only component)
+ */
 export const YukaStateMachine = forwardRef<YukaStateMachineRef, YukaStateMachineProps>(
     function YukaStateMachine({ entity, states, initialState, globalState }, ref) {
         const stateMachineRef = useRef<YUKA.StateMachine<YUKA.GameEntity> | null>(null);
@@ -389,10 +594,44 @@ export const YukaStateMachine = forwardRef<YukaStateMachineRef, YukaStateMachine
     }
 );
 
-// =============================================================================
-// YUKA NAV MESH - Navigation Mesh
-// =============================================================================
-
+/**
+ * Navigation mesh component for AI pathfinding.
+ * Creates a walkable surface from Three.js geometry for A* pathfinding.
+ * 
+ * @example
+ * ```tsx
+ * // Create nav mesh from floor geometry
+ * const navMeshRef = useRef<YukaNavMeshRef>(null);
+ * 
+ * <YukaNavMesh
+ *   ref={navMeshRef}
+ *   geometry={floorGeometry}
+ *   visible={debugMode}
+ *   wireframe={true}
+ *   color="#0088ff"
+ * />
+ * 
+ * // Find path for AI movement
+ * const handleClick = (target: THREE.Vector3) => {
+ *   const path = navMeshRef.current?.findPath(
+ *     agentPosition,
+ *     target
+ *   );
+ *   if (path) {
+ *     moveAlongPath(path);
+ *   }
+ * };
+ * 
+ * // Get random patrol point
+ * const getPatrolPoint = () => {
+ *   const region = navMeshRef.current?.getRandomRegion();
+ *   return region?.centroid;
+ * };
+ * ```
+ * 
+ * @param props - YukaNavMeshProps configuration
+ * @returns React element with optional nav mesh visualization
+ */
 export const YukaNavMesh = forwardRef<YukaNavMeshRef, YukaNavMeshProps>(function YukaNavMesh(
     { geometry, visible = false, wireframe = true, color = 0x0088ff },
     ref
@@ -487,10 +726,6 @@ function createPolygonsFromGeometry(vertices: number[], indices: number[]): YUKA
 
     return polygons;
 }
-
-// =============================================================================
-// EXPORTS
-// =============================================================================
 
 export {
     yukaVector3ToThree,

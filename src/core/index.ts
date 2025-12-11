@@ -208,3 +208,41 @@ export type {
     SoundPoolConfig,
     AudioManagerConfig,
 } from './audio';
+
+// Physics system
+export {
+    CollisionLayer,
+    collisionFilters,
+    calculateImpulse,
+    calculateForce,
+    calculateJumpImpulse,
+    calculateLandingVelocity,
+    applyDrag,
+    calculateBuoyancyForce,
+    calculateSlopeAngle,
+    isWalkableSlope,
+    projectVelocityOntoGround,
+    calculateSteeringAngle,
+    calculateSuspensionForce,
+    calculateExplosionForce,
+    generateDebrisVelocity,
+    createDefaultPhysicsConfig,
+    createDefaultCharacterConfig,
+    createDefaultVehicleConfig,
+    createHumanoidRagdoll,
+    createDefaultDestructibleConfig,
+    createDefaultBuoyancyConfig,
+} from './physics';
+export type {
+    PhysicsConfig,
+    CollisionFilter,
+    CharacterControllerConfig,
+    VehicleConfig,
+    WheelConfig,
+    RagdollJointConfig,
+    RagdollBodyPart,
+    RagdollConfig,
+    PhysicsMaterial,
+    DestructibleConfig,
+    BuoyancyConfig,
+} from './physics';

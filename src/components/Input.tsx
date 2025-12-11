@@ -3,6 +3,7 @@
  * 
  * Revolutionary 3D joystick and trigger system with real depth, shadows, and haptics.
  * Replaces flat 2D controls with immersive 3D alternatives.
+ * @module components/Input
  */
 
 import React, { useRef, useEffect, useMemo, useCallback, forwardRef, useImperativeHandle } from 'react';
@@ -16,6 +17,14 @@ import {
     DragState,
 } from '../core/input';
 
+/**
+ * Base ref interface for all input controls
+ * 
+ * @property getAxis - Get current axis values
+ * @property getWorldPosition - Get control position in world space
+ * @property isActive - Check if control is currently active
+ * @property reset - Reset control to default state
+ */
 export interface InputControlRef {
     getAxis: () => InputAxis;
     getWorldPosition: () => THREE.Vector3;
@@ -23,6 +32,15 @@ export interface InputControlRef {
     reset: () => void;
 }
 
+/**
+ * Event callbacks for input controls
+ * 
+ * @property onActivate - Called when control is activated
+ * @property onDeactivate - Called when control is deactivated
+ * @property onAxisChange - Called when axis values change
+ * @property onPress - Called on initial press
+ * @property onRelease - Called when released
+ */
 export interface InputControlEvents {
     onActivate?: (event: InputEvent) => void;
     onDeactivate?: (event: InputEvent) => void;
@@ -31,6 +49,18 @@ export interface InputControlEvents {
     onRelease?: (event: InputEvent) => void;
 }
 
+/**
+ * Props for the Joystick3D component
+ * 
+ * @property position - Position in 3D space [x, y, z]
+ * @property baseColor - Color of the joystick base
+ * @property stalkColor - Color of the joystick stalk
+ * @property knobColor - Color of the draggable knob
+ * @property size - Overall size multiplier
+ * @property deadzone - Center deadzone threshold (0-1)
+ * @property returnSpeed - Speed of return to center
+ * @property maxTilt - Maximum tilt angle in radians
+ */
 export interface Joystick3DProps extends InputControlEvents {
     position?: [number, number, number];
     baseColor?: THREE.ColorRepresentation;
@@ -42,10 +72,47 @@ export interface Joystick3DProps extends InputControlEvents {
     maxTilt?: number;
 }
 
+/**
+ * Ref interface for Joystick3D with trauma feedback
+ */
 export interface Joystick3DRef extends InputControlRef {
     addTrauma: (amount: number) => void;
 }
 
+/**
+ * Physical 3D joystick control with real depth, shadows, and haptic feedback.
+ * Ideal for character movement, vehicle control, and camera manipulation.
+ * 
+ * @example
+ * ```tsx
+ * // Basic movement joystick
+ * const joystickRef = useRef<Joystick3DRef>(null);
+ * 
+ * <Joystick3D
+ *   ref={joystickRef}
+ *   position={[0, 0, 0]}
+ *   onAxisChange={(axis) => movePlayer(axis.x, axis.y)}
+ * />
+ * 
+ * // Styled joystick with custom colors
+ * <Joystick3D
+ *   position={[-2, 0.5, 2]}
+ *   baseColor="#222222"
+ *   stalkColor="#444444"
+ *   knobColor="#ff0000"
+ *   size={1.5}
+ *   maxTilt={Math.PI / 4}
+ * />
+ * 
+ * // With haptic feedback on collision
+ * const handleCollision = () => {
+ *   joystickRef.current?.addTrauma(0.5);
+ * };
+ * ```
+ * 
+ * @param props - Joystick3DProps configuration
+ * @returns React element containing the 3D joystick
+ */
 export const Joystick3D = forwardRef<Joystick3DRef, Joystick3DProps>(({
     position = [0, 0, 0],
     baseColor = '#333333',
@@ -251,6 +318,15 @@ export const Joystick3D = forwardRef<Joystick3DRef, Joystick3DProps>(({
 
 Joystick3D.displayName = 'Joystick3D';
 
+/**
+ * Props for the GroundSwitch component
+ * 
+ * @property position - Position in 3D space [x, y, z]
+ * @property axis - Axis of movement ('x' or 'z')
+ * @property throwDistance - Distance the lever travels
+ * @property material - Visual style ('steel', 'brass', 'chrome')
+ * @property size - Overall size multiplier
+ */
 export interface GroundSwitchProps extends InputControlEvents {
     position?: [number, number, number];
     axis?: 'x' | 'z';
@@ -259,11 +335,45 @@ export interface GroundSwitchProps extends InputControlEvents {
     size?: number;
 }
 
+/**
+ * Ref interface for GroundSwitch with toggle support
+ */
 export interface GroundSwitchRef extends InputControlRef {
     toggle: () => void;
     setValue: (value: number) => void;
 }
 
+/**
+ * Industrial ground-mounted lever switch with snapping positions.
+ * Great for railway switches, power controls, and mechanical puzzles.
+ * 
+ * @example
+ * ```tsx
+ * // Railway switch
+ * <GroundSwitch
+ *   position={[0, 0, 0]}
+ *   axis="z"
+ *   material="steel"
+ *   onActivate={() => switchTrack()}
+ * />
+ * 
+ * // Power lever
+ * <GroundSwitch
+ *   position={[2, 0, 0]}
+ *   material="brass"
+ *   throwDistance={0.8}
+ *   onAxisChange={(axis) => setPowerLevel(axis.y)}
+ * />
+ * 
+ * // Programmatic toggle
+ * const switchRef = useRef<GroundSwitchRef>(null);
+ * <GroundSwitch ref={switchRef} />
+ * switchRef.current?.toggle();
+ * ```
+ * 
+ * @param props - GroundSwitchProps configuration
+ * @returns React element containing the ground switch
+ */
 export const GroundSwitch = forwardRef<GroundSwitchRef, GroundSwitchProps>(({
     position = [0, 0, 0],
     axis = 'z',
@@ -467,6 +577,16 @@ export const GroundSwitch = forwardRef<GroundSwitchRef, GroundSwitchProps>(({
 
 GroundSwitch.displayName = 'GroundSwitch';
 
+/**
+ * Props for the PressurePlate component
+ * 
+ * @property position - Position in 3D space [x, y, z]
+ * @property size - Plate dimensions [width, height, depth]
+ * @property activationDepth - How far plate must be pressed
+ * @property springiness - Return spring strength
+ * @property color - Default plate color
+ * @property activeColor - Color when activated
+ */
 export interface PressurePlateProps extends InputControlEvents {
     position?: [number, number, number];
     size?: [number, number, number];
@@ -476,11 +596,44 @@ export interface PressurePlateProps extends InputControlEvents {
     activeColor?: THREE.ColorRepresentation;
 }
 
+/**
+ * Ref interface for PressurePlate with pressure feedback
+ */
 export interface PressurePlateRef extends InputControlRef {
     setPressed: (pressed: boolean) => void;
     getPressure: () => number;
 }
 
+/**
+ * Pressure-sensitive floor plate for weight-based puzzles and triggers.
+ * Features spring-back animation and activation threshold.
+ * 
+ * @example
+ * ```tsx
+ * // Door trigger
+ * <PressurePlate
+ *   position={[0, 0, 5]}
+ *   onActivate={() => openDoor()}
+ *   onDeactivate={() => closeDoor()}
+ * />
+ * 
+ * // Weighted puzzle plate
+ * <PressurePlate
+ *   position={[2, 0, 0]}
+ *   size={[2, 0.2, 2]}
+ *   activationDepth={0.15}
+ *   color="#996633"
+ *   activeColor="#669933"
+ * />
+ * 
+ * // Programmatic activation
+ * const plateRef = useRef<PressurePlateRef>(null);
+ * plateRef.current?.setPressed(true);
+ * ```
+ * 
+ * @param props - PressurePlateProps configuration
+ * @returns React element containing the pressure plate
+ */
 export const PressurePlate = forwardRef<PressurePlateRef, PressurePlateProps>(({
     position = [0, 0, 0],
     size = [1, 0.15, 1],
@@ -649,6 +802,17 @@ export const PressurePlate = forwardRef<PressurePlateRef, PressurePlateProps>(({
 
 PressurePlate.displayName = 'PressurePlate';
 
+/**
+ * Props for the WallButton component
+ * 
+ * @property position - Position in 3D space [x, y, z]
+ * @property rotation - Rotation angles [x, y, z]
+ * @property size - Button size multiplier
+ * @property type - 'momentary' returns on release, 'toggle' stays pressed
+ * @property color - Default button color
+ * @property activeColor - Color when pressed/active
+ * @property housingColor - Color of the button housing
+ */
 export interface WallButtonProps extends InputControlEvents {
     position?: [number, number, number];
     rotation?: [number, number, number];
@@ -659,11 +823,48 @@ export interface WallButtonProps extends InputControlEvents {
     housingColor?: THREE.ColorRepresentation;
 }
 
+/**
+ * Ref interface for WallButton with programmatic control
+ */
 export interface WallButtonRef extends InputControlRef {
     press: () => void;
     setActive: (active: boolean) => void;
 }
 
+/**
+ * Wall-mounted push button for doors, elevators, and machinery.
+ * Supports both momentary and toggle modes with visual feedback.
+ * 
+ * @example
+ * ```tsx
+ * // Elevator call button
+ * <WallButton
+ *   position={[5, 1.2, 0]}
+ *   rotation={[0, Math.PI / 2, 0]}
+ *   onPress={() => callElevator()}
+ * />
+ * 
+ * // Toggle light switch
+ * <WallButton
+ *   position={[0, 1.5, -3]}
+ *   type="toggle"
+ *   onActivate={() => lightsOn()}
+ *   onDeactivate={() => lightsOff()}
+ * />
+ * 
+ * // Emergency stop button
+ * <WallButton
+ *   position={[2, 1, 0]}
+ *   size={1.5}
+ *   color="#ff0000"
+ *   activeColor="#00ff00"
+ *   housingColor="#ffff00"
+ * />
+ * ```
+ * 
+ * @param props - WallButtonProps configuration
+ * @returns React element containing the wall button
+ */
 export const WallButton = forwardRef<WallButtonRef, WallButtonProps>(({
     position = [0, 0, 0],
     rotation = [0, 0, 0],
@@ -865,9 +1066,19 @@ export const WallButton = forwardRef<WallButtonRef, WallButtonProps>(({
 
 WallButton.displayName = 'WallButton';
 
+/**
+ * Trigger shape options for TriggerComposer
+ */
 export type TriggerShape = 'box' | 'sphere' | 'cylinder' | 'custom';
+
+/**
+ * Trigger behavior modes
+ */
 export type TriggerBehavior = 'momentary' | 'toggle' | 'axis' | 'pressure';
 
+/**
+ * Configuration for trigger geometry
+ */
 export interface TriggerConfig {
     shape: TriggerShape;
     size?: [number, number, number] | number;
@@ -875,6 +1086,9 @@ export interface TriggerConfig {
     customGeometry?: THREE.BufferGeometry;
 }
 
+/**
+ * Configuration for trigger material appearance
+ */
 export interface TriggerMaterialConfig {
     color?: THREE.ColorRepresentation;
     activeColor?: THREE.ColorRepresentation;
@@ -883,6 +1097,9 @@ export interface TriggerMaterialConfig {
     emissiveIntensity?: number;
 }
 
+/**
+ * Configuration for trigger behavior
+ */
 export interface TriggerBehaviorConfig {
     type: TriggerBehavior;
     axis?: 'x' | 'y' | 'z';
@@ -891,6 +1108,9 @@ export interface TriggerBehaviorConfig {
     returnSpeed?: number;
 }
 
+/**
+ * Props for the TriggerComposer component
+ */
 export interface TriggerComposerProps extends InputControlEvents {
     position?: [number, number, number];
     rotation?: [number, number, number];
@@ -899,11 +1119,46 @@ export interface TriggerComposerProps extends InputControlEvents {
     behaviorConfig?: TriggerBehaviorConfig;
 }
 
+/**
+ * Ref interface for TriggerComposer
+ */
 export interface TriggerComposerRef extends InputControlRef {
     setValue: (value: number) => void;
     getMesh: () => THREE.Mesh | null;
 }
 
+/**
+ * Composable trigger builder for creating custom interactive controls.
+ * Combine shape, material, and behavior configurations for unique triggers.
+ * 
+ * @example
+ * ```tsx
+ * // Custom sphere button
+ * <TriggerComposer
+ *   shapeConfig={{ shape: 'sphere', size: 0.5 }}
+ *   materialConfig={{ color: '#0066ff', activeColor: '#00ff66' }}
+ *   behaviorConfig={{ type: 'toggle' }}
+ *   onActivate={() => console.log('Activated!')}
+ * />
+ * 
+ * // Pressure-sensitive cylinder
+ * <TriggerComposer
+ *   shapeConfig={{ shape: 'cylinder', size: [0.3, 0.8, 0.3] }}
+ *   behaviorConfig={{ type: 'pressure', springiness: 20 }}
+ *   onAxisChange={(axis) => setForce(axis.y)}
+ * />
+ * 
+ * // Custom geometry trigger
+ * <TriggerComposer
+ *   shapeConfig={{ shape: 'custom', customGeometry: starGeometry }}
+ *   materialConfig={{ metalness: 0.9, roughness: 0.1 }}
+ *   behaviorConfig={{ type: 'momentary' }}
+ * />
+ * ```
+ * 
+ * @param props - TriggerComposerProps configuration
+ * @returns React element containing the composed trigger
+ */
 export const TriggerComposer = forwardRef<TriggerComposerRef, TriggerComposerProps>(({
     position = [0, 0, 0],
     rotation = [0, 0, 0],

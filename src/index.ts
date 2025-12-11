@@ -154,6 +154,28 @@ export {
     createAudioManager,
     calculateDistanceAttenuation,
     environmentPresets,
+    // Physics (pure TS)
+    CollisionLayer,
+    collisionFilters,
+    calculateImpulse,
+    calculateForce,
+    calculateJumpImpulse,
+    calculateLandingVelocity,
+    applyDrag,
+    calculateBuoyancyForce,
+    calculateSlopeAngle,
+    isWalkableSlope,
+    projectVelocityOntoGround,
+    calculateSteeringAngle,
+    calculateSuspensionForce,
+    calculateExplosionForce,
+    generateDebrisVelocity,
+    createDefaultPhysicsConfig,
+    createDefaultCharacterConfig,
+    createDefaultVehicleConfig,
+    createHumanoidRagdoll,
+    createDefaultDestructibleConfig,
+    createDefaultBuoyancyConfig,
 } from './core';
 export type {
     // SDF types
@@ -225,6 +247,18 @@ export type {
     EnvironmentConfig,
     SoundPoolConfig,
     AudioManagerConfig,
+    // Physics types
+    PhysicsConfig,
+    CollisionFilter,
+    CharacterControllerConfig,
+    VehicleConfig,
+    WheelConfig,
+    RagdollJointConfig,
+    RagdollBodyPart,
+    RagdollConfig,
+    PhysicsMaterial,
+    DestructibleConfig,
+    BuoyancyConfig,
 } from './core';
 
 // React components
@@ -302,6 +336,12 @@ export {
     WeatherAudio,
     useAudioContext,
     useAudioManager,
+    // Physics components
+    CharacterController,
+    VehicleBody,
+    Destructible,
+    Buoyancy,
+    Ragdoll,
 } from './components';
 
 // Presets (organized by layer: background, midground, foreground)
@@ -410,6 +450,17 @@ export type {
     FootstepAudioProps,
     FootstepAudioRef,
     WeatherAudioProps,
+    // Physics component types
+    CharacterControllerProps,
+    CharacterControllerRef,
+    VehicleBodyProps,
+    VehicleBodyRef,
+    DestructibleProps,
+    DestructibleRef,
+    BuoyancyProps,
+    BuoyancyRef,
+    RagdollProps,
+    RagdollRef,
 } from './components';
 
 // Hooks

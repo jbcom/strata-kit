@@ -2,6 +2,8 @@
  * Weather Components
  *
  * GPU-instanced weather effects including rain, snow, and lightning.
+ * Provides realistic precipitation and storm effects for outdoor scenes.
+ * @module components/Weather
  */
 
 import { useRef, useMemo, useEffect, useState } from 'react';
@@ -116,6 +118,17 @@ const SNOW_FRAGMENT_SHADER = `
   }
 `;
 
+/**
+ * Props for the Rain component
+ * 
+ * @property count - Number of rain drops to simulate
+ * @property areaSize - Size of the rain coverage area in world units
+ * @property height - Maximum height from which rain falls
+ * @property intensity - Visual intensity/opacity of rain (0-1)
+ * @property wind - Wind direction and strength affecting rain angle
+ * @property color - Color of rain drops
+ * @property dropLength - Length of individual rain drop streaks
+ */
 export interface RainProps {
     count?: number;
     areaSize?: number;
@@ -126,6 +139,35 @@ export interface RainProps {
     dropLength?: number;
 }
 
+/**
+ * GPU-instanced rain effect component for realistic precipitation.
+ * Automatically follows the camera to create infinite rain coverage.
+ * 
+ * @example
+ * ```tsx
+ * // Basic rain effect
+ * <Rain intensity={0.8} />
+ * 
+ * // Heavy storm with wind
+ * <Rain
+ *   count={20000}
+ *   intensity={1.0}
+ *   wind={new THREE.Vector3(2, 0, 1)}
+ *   dropLength={0.8}
+ *   color={0x8888aa}
+ * />
+ * 
+ * // Light drizzle
+ * <Rain
+ *   count={3000}
+ *   intensity={0.4}
+ *   areaSize={30}
+ * />
+ * ```
+ * 
+ * @param props - RainProps configuration
+ * @returns React element containing the rain particle system
+ */
 export function Rain({
     count = 10000,
     areaSize = 50,
@@ -219,6 +261,17 @@ export function Rain({
     return <mesh ref={meshRef} geometry={geometry} material={material} frustumCulled={false} />;
 }
 
+/**
+ * Props for the Snow component
+ * 
+ * @property count - Number of snowflakes to simulate
+ * @property areaSize - Size of the snow coverage area in world units
+ * @property height - Maximum height from which snow falls
+ * @property intensity - Visual intensity/opacity of snow (0-1)
+ * @property wind - Wind direction and strength affecting snowflake drift
+ * @property color - Color of snowflakes
+ * @property flakeSize - Base size of snowflakes
+ */
 export interface SnowProps {
     count?: number;
     areaSize?: number;
@@ -229,6 +282,34 @@ export interface SnowProps {
     flakeSize?: number;
 }
 
+/**
+ * GPU-instanced snow effect component for realistic snowfall.
+ * Features gentle drifting motion and automatic camera following.
+ * 
+ * @example
+ * ```tsx
+ * // Basic snowfall
+ * <Snow intensity={0.8} />
+ * 
+ * // Heavy blizzard with wind
+ * <Snow
+ *   count={10000}
+ *   intensity={1.0}
+ *   wind={new THREE.Vector3(1.5, 0, 0.5)}
+ *   flakeSize={0.2}
+ * />
+ * 
+ * // Light flurries
+ * <Snow
+ *   count={2000}
+ *   intensity={0.5}
+ *   flakeSize={0.1}
+ * />
+ * ```
+ * 
+ * @param props - SnowProps configuration
+ * @returns React element containing the snow particle system
+ */
 export function Snow({
     count = 5000,
     areaSize = 50,
@@ -327,6 +408,16 @@ export function Snow({
     return <mesh ref={meshRef} geometry={geometry} material={material} frustumCulled={false} />;
 }
 
+/**
+ * Props for the Lightning component
+ * 
+ * @property active - Whether lightning can strike
+ * @property frequency - Probability of lightning strike per frame (0-1)
+ * @property boltColor - Color of the lightning bolt
+ * @property flashColor - Color of the ambient flash
+ * @property flashIntensity - Brightness of the flash effect
+ * @property onStrike - Callback fired when lightning strikes
+ */
 export interface LightningProps {
     active?: boolean;
     frequency?: number;
@@ -336,6 +427,35 @@ export interface LightningProps {
     onStrike?: () => void;
 }
 
+/**
+ * Dynamic lightning effect component for storm scenes.
+ * Creates randomized lightning bolts with accompanying flash effects.
+ * 
+ * @example
+ * ```tsx
+ * // Basic lightning during storm
+ * <Lightning active={isStorming} />
+ * 
+ * // Frequent dramatic lightning
+ * <Lightning
+ *   active={true}
+ *   frequency={0.3}
+ *   flashIntensity={3}
+ *   boltColor={0xaaaaff}
+ *   onStrike={() => playThunderSound()}
+ * />
+ * 
+ * // Subtle distant lightning
+ * <Lightning
+ *   active={true}
+ *   frequency={0.05}
+ *   flashIntensity={1}
+ * />
+ * ```
+ * 
+ * @param props - LightningProps configuration
+ * @returns React element containing the lightning effect
+ */
 export function Lightning({
     active = true,
     frequency = 0.1,
@@ -469,6 +589,16 @@ export function Lightning({
     );
 }
 
+/**
+ * Props for the WeatherSystem component
+ * 
+ * @property weather - Weather state configuration
+ * @property rainCount - Number of rain particles
+ * @property snowCount - Number of snow particles
+ * @property areaSize - Coverage area for weather effects
+ * @property height - Height of weather effect area
+ * @property enableLightning - Whether to show lightning during storms
+ */
 export interface WeatherSystemProps {
     weather?: Partial<WeatherStateConfig>;
     rainCount?: number;
@@ -478,6 +608,45 @@ export interface WeatherSystemProps {
     enableLightning?: boolean;
 }
 
+/**
+ * Unified weather system component that manages rain, snow, and lightning.
+ * Automatically switches between weather types based on configuration.
+ * 
+ * @example
+ * ```tsx
+ * // Rain storm
+ * <WeatherSystem
+ *   weather={{
+ *     type: 'rain',
+ *     intensity: 0.8,
+ *     windIntensity: 0.5,
+ *     windDirection: new THREE.Vector3(1, 0, 0)
+ *   }}
+ * />
+ * 
+ * // Heavy thunderstorm
+ * <WeatherSystem
+ *   weather={{
+ *     type: 'storm',
+ *     intensity: 1.0,
+ *     temperature: 15
+ *   }}
+ *   enableLightning={true}
+ * />
+ * 
+ * // Snowfall (temperature below 0)
+ * <WeatherSystem
+ *   weather={{
+ *     type: 'snow',
+ *     intensity: 0.6,
+ *     temperature: -5
+ *   }}
+ * />
+ * ```
+ * 
+ * @param props - WeatherSystemProps configuration
+ * @returns React element containing the complete weather system
+ */
 export function WeatherSystem({
     weather,
     rainCount = 10000,

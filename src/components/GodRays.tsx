@@ -1,7 +1,9 @@
 /**
  * God Rays Components
  *
- * React components for volumetric light shafts and god rays effects
+ * React components for volumetric light shafts and god rays effects.
+ * Includes screen-space god rays, volumetric spotlights, and point lights.
+ * @module components/GodRays
  */
 
 import React, { useRef, useMemo, useEffect, forwardRef, useImperativeHandle } from 'react';
@@ -19,6 +21,22 @@ import {
     blendGodRayColors,
 } from '../core/godRays';
 
+/**
+ * Props for the GodRays component
+ * 
+ * @property lightPosition - Position of the light source (sun/moon)
+ * @property color - Base color of the rays
+ * @property intensity - Overall ray intensity
+ * @property decay - How quickly rays fade with distance
+ * @property density - Ray density/thickness
+ * @property samples - Quality (number of raymarching samples)
+ * @property exposure - Final exposure adjustment
+ * @property scattering - Atmospheric scattering amount
+ * @property noiseFactor - Amount of noise variation
+ * @property enabled - Toggle the effect
+ * @property sunAltitude - Sun angle for auto color/intensity
+ * @property atmosphereColor - Color for sunset/sunrise blending
+ */
 export interface GodRaysProps {
     lightPosition?: THREE.Vector3 | [number, number, number];
     color?: THREE.ColorRepresentation;
@@ -34,12 +52,49 @@ export interface GodRaysProps {
     atmosphereColor?: THREE.ColorRepresentation;
 }
 
+/**
+ * Ref interface for GodRays imperative control
+ */
 export interface GodRaysRef {
     material: THREE.ShaderMaterial | null;
     setIntensity: (intensity: number) => void;
     setLightPosition: (position: THREE.Vector3) => void;
 }
 
+/**
+ * Screen-space god rays effect for dramatic light shafts.
+ * Automatically handles sun position and atmospheric scattering.
+ * 
+ * @example
+ * ```tsx
+ * // Basic sun rays
+ * <GodRays
+ *   lightPosition={[100, 50, 0]}
+ *   intensity={0.8}
+ * />
+ * 
+ * // Sunset god rays with atmosphere
+ * <GodRays
+ *   lightPosition={sunPosition}
+ *   sunAltitude={15}
+ *   atmosphereColor={0xff6622}
+ *   intensity={1.2}
+ *   density={1.5}
+ * />
+ * 
+ * // High quality moonlight rays
+ * <GodRays
+ *   lightPosition={moonPosition}
+ *   color={0xccddff}
+ *   intensity={0.4}
+ *   samples={80}
+ *   decay={0.98}
+ * />
+ * ```
+ * 
+ * @param props - GodRaysProps configuration
+ * @returns React element containing the god rays effect
+ */
 export const GodRays = forwardRef<GodRaysRef, GodRaysProps>(function GodRays(
     {
         lightPosition = new THREE.Vector3(100, 50, 0),
@@ -145,8 +200,24 @@ export const GodRays = forwardRef<GodRaysRef, GodRaysProps>(function GodRays(
     );
 });
 
+/**
+ * Alias for GodRays - alternative naming convention
+ */
 export const LightShafts = GodRays;
 
+/**
+ * Props for the VolumetricSpotlight component
+ * 
+ * @property position - Light position in world space
+ * @property target - Point the light is aimed at
+ * @property color - Light color
+ * @property intensity - Light intensity
+ * @property angle - Cone angle in radians
+ * @property penumbra - Soft edge falloff (0-1)
+ * @property distance - Light range
+ * @property dustDensity - Amount of visible dust/fog
+ * @property enabled - Toggle the effect
+ */
 export interface VolumetricSpotlightProps {
     position?: THREE.Vector3 | [number, number, number];
     target?: THREE.Vector3 | [number, number, number];
@@ -159,12 +230,53 @@ export interface VolumetricSpotlightProps {
     enabled?: boolean;
 }
 
+/**
+ * Ref interface for VolumetricSpotlight imperative control
+ */
 export interface VolumetricSpotlightRef {
     material: THREE.ShaderMaterial | null;
     mesh: THREE.Mesh | null;
     setIntensity: (intensity: number) => void;
 }
 
+/**
+ * Volumetric spotlight with visible light cone in dusty/foggy environments.
+ * Great for dramatic stage lighting, flashlights, and searchlights.
+ * 
+ * @example
+ * ```tsx
+ * // Stage spotlight
+ * <VolumetricSpotlight
+ *   position={[0, 10, 0]}
+ *   target={[0, 0, 0]}
+ *   color={0xffffff}
+ *   intensity={1.5}
+ *   angle={Math.PI / 8}
+ *   dustDensity={0.6}
+ * />
+ * 
+ * // Colored dramatic lighting
+ * <VolumetricSpotlight
+ *   position={[5, 8, 5]}
+ *   target={[0, 1, 0]}
+ *   color={0xff4400}
+ *   intensity={2}
+ *   penumbra={0.3}
+ * />
+ * 
+ * // Flashlight beam
+ * <VolumetricSpotlight
+ *   position={playerPosition}
+ *   target={aimTarget}
+ *   angle={Math.PI / 12}
+ *   distance={20}
+ *   dustDensity={0.3}
+ * />
+ * ```
+ * 
+ * @param props - VolumetricSpotlightProps configuration
+ * @returns React element containing the volumetric spotlight
+ */
 export const VolumetricSpotlight = forwardRef<VolumetricSpotlightRef, VolumetricSpotlightProps>(
     function VolumetricSpotlight(
         {
@@ -262,6 +374,17 @@ export const VolumetricSpotlight = forwardRef<VolumetricSpotlightRef, Volumetric
     }
 );
 
+/**
+ * Props for the VolumetricPointLight component
+ * 
+ * @property position - Light position in world space
+ * @property color - Light color
+ * @property intensity - Light intensity
+ * @property radius - Light influence radius
+ * @property dustDensity - Amount of visible dust/fog
+ * @property flicker - Flicker animation amount (0-1)
+ * @property enabled - Toggle the effect
+ */
 export interface VolumetricPointLightProps {
     position?: THREE.Vector3 | [number, number, number];
     color?: THREE.ColorRepresentation;
@@ -272,12 +395,53 @@ export interface VolumetricPointLightProps {
     enabled?: boolean;
 }
 
+/**
+ * Ref interface for VolumetricPointLight imperative control
+ */
 export interface VolumetricPointLightRef {
     material: THREE.ShaderMaterial | null;
     mesh: THREE.Mesh | null;
     setIntensity: (intensity: number) => void;
 }
 
+/**
+ * Volumetric point light with visible glow sphere for atmospheric effects.
+ * Perfect for torches, lanterns, and magical light sources.
+ * 
+ * @example
+ * ```tsx
+ * // Torch light
+ * <VolumetricPointLight
+ *   position={[0, 2, 0]}
+ *   color={0xffaa44}
+ *   intensity={1.5}
+ *   radius={5}
+ *   flicker={0.3}
+ * />
+ * 
+ * // Magical orb
+ * <VolumetricPointLight
+ *   position={orbPosition}
+ *   color={0x44aaff}
+ *   intensity={2}
+ *   radius={3}
+ *   dustDensity={0.8}
+ * />
+ * 
+ * // Campfire glow
+ * <VolumetricPointLight
+ *   position={[0, 0.5, 0]}
+ *   color={0xff6600}
+ *   intensity={1.8}
+ *   radius={8}
+ *   flicker={0.5}
+ *   dustDensity={0.4}
+ * />
+ * ```
+ * 
+ * @param props - VolumetricPointLightProps configuration
+ * @returns React element containing the volumetric point light
+ */
 export const VolumetricPointLight = forwardRef<VolumetricPointLightRef, VolumetricPointLightProps>(
     function VolumetricPointLight(
         {
