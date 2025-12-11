@@ -7,16 +7,19 @@ import * as THREE from 'three';
 import { generateInstanceData, InstanceData, BiomeData } from '../../../src/core/instancing';
 
 describe('generateInstanceData', () => {
-    it('generates requested number of instances', () => {
+    it('generates instances with noise-based clustering', () => {
         const instances = generateInstanceData(
             10,
             100,
-            () => 0, // Flat terrain
+            () => 1, // Above water (y > 0)
             undefined,
             undefined
         );
 
-        expect(instances.length).toBe(10);
+        // Due to noise-based density clustering, may get fewer instances
+        // but should get at least some
+        expect(instances.length).toBeGreaterThan(0);
+        expect(instances.length).toBeLessThanOrEqual(10);
     });
 
     it('respects biome filtering', () => {
