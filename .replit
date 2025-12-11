@@ -16,18 +16,19 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Playwright MCP Server"
+args = "Strata Docs"
 
 [[workflows.workflow]]
-name = "Playwright MCP Server"
+name = "Strata Docs"
 author = "agent"
-
-[workflows.workflow.metadata]
-outputType = "console"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npx -y @executeautomation/playwright-mcp-server --port 8080"
+args = "npx serve packages/docs -l 5000"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
 
 [[ports]]
 localPort = 5000
