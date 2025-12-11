@@ -46,28 +46,13 @@ interface LayoutProps {
 
 const navLinks = [
   { path: '/', label: 'Home' },
+  { path: '/themes', label: 'Choose Theme' },
   { path: '/getting-started', label: 'Getting Started' },
   { path: '/api', label: 'API Reference' },
 ];
 
 const demoLinks = [
-  { path: '/demos/terrain', label: 'Terrain', icon: <TerrainIcon fontSize="small" /> },
-  { path: '/demos/water', label: 'Water', icon: <WaterIcon fontSize="small" /> },
-  { path: '/demos/sky', label: 'Sky', icon: <WbSunnyIcon fontSize="small" /> },
-  { path: '/demos/vegetation', label: 'Vegetation', icon: <GrassIcon fontSize="small" /> },
-  { path: '/demos/volumetrics', label: 'Volumetrics', icon: <CloudIcon fontSize="small" /> },
-  { path: '/demos/characters', label: 'Characters', icon: <PetsIcon fontSize="small" /> },
-  { path: '/demos/full-scene', label: 'Full Scene', icon: <SportsEsportsIcon fontSize="small" /> },
-  { path: '/demos/particles', label: 'Particles', icon: <FlareIcon fontSize="small" /> },
-  { path: '/demos/weather', label: 'Weather', icon: <AcUnitIcon fontSize="small" /> },
-  { path: '/demos/clouds', label: 'Clouds', icon: <CloudIcon fontSize="small" /> },
-  { path: '/demos/camera', label: 'Camera', icon: <VideocamIcon fontSize="small" /> },
-  { path: '/demos/decals', label: 'Decals', icon: <FormatPaintIcon fontSize="small" /> },
-  { path: '/demos/lod', label: 'LOD', icon: <ViewInArIcon fontSize="small" /> },
-  { path: '/demos/god-rays', label: 'God Rays', icon: <LightModeIcon fontSize="small" /> },
-  { path: '/demos/input', label: 'Input', icon: <GamepadIcon fontSize="small" /> },
   { path: '/demos/ai', label: 'AI', icon: <SmartToyIcon fontSize="small" /> },
-  { path: '/demos/audio', label: 'Audio', icon: <VolumeUpIcon fontSize="small" /> },
 ];
 
 export default function Layout({ children }: LayoutProps) {

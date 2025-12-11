@@ -3,32 +3,10 @@ import { Suspense, lazy } from 'react';
 import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
 
-const TerrainDemo = lazy(() => import('./pages/demos/TerrainDemo'));
-const WaterDemo = lazy(() => import('./pages/demos/WaterDemo'));
-const SkyDemo = lazy(() => import('./pages/demos/SkyDemo'));
-const VegetationDemo = lazy(() => import('./pages/demos/VegetationDemo'));
-const VolumetricsDemo = lazy(() => import('./pages/demos/VolumetricsDemo'));
-const CharactersDemo = lazy(() => import('./pages/demos/CharactersDemo'));
-const FullSceneDemo = lazy(() => import('./pages/demos/FullSceneDemo'));
 const GettingStarted = lazy(() => import('./pages/GettingStarted'));
 const ApiReference = lazy(() => import('./pages/ApiReference'));
-
-const ParticleDemo = lazy(() => import('./pages/demos/ParticleDemo'));
-const WeatherDemo = lazy(() => import('./pages/demos/WeatherDemo'));
-const CloudsDemo = lazy(() => import('./pages/demos/CloudsDemo'));
-const CameraDemo = lazy(() => import('./pages/demos/CameraDemo'));
-const DecalsDemo = lazy(() => import('./pages/demos/DecalsDemo'));
-const LODDemo = lazy(() => import('./pages/demos/LODDemo'));
-const GodRaysDemo = lazy(() => import('./pages/demos/GodRaysDemo'));
-const InputDemo = lazy(() => import('./pages/demos/InputDemo'));
+const ThemePreview = lazy(() => import('./pages/ThemePreview'));
 const AIDemo = lazy(() => import('./pages/demos/AIDemo'));
-const AudioDemo = lazy(() => import('./pages/demos/AudioDemo'));
-const PhysicsDemo = lazy(() => import('./pages/demos/PhysicsDemo'));
-const PostProcessingDemo = lazy(() => import('./pages/demos/PostProcessingDemo'));
-const AnimationDemo = lazy(() => import('./pages/demos/AnimationDemo'));
-const StateDemo = lazy(() => import('./pages/demos/StateDemo'));
-const UIDemo = lazy(() => import('./pages/demos/UIDemo'));
-const ShadersDemo = lazy(() => import('./pages/demos/ShadersDemo'));
 
 function Loading() {
   return (
@@ -42,8 +20,8 @@ function Loading() {
       <div style={{
         width: 60,
         height: 60,
-        border: '3px solid rgba(212, 175, 55, 0.2)',
-        borderTopColor: '#d4af37',
+        border: '3px solid rgba(17, 205, 239, 0.2)',
+        borderTopColor: '#11CDEF',
         borderRadius: '50%',
         animation: 'spin 1s linear infinite'
       }} />
@@ -64,29 +42,8 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/getting-started" element={<GettingStarted />} />
           <Route path="/api" element={<ApiReference />} />
-          <Route path="/demos/terrain" element={<TerrainDemo />} />
-          <Route path="/demos/water" element={<WaterDemo />} />
-          <Route path="/demos/sky" element={<SkyDemo />} />
-          <Route path="/demos/vegetation" element={<VegetationDemo />} />
-          <Route path="/demos/volumetrics" element={<VolumetricsDemo />} />
-          <Route path="/demos/characters" element={<CharactersDemo />} />
-          <Route path="/demos/full-scene" element={<FullSceneDemo />} />
-          <Route path="/demos/particles" element={<ParticleDemo />} />
-          <Route path="/demos/weather" element={<WeatherDemo />} />
-          <Route path="/demos/clouds" element={<CloudsDemo />} />
-          <Route path="/demos/camera" element={<CameraDemo />} />
-          <Route path="/demos/decals" element={<DecalsDemo />} />
-          <Route path="/demos/lod" element={<LODDemo />} />
-          <Route path="/demos/god-rays" element={<GodRaysDemo />} />
-          <Route path="/demos/input" element={<InputDemo />} />
+          <Route path="/themes" element={<ThemePreview />} />
           <Route path="/demos/ai" element={<AIDemo />} />
-          <Route path="/demos/audio" element={<AudioDemo />} />
-          <Route path="/demos/physics" element={<PhysicsDemo />} />
-          <Route path="/demos/postprocessing" element={<PostProcessingDemo />} />
-          <Route path="/demos/animation" element={<AnimationDemo />} />
-          <Route path="/demos/state" element={<StateDemo />} />
-          <Route path="/demos/ui" element={<UIDemo />} />
-          <Route path="/demos/shaders" element={<ShadersDemo />} />
         </Routes>
       </Suspense>
     </Layout>
