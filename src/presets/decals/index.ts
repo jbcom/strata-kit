@@ -6,6 +6,14 @@
  */
 
 import * as THREE from 'three';
+import {
+    createBulletHoleTexture,
+    createBloodSplatterTexture,
+    createScorchMarkTexture,
+    createFootprintTexture,
+    createWaterPuddleTexture,
+    createDecalTexture,
+} from '../../core/decals';
 
 export interface DecalOptions {
     position: THREE.Vector3;
@@ -16,6 +24,15 @@ export interface DecalOptions {
     material?: THREE.Material;
     depthTest?: boolean;
     depthWrite?: boolean;
+}
+
+export interface DecalPresetOptions {
+    position: THREE.Vector3;
+    normal: THREE.Vector3;
+    size?: number;
+    rotation?: number;
+    fadeTime?: number;
+    texture?: THREE.Texture;
 }
 
 /**
@@ -192,3 +209,91 @@ export function createBulletHoleDecal(
         texture: canvasTexture,
     });
 }
+
+function createDecalFromNormal(
+    position: THREE.Vector3,
+    normal: THREE.Vector3,
+    size: number,
+    rotationAngle: number,
+    texture: THREE.Texture
+): THREE.Mesh {
+    const up = new THREE.Vector3(0, 1, 0);
+    if (Math.abs(normal.dot(up)) > 0.99) {
+        up.set(0, 0, 1);
+    }
+
+    const quaternion = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
+    const rotQuat = new THREE.Quaternion().setFromAxisAngle(normal, rotationAngle);
+    quaternion.premultiply(rotQuat);
+    const rotation = new THREE.Euler().setFromQuaternion(quaternion);
+
+    const geometry = new THREE.PlaneGeometry(size, size);
+    const material = new THREE.MeshPhongMaterial({
+        map: texture,
+        transparent: true,
+        depthTest: true,
+        depthWrite: false,
+        polygonOffset: true,
+        polygonOffsetFactor: -4,
+        side: THREE.DoubleSide,
+    });
+
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.copy(position);
+    mesh.rotation.copy(rotation);
+
+    return mesh;
+}
+
+export function createFootprintDecal(options: DecalPresetOptions): THREE.Mesh {
+    const { position, normal, size = 0.15, rotation = 0 } = options;
+
+    const texture = options.texture ?? createFootprintTexture(64);
+    if (!texture) {
+        throw new Error('createFootprintDecal: Could not create texture');
+    }
+
+    return createDecalFromNormal(position, normal, size, rotation, texture);
+}
+
+export function createBloodSplatterDecal(options: DecalPresetOptions): THREE.Mesh {
+    const { position, normal, size = 0.5, rotation = 0 } = options;
+
+    const texture = options.texture ?? createBloodSplatterTexture(128);
+    if (!texture) {
+        throw new Error('createBloodSplatterDecal: Could not create texture');
+    }
+
+    return createDecalFromNormal(position, normal, size, rotation, texture);
+}
+
+export function createScorchMarkDecal(options: DecalPresetOptions): THREE.Mesh {
+    const { position, normal, size = 0.8, rotation = 0 } = options;
+
+    const texture = options.texture ?? createScorchMarkTexture(128);
+    if (!texture) {
+        throw new Error('createScorchMarkDecal: Could not create texture');
+    }
+
+    return createDecalFromNormal(position, normal, size, rotation, texture);
+}
+
+export function createWaterPuddleDecal(options: DecalPresetOptions): THREE.Mesh {
+    const { position, normal, size = 1.0, rotation = 0 } = options;
+
+    const texture = options.texture ?? createWaterPuddleTexture(128);
+    if (!texture) {
+        throw new Error('createWaterPuddleDecal: Could not create texture');
+    }
+
+    return createDecalFromNormal(position, normal, size, rotation, texture);
+}
+
+export {
+    createBulletHoleTexture,
+    createBloodSplatterTexture,
+    createScorchMarkTexture,
+    createFootprintTexture,
+    createWaterPuddleTexture,
+    createDecalTexture,
+};

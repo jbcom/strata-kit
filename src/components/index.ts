@@ -64,3 +64,55 @@ export type {
     CameraShakeRef,
     CameraTransitionProps,
 } from './Camera';
+
+// Decals and Billboards
+export {
+    Decal,
+    Billboard,
+    AnimatedBillboard,
+    DecalPool,
+} from './Decals';
+export type {
+    DecalProps,
+    DecalRef,
+    BillboardProps,
+    BillboardRef,
+    AnimatedBillboardProps,
+    AnimatedBillboardRef,
+    DecalPoolProps,
+    DecalPoolRef,
+} from './Decals';
+
+// LOD (Level of Detail)
+export {
+    LODMesh,
+    LODGroup,
+    Impostor,
+    LODVegetation,
+} from './LOD';
+export type {
+    LODMeshProps,
+    LODMeshRef,
+    LODGroupProps,
+    LODGroupRef,
+    ImpostorProps,
+    ImpostorRef,
+    LODVegetationProps,
+    LODVegetationRef,
+} from './LOD';
+
+// God Rays and Volumetric Lighting
+export {
+    GodRays,
+    LightShafts,
+    VolumetricSpotlight,
+    VolumetricPointLight,
+} from './GodRays';
+export type {
+    GodRaysProps,
+    GodRaysRef,
+    VolumetricSpotlightProps,
+    VolumetricSpotlightRef,
+    VolumetricPointLightProps,
+    VolumetricPointLightRef,
+} from './GodRays';

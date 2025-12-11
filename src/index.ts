@@ -88,6 +88,52 @@ export {
     calculateLookAhead,
     calculateHeadBob,
     calculateScreenShakeIntensity,
+    // Decals and billboards (pure TS)
+    DecalProjector,
+    updateBillboardRotation,
+    createBillboardMatrix,
+    sortBillboardsByDepth,
+    createSpriteSheetAnimation,
+    updateSpriteSheetAnimation,
+    getSpriteSheetUVs,
+    applySpriteSheetFrame,
+    createSpriteSheetMaterial,
+    createDecalTexture,
+    createBulletHoleTexture,
+    createBloodSplatterTexture,
+    createScorchMarkTexture,
+    createFootprintTexture,
+    createWaterPuddleTexture,
+    // LOD (pure TS)
+    LODManager,
+    calculateLODLevel,
+    createLODLevels,
+    simplifyGeometry,
+    generateLODGeometries,
+    createImpostorTexture,
+    createImpostorGeometry,
+    updateImpostorUV,
+    calculateImpostorAngle,
+    interpolateLODMaterials,
+    createDitherPattern,
+    calculateScreenSpaceSize,
+    shouldUseLOD,
+    createVegetationLODLevels,
+    calculateVegetationDensity,
+    batchLODObjects,
+    // God rays (pure TS)
+    createGodRaysMaterial,
+    createVolumetricSpotlightMaterial,
+    createVolumetricPointLightMaterial,
+    createSpotlightConeGeometry,
+    createPointLightSphereGeometry,
+    calculateRadialBlur,
+    calculateSunOcclusion,
+    calculateScatteringIntensity,
+    getLightScreenPosition,
+    calculateGodRayIntensityFromAngle,
+    updateGodRaysLightPosition,
+    blendGodRayColors,
 } from './core';
 export type {
     // SDF types
@@ -123,6 +169,26 @@ export type {
     CloudMaterialOptions,
     VolumetricCloudOptions,
     CloudSkyConfig,
+    // Decal types
+    DecalProjectorConfig,
+    DecalInstance,
+    BillboardConfig,
+    SpriteSheetConfig,
+    SpriteAnimationState,
+    // LOD types
+    LODLevel,
+    LODConfig,
+    LODState,
+    ImpostorConfig,
+    SimplificationOptions,
+    VegetationLODConfig,
+    // God rays types
+    GodRaysMaterialOptions,
+    VolumetricSpotlightMaterialOptions,
+    VolumetricPointLightMaterialOptions,
+    RadialBlurOptions,
+    OcclusionResult,
+    ScatteringParams,
 } from './core';
 
 // React components
@@ -157,6 +223,21 @@ export {
     CinematicCamera,
     CameraShake,
     useCameraTransition,
+    // Decal components
+    Decal,
+    Billboard,
+    AnimatedBillboard,
+    DecalPool,
+    // LOD components
+    LODMesh,
+    LODGroup,
+    Impostor,
+    LODVegetation,
+    // God rays components
+    GodRays,
+    LightShafts,
+    VolumetricSpotlight,
+    VolumetricPointLight,
 } from './components';
 
 // Presets (organized by layer: background, midground, foreground)
@@ -194,6 +275,31 @@ export type {
     CameraShakeProps,
     CameraShakeRef,
     CameraTransitionProps,
+    // Decal component types
+    DecalProps,
+    DecalRef,
+    BillboardProps,
+    BillboardRef,
+    AnimatedBillboardProps,
+    AnimatedBillboardRef,
+    DecalPoolProps,
+    DecalPoolRef,
+    // LOD component types
+    LODMeshProps,
+    LODMeshRef,
+    LODGroupProps,
+    LODGroupRef,
+    ImpostorProps,
+    ImpostorRef,
+    LODVegetationProps,
+    LODVegetationRef,
+    // God rays component types
+    GodRaysProps,
+    GodRaysRef,
+    VolumetricSpotlightProps,
+    VolumetricSpotlightRef,
+    VolumetricPointLightProps,
+    VolumetricPointLightRef,
 } from './components';
 
 // GLSL shaders

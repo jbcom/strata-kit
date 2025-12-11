@@ -56,6 +56,7 @@ export * from './billboards';
 export * from './shadows';
 export * from './postprocessing';
 export * from './reflections';
+export * from './lighting';
 
 // Weather
 export * from './weather';
@@ -70,7 +71,7 @@ export type { MolecularOptions, AtomData, BondData } from './molecular';
 export type { TerrainOptions } from './terrain';
 export type { VegetationOptions } from './vegetation';
 export type { ParticleEmitterOptions, ParticleSystem } from './particles';
-export type { DecalOptions } from './decals';
+export type { DecalOptions, DecalPresetOptions } from './decals';
 export type { BillboardOptions } from './billboards';
 export type { ShadowSystemOptions, ShadowSystem } from './shadows';
 export type {
@@ -81,7 +82,12 @@ export type {
 export type { ReflectionProbeOptions, ReflectionProbe } from './reflections';
 export type { WeatherPreset, WeatherPresetName } from './weather';
 export type { CloudPreset, CloudPresetName } from './clouds';
+export type { LightingPreset, LightingPresetName } from './lighting';
 
 // Camera presets
 export * from './camera';
 export type { CameraPreset, CameraPresetName } from './camera';
+
+// LOD presets
+export * from './lod';
+export type { LODPreset, LODPresetName } from './lod';

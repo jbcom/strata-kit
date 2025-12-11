@@ -41,6 +41,7 @@ export * from './raymarching';
 export * from './sky';
 export * from './volumetrics';
 export * from './clouds';
+export * from './godRays';
 
 // SDF primitives and operations
 export {
@@ -109,3 +110,57 @@ export type {
     CameraPath,
     ScreenShakeIntensity,
 } from './camera';
+
+// Decals and billboards
+export {
+    DecalProjector,
+    updateBillboardRotation,
+    createBillboardMatrix,
+    sortBillboardsByDepth,
+    createSpriteSheetAnimation,
+    updateSpriteSheetAnimation,
+    getSpriteSheetUVs,
+    applySpriteSheetFrame,
+    createSpriteSheetMaterial,
+    createDecalTexture,
+    createBulletHoleTexture,
+    createBloodSplatterTexture,
+    createScorchMarkTexture,
+    createFootprintTexture,
+    createWaterPuddleTexture,
+} from './decals';
+export type {
+    DecalProjectorConfig,
+    DecalInstance,
+    BillboardConfig,
+    SpriteSheetConfig,
+    SpriteAnimationState,
+} from './decals';
+
+// LOD (Level of Detail)
+export {
+    LODManager,
+    calculateLODLevel,
+    createLODLevels,
+    simplifyGeometry,
+    generateLODGeometries,
+    createImpostorTexture,
+    createImpostorGeometry,
+    updateImpostorUV,
+    calculateImpostorAngle,
+    interpolateLODMaterials,
+    createDitherPattern,
+    calculateScreenSpaceSize,
+    shouldUseLOD,
+    createVegetationLODLevels,
+    calculateVegetationDensity,
+    batchLODObjects,
+} from './lod';
+export type {
+    LODLevel,
+    LODConfig,
+    LODState,
+    ImpostorConfig,
+    SimplificationOptions,
+    VegetationLODConfig,
+} from './lod';

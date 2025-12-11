@@ -68,3 +68,21 @@ export {
     createVolumetricCloudUniforms,
 } from './clouds';
 export type { CloudLayerUniforms, VolumetricCloudUniforms } from './clouds';
+
+// God rays shaders
+export {
+    godRaysVertexShader,
+    godRaysFragmentShader,
+    volumetricSpotlightVertexShader,
+    volumetricSpotlightFragmentShader,
+    volumetricPointLightVertexShader,
+    volumetricPointLightFragmentShader,
+    createGodRaysUniforms,
+    createVolumetricSpotlightUniforms,
+    createVolumetricPointLightUniforms,
+} from './godRays';
+export type {
+    GodRaysUniforms,
+    VolumetricSpotlightUniforms,
+    VolumetricPointLightUniforms,
+} from './godRays';
