@@ -1,7 +1,7 @@
 {
-  "name": "strata-docs",
+  "name": "@strata/docs",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 5000",
@@ -13,6 +13,7 @@
     "@emotion/react": "^11.11.0",
     "@emotion/styled": "^11.11.0",
     "@jbcom/strata": "workspace:*",
+    "@strata/capacitor-plugin": "workspace:*",
     "@mui/icons-material": "^5.15.0",
     "@mui/material": "^5.15.0",
     "@react-three/drei": "^9.114.0",

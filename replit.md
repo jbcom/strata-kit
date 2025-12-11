@@ -3,24 +3,62 @@
 ## Overview
 Strata is a world-class procedural 3D graphics and game development library for React Three Fiber. It provides production-ready components for terrain, water, vegetation, sky, volumetrics, characters, particles, weather, cameras, AI, audio, physics, post-processing, animation, state management, UI, shaders, and interactive controls.
 
-## Project Structure
-- `src/` - TypeScript source code for the library
-  - `components/` - React Three Fiber components
-  - `core/` - Core algorithms (marching cubes, SDF, particles, weather, audio, AI, physics, animation, state, UI)
-  - `presets/` - Pre-configured setups for various effects
-  - `shaders/` - GLSL shader code and custom materials
-  - `hooks/` - React hooks (useYuka for AI behaviors, useGameState, useUndo, etc.)
-  - `utils/` - Utility functions
-- `docs-site/` - Vite + React documentation site with interactive demos
-  - `src/pages/demos/` - Live demo pages for each feature (24 demos)
-  - Uses Material UI for UI chrome
-  - Dogfoods @jbcom/strata components
-- `tests/` - Unit, integration, and e2e tests
-- `dist/` - Compiled library output
+## Project Structure (Monorepo)
+
+```
+├── packages/
+│   ├── capacitor-plugin/     # @strata/capacitor-plugin - Cross-platform input/haptics
+│   │   ├── src/              # TypeScript source
+│   │   │   ├── definitions.ts    # Plugin interface definitions
+│   │   │   ├── index.ts          # Plugin registration
+│   │   │   ├── web.ts            # Web implementation
+│   │   │   └── react/            # React hooks (useDevice, useInput, useHaptics)
+│   │   ├── android/          # Android native code (future)
+│   │   ├── ios/              # iOS native code (future)
+│   │   └── dist/             # Compiled output
+│   └── docs/                 # @strata/docs - Documentation website
+│       ├── src/
+│       │   ├── pages/demos/  # 24 interactive demo pages
+│       │   ├── components/   # Layout, DemoLayout, etc.
+│       │   └── App.tsx       # Route definitions
+│       └── vite.config.ts    # Vite bundler config
+├── src/                      # @jbcom/strata - Core library
+│   ├── components/           # React Three Fiber components
+│   ├── core/                 # Algorithms (marching cubes, SDF, particles, etc.)
+│   ├── presets/              # Pre-configured setups
+│   ├── shaders/              # GLSL shader code
+│   ├── hooks/                # React hooks (useYuka, useGameState, etc.)
+│   └── utils/                # Utility functions
+├── tests/                    # Unit, integration, and e2e tests
+├── config/                   # Environment configuration
+└── dist/                     # Compiled library output
+```
+
+## Packages
+
+### @jbcom/strata (Root)
+The core 3D graphics library with all React Three Fiber components.
+
+### @strata/capacitor-plugin
+Cross-platform input, device detection, and haptics for game development.
+
+**Features:**
+- Device detection (mobile/tablet/foldable/desktop, iOS/Android/Web)
+- Unified input (touch/keyboard/gamepad abstraction)
+- Haptic feedback (device vibration + gamepad rumble)
+- React hooks: `useDevice`, `useInput`, `useHaptics`, `useControlHints`
+
+**Platform Support:**
+- Web (pure browser)
+- iOS/Android via Capacitor
+- Desktop via Electron (@capacitor-community/electron)
+
+### @strata/docs
+Interactive documentation site with live demos. Uses Material UI for responsive layout.
 
 ## Feature Systems
 
-### Core Graphics (Original)
+### Core Graphics
 - **Terrain** - SDF-based terrain with marching cubes
 - **Water** - Reflective water with waves, AdvancedWater for oceans
 - **Vegetation** - GPU-instanced grass, trees, rocks
@@ -28,185 +66,81 @@ Strata is a world-class procedural 3D graphics and game development library for 
 - **Volumetrics** - Fog, underwater effects, enhanced fog
 - **Characters** - Animated characters with fur rendering
 
-### New Features (Dec 2024)
-
-#### GPU Particle System
-- `ParticleEmitter` component with GPU instancing
-- Presets: fire, smoke, sparks, magic, explosion
-- Forces: gravity, wind, turbulence
-- Emission shapes: point, sphere, cone, box
-
-#### Dynamic Weather
-- `Rain`, `Snow`, `Lightning` components
-- Weather state machine with smooth transitions
-- Wind simulation with gusts
-- Presets: clear, rain, thunderstorm, snow, blizzard
-
-#### Procedural Clouds
-- `CloudLayer`, `CloudSky`, `VolumetricClouds`
-- FBM noise-based generation with wind movement
-- Day/night color adaptation
-- Presets: clear, partly cloudy, overcast, stormy, sunset
-
-#### Camera Systems
-- `FollowCamera`, `OrbitCamera`, `FPSCamera`, `CinematicCamera`
-- Camera shake with trauma-based decay
-- FOV transitions, head bob, look-ahead
-- Presets: third-person action, RTS, side-scroller, cinematic
-
-#### Decals & Billboards
-- `Decal`, `Billboard`, `AnimatedBillboard`, `DecalPool`
-- Sprite sheet animation support
-- Automatic fade over time
-- Presets: bullet holes, blood, scorch marks, footprints
-
-#### LOD System
-- `LODMesh`, `LODGroup`, `Impostor`, `LODVegetation`
-- Automatic level-of-detail switching
-- Cross-fade transitions
-- Presets: performance, quality, mobile, desktop, ultra
-
-#### God Rays / Volumetric Lighting
-- `GodRays`, `VolumetricSpotlight`, `VolumetricPointLight`
-- Radial blur light shafts from sun
-- Scattering intensity based on viewing angle
-- Presets: cathedral, forest canopy, underwater, dusty room
-
-#### 3D Joystick/Trigger System
-- `Joystick3D` - Real 3D joystick with depth and shadows
-- `GroundSwitch` - Metallic lever with haptic feedback
-- `PressurePlate` - Floor depress button
-- `WallButton` - Mounted push button
-- `TriggerComposer` - Build custom triggers
-- Haptic feedback support
-
-#### YukaJS AI Integration
-- `YukaEntityManager` - AI entity management
-- `YukaVehicle` - Steering agent with behaviors
-- `YukaPath` - Waypoint visualization
-- `YukaStateMachine` - FSM wrapper
-- `YukaNavMesh` - Pathfinding on navmesh
-- Steering hooks: useSeek, useFlee, useWander, useFollowPath, etc.
-- Presets: guard, prey, predator, flock, follower
-
-#### Spatial Audio
-- `AudioProvider`, `AudioListener` - Web Audio API integration
-- `PositionalAudio` - 3D positioned sounds with falloff
-- `AmbientAudio` - Background audio
-- `AudioZone`, `AudioEmitter` - Trigger volumes and dynamic sources
-- Distance models: linear, inverse, exponential
-- Presets: forest, cave, city, underwater, combat
-
-#### Physics System (@react-three/rapier)
-- `CharacterController` - FPS/third-person character with WASD, jumping, slopes
-- `VehicleBody` - Car-like physics with wheels and suspension
-- `Destructible` - Breakable objects that shatter
-- `Buoyancy` - Floating objects with water simulation
-- `Ragdoll` - Full ragdoll body with joints
-- Presets: fps, thirdPerson, platformer, car, truck
-
-#### Post-Processing Effects
-- `CinematicEffects`, `DreamyEffects`, `HorrorEffects`, `NeonEffects`
-- `RealisticEffects`, `VintageEffects`, `DynamicDOF`
-- Bloom, depth of field, vignette, chromatic aberration, noise
-- Mood presets: cinematic, dreamy, horror, neon, vintage, noir, sci-fi
-
-#### Procedural Animation
-- `IKChain`, `IKLimb` - Inverse kinematics (FABRIK, CCD, two-bone)
-- `SpringBone`, `TailPhysics` - Spring dynamics for secondary motion
-- `LookAt`, `HeadTracker` - Head/eye tracking
-- `ProceduralWalk` - Procedural foot placement
-- `BreathingAnimation`, `BlinkController` - Subtle animations
-- Presets: humanArm, humanLeg, spiderLeg, tentacle, walk, run
-
-#### State Management
-- `GameStateProvider`, `useGameState` - React context for game state
-- `useSaveLoad`, `useUndo`, `useCheckpoint` - Save/load, undo/redo
-- `AutoSave` - Automatic save at intervals
-- `StateDebugger` - Debug overlay
-- Presets: RPG, puzzle, platformer, sandbox templates
-
-#### UI System (HUD)
-- `HealthBar`, `Nameplate`, `DamageNumber` - Entity UI
-- `ProgressBar3D` - 3D mesh-based progress bars
-- `Inventory` - Grid-based drag-and-drop inventory
-- `DialogBox` - Typewriter effect with choices
-- `Minimap`, `Crosshair`, `Tooltip`, `Notification`
-- Presets: rpg, fps, mmo, visual_novel
-
-#### Shader Library
-- `ToonMesh`, `HologramMesh`, `DissolveMesh` - Custom materials
-- `Forcefield`, `GlitchMesh`, `CrystalMesh`, `GradientMesh`
-- ShaderChunks: noise, lighting, UV, color, animation, effects
-- Presets: anime, comic, matrix, fire, ice, magic
+### Extended Features
+- **GPU Particles** - Fire, smoke, sparks, magic, explosion presets
+- **Weather** - Rain, snow, lightning with state machine
+- **Clouds** - Procedural FBM noise-based clouds
+- **Camera Systems** - Follow, orbit, FPS, cinematic cameras
+- **Decals & Billboards** - Sprite sheets, pooling, fade
+- **LOD System** - Automatic level-of-detail with cross-fade
+- **God Rays** - Volumetric lighting effects
+- **3D Input Controls** - Joystick, switches, pressure plates
+- **AI (YukaJS)** - Steering behaviors, FSM, navmesh pathfinding
+- **Spatial Audio** - 3D positioned sounds with falloff
+- **Physics (Rapier)** - Character controller, vehicles, ragdolls
+- **Post-Processing** - Cinematic, dreamy, horror, neon effects
+- **Procedural Animation** - IK chains, spring bones, look-at
+- **State Management** - Save/load, undo/redo, checkpoints
+- **Game UI** - Health bars, inventory, dialog, minimap
+- **Shader Library** - Toon, hologram, dissolve, forcefield
 
 ## Development Commands
-- `pnpm run build` - Compile TypeScript to dist/
-- `pnpm run dev` - Watch mode for development
-- `pnpm run test` - Run all tests (778 tests)
-- `pnpm run lint` - Run ESLint
-- `pnpm run format` - Format code with Prettier
 
-## Documentation Site
-Run `cd docs-site && pnpm dev` to start the documentation server on port 5000.
+### Root Level
+```bash
+pnpm run build          # Build core library
+pnpm run dev            # Watch mode
+pnpm run test           # Run all tests
+pnpm run lint           # ESLint
+pnpm run format         # Prettier
+```
 
-### Demo Pages (24 total)
+### Documentation Site
+```bash
+cd packages/docs && pnpm dev    # Start dev server on port 5000
+cd packages/docs && pnpm build  # Production build
+```
+
+### Capacitor Plugin
+```bash
+cd packages/capacitor-plugin && pnpm build  # Build plugin
+```
+
+## Demo Pages (24 total)
 - `/` - Homepage with hero scene
-- `/demos/terrain` - SDF terrain with marching cubes
-- `/demos/water` - Water and AdvancedWater components
-- `/demos/sky` - ProceduralSky with day/night cycle
-- `/demos/vegetation` - GPU-instanced grass, trees, rocks
-- `/demos/volumetrics` - Fog, underwater effects
-- `/demos/characters` - Animated characters with fur
-- `/demos/full-scene` - All features combined
-- `/demos/particles` - GPU particle effects
-- `/demos/weather` - Rain, snow, lightning
-- `/demos/clouds` - Procedural cloud layers
+- `/demos/terrain` - SDF terrain
+- `/demos/water` - Water components
+- `/demos/sky` - Day/night cycle
+- `/demos/vegetation` - Instanced vegetation
+- `/demos/volumetrics` - Fog effects
+- `/demos/characters` - Animated characters
+- `/demos/full-scene` - Combined features
+- `/demos/particles` - GPU particles
+- `/demos/weather` - Weather system
+- `/demos/clouds` - Procedural clouds
 - `/demos/camera` - Camera systems
 - `/demos/decals` - Decals and billboards
-- `/demos/lod` - Level of detail system
+- `/demos/lod` - Level of detail
 - `/demos/god-rays` - Volumetric lighting
-- `/demos/input` - 3D joystick and triggers
-- `/demos/ai` - YukaJS AI agents
+- `/demos/input` - 3D controls
+- `/demos/ai` - AI agents
 - `/demos/audio` - Spatial audio
-- `/demos/physics` - Physics with @react-three/rapier
-- `/demos/postprocessing` - Post-processing effects
-- `/demos/animation` - Procedural animation (IK, springs)
+- `/demos/physics` - Physics simulation
+- `/demos/postprocessing` - Post effects
+- `/demos/animation` - Procedural animation
 - `/demos/state` - State management
-- `/demos/ui` - Game HUD components
-- `/demos/shaders` - Custom shader materials
+- `/demos/ui` - Game HUD
+- `/demos/shaders` - Shader materials
 
 ## API Design Principles
-- Components accept `THREE.ColorRepresentation` (strings, hex numbers, Color objects)
-- Common props like `size`, `color`, `opacity` are exposed at the top level
-- Components support `forwardRef` for animation hooks
-- Consistent naming across all components
-- Framework-agnostic core logic (can be used outside React)
-- Comprehensive JSDoc documentation on all exports
-
-## Dependencies
-- React Three Fiber / Drei
-- Three.js
-- Yuka (game AI)
-- @react-three/rapier (physics)
-- @react-three/postprocessing (effects)
-- Material UI (docs site)
-- Vite (docs site bundler)
-- Vitest for testing
-- Playwright for e2e tests
-- pnpm workspace
-
-## Test Coverage
-- 778 unit tests covering all features
-- 24 demo pages with e2e tests across 5 browsers
-- Core systems, presets, and utilities fully tested
-- TypeScript compilation verified
+- Components accept `THREE.ColorRepresentation`
+- Common props exposed at top level
+- Components support `forwardRef`
+- Framework-agnostic core logic
+- Comprehensive JSDoc documentation
 
 ## Environment Configuration
 
-The project uses a multi-environment configuration system in `config/environments.ts`:
-
-### Environments
 | Environment | Detection | Base URL | Browser |
 |------------|-----------|----------|---------|
 | **local** | Default | localhost:5000 | Bundled Chromium |
@@ -214,31 +148,17 @@ The project uses a multi-environment configuration system in `config/environment
 | **staging** | `GITHUB_ACTIONS` set | localhost:5000 | Playwright MCP |
 | **production** | `NODE_ENV=production` | GitHub Pages | N/A |
 
-### Replit Development
-- Uses live dev URL from `REPLIT_DOMAINS` environment variable
-- Uses system Chromium (`CHROMIUM_PATH`) for faster tests
-- No software rendering needed - tests run ~3x faster
+## User Preferences
+- Responsive design for foldables (OnePlus Open) and tablets
+- Device-aware control hints (no WASD on mobile)
+- Thin one-line footer bar
+- Maximize canvas space in demos
+- Cross-platform support via Capacitor
 
-### GitHub Copilot Staging
-- VS Code MCP configuration in `.vscode/settings.json`
-- Playwright MCP server for browser automation (HTTP mode on port 8080)
-- Multi-browser testing (Chromium, Firefox, WebKit)
-
-### Playwright MCP Server
-The Playwright MCP server runs as a background workflow on startup:
-- **Port**: 8080
-- **Health Check**: `curl http://localhost:8080/health`
-- **MCP Endpoint**: `http://localhost:8080/mcp`
-- **Version**: @executeautomation/playwright-mcp-server
-
-### Running E2E Tests
-```bash
-# Replit (uses live dev URL)
-pnpm test:e2e
-
-# Local (starts dev server)
-pnpm test:e2e
-
-# Specific tests
-pnpm test:e2e --grep "Homepage"
-```
+## Recent Changes (Dec 2024)
+- Reorganized to monorepo structure under `packages/`
+- Created `@strata/capacitor-plugin` for cross-platform input/haptics
+- Moved docs-site to `packages/docs`
+- Redesigned DemoLayout with responsive top toolbar
+- Fixed AI demo flocking behaviors (YUKA Vector3 compatibility)
+- Added thin one-line footer

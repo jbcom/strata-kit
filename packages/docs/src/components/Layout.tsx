@@ -302,44 +302,77 @@ export default function Layout({ children }: LayoutProps) {
         component="footer"
         sx={{
           bgcolor: '#050508',
-          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-          py: 4,
-          textAlign: 'center',
+          borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+          py: 0.75,
+          px: 2,
         }}
       >
-        <Container>
-          <Stack
-            direction="row"
-            spacing={3}
-            justifyContent="center"
-            flexWrap="wrap"
-            sx={{ mb: 2 }}
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="center"
+          spacing={{ xs: 1, sm: 2 }}
+          flexWrap="wrap"
+          sx={{ 
+            '& a, & button': { 
+              fontSize: '0.7rem',
+              py: 0.25,
+              px: { xs: 0.5, sm: 1 },
+              minWidth: 'auto',
+            }
+          }}
+        >
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              color: 'text.secondary',
+              fontSize: '0.7rem',
+              display: { xs: 'none', sm: 'block' }
+            }}
           >
-            <Button
-              href="https://github.com/jbcom/strata"
-              target="_blank"
-              rel="noopener noreferrer"
-              color="inherit"
-              startIcon={<GitHubIcon />}
-            >
-              GitHub
-            </Button>
-            <Button
-              href="https://www.npmjs.com/package/@jbcom/strata"
-              target="_blank"
-              rel="noopener noreferrer"
-              color="inherit"
-            >
-              npm
-            </Button>
-            <Button component={RouterLink} to="/api" color="inherit">
-              API Reference
-            </Button>
-          </Stack>
-          <Typography variant="body2" color="text.secondary">
-            MIT License | Built with React Three Fiber
+            MIT
           </Typography>
-        </Container>
+          <Button
+            href="https://github.com/jbcom/strata"
+            target="_blank"
+            rel="noopener noreferrer"
+            color="inherit"
+            size="small"
+            startIcon={<GitHubIcon sx={{ fontSize: '0.9rem !important' }} />}
+            sx={{ textTransform: 'none' }}
+          >
+            GitHub
+          </Button>
+          <Button
+            href="https://www.npmjs.com/package/@jbcom/strata"
+            target="_blank"
+            rel="noopener noreferrer"
+            color="inherit"
+            size="small"
+            sx={{ textTransform: 'none' }}
+          >
+            npm
+          </Button>
+          <Button 
+            component={RouterLink} 
+            to="/api" 
+            color="inherit"
+            size="small"
+            sx={{ textTransform: 'none' }}
+          >
+            API
+          </Button>
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              color: 'text.disabled',
+              fontSize: '0.65rem',
+              display: { xs: 'none', md: 'block' }
+            }}
+          >
+            React Three Fiber
+          </Typography>
+        </Stack>
       </Box>
     </Box>
   );
