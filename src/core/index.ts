@@ -164,3 +164,47 @@ export type {
     SimplificationOptions,
     VegetationLODConfig,
 } from './lod';
+
+// Input system
+export {
+    InputManager,
+    InputStateMachine,
+    HapticFeedback,
+    createInputManager,
+    normalizeAxisValue,
+    clampAxis,
+    axisToAngle,
+    axisToMagnitude,
+    angleToAxis,
+} from './input';
+export type {
+    DragState,
+    InputAxis,
+    InputEvent,
+    HapticPattern,
+    GamepadState,
+    PointerState,
+    InputManagerConfig,
+} from './input';
+
+// Audio system
+export {
+    AudioManager,
+    AudioSource,
+    AmbientSource,
+    SoundPool,
+    ReverbEffect,
+    EnvironmentEffect,
+    createAudioManager,
+    calculateDistanceAttenuation,
+    environmentPresets,
+} from './audio';
+export type {
+    DistanceModel,
+    EnvironmentType,
+    AudioSourceConfig,
+    ReverbConfig,
+    EnvironmentConfig,
+    SoundPoolConfig,
+    AudioManagerConfig,
+} from './audio';

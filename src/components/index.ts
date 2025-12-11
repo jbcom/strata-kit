@@ -116,3 +116,89 @@ export type {
     VolumetricPointLightProps,
     VolumetricPointLightRef,
 } from './GodRays';
+
+// Input Controls
+export {
+    Joystick3D,
+    GroundSwitch,
+    PressurePlate,
+    WallButton,
+    TriggerComposer,
+} from './Input';
+export type {
+    InputControlRef,
+    InputControlEvents,
+    Joystick3DProps,
+    Joystick3DRef,
+    GroundSwitchProps,
+    GroundSwitchRef,
+    PressurePlateProps,
+    PressurePlateRef,
+    WallButtonProps,
+    WallButtonRef,
+    TriggerShape,
+    TriggerBehavior,
+    TriggerConfig,
+    TriggerMaterialConfig,
+    TriggerBehaviorConfig,
+    TriggerComposerProps,
+    TriggerComposerRef,
+} from './Input';
+
+// AI (YukaJS integration)
+export {
+    YukaEntityManager,
+    YukaVehicle,
+    YukaPath,
+    YukaStateMachine,
+    YukaNavMesh,
+    useYukaContext,
+    yukaVector3ToThree,
+    threeVector3ToYuka,
+    syncYukaToThree,
+} from './AI';
+export type {
+    YukaEntityManagerContextValue,
+    YukaEntityManagerProps,
+    YukaVehicleProps,
+    YukaVehicleRef,
+    YukaPathProps,
+    YukaPathRef,
+    StateConfig,
+    YukaStateMachineProps,
+    YukaStateMachineRef,
+    YukaNavMeshProps,
+    YukaNavMeshRef,
+} from './AI';
+
+// Audio
+export {
+    AudioProvider,
+    AudioListener,
+    PositionalAudio,
+    AmbientAudio,
+    AudioZone,
+    AudioEmitter,
+    AudioEnvironment,
+    FootstepAudio,
+    WeatherAudio,
+    useAudioContext,
+    useAudioManager,
+} from './Audio';
+export type {
+    AudioContextValue,
+    AudioProviderProps,
+    AudioListenerProps,
+    PositionalAudioProps,
+    PositionalAudioRef,
+    AmbientAudioProps,
+    AmbientAudioRef,
+    AudioZoneProps,
+    AudioZoneRef,
+    AudioEmitterProps,
+    AudioEmitterRef,
+    AudioEnvironmentProps,
+    FootstepAudioProps,
+    FootstepAudioRef,
+    WeatherAudioProps,
+} from './Audio';

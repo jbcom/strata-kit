@@ -91,3 +91,60 @@ export type { CameraPreset, CameraPresetName } from './camera';
 // LOD presets
 export * from './lod';
 export type { LODPreset, LODPresetName } from './lod';
+
+// Input presets
+export * from './input';
+export type {
+    InputPreset,
+    JoystickPreset,
+    SwitchPreset,
+    PlatePreset,
+    ButtonPreset,
+    TriggerPreset,
+    InputPresetType,
+} from './input';
+
+// AI presets
+export {
+    createGuardPreset,
+    createPreyPreset,
+    createPredatorPreset,
+    createFlockMemberPreset,
+    createFollowerPreset,
+    createFlock,
+} from './ai';
+export type {
+    AIPresetConfig,
+    GuardPresetConfig,
+    PreyPresetConfig,
+    PredatorPresetConfig,
+    FlockMemberPresetConfig,
+    FollowerPresetConfig,
+    AIPresetResult,
+    FlockConfig,
+    AIPresetName,
+} from './ai';
+
+// Audio presets
+export {
+    audioPresets,
+    footstepPresets,
+    combatSoundPresets,
+    weatherAudioPresets,
+    spatialAudioConfigs,
+    getAudioPreset,
+    getFootstepPreset,
+    getCombatSoundPreset,
+    createCustomAudioPreset,
+    calculateWeatherAudioIntensity,
+} from './audio';
+export type {
+    AudioPresetName,
+    SurfaceType,
+    AmbienceLayer,
+    AudioPreset,
+    FootstepPreset,
+    CombatSoundPreset,
+    WeatherAudioPreset,
+    SpatialAudioConfig,
+} from './audio';
