@@ -196,7 +196,7 @@ export function opSmoothIntersection(d1: number, d2: number, k: number): number 
 }
 
 // ============================================================================
-// NOISE FUNCTIONS
+// NOISE FUNCTIONS (Legacy - prefer @see core/math for new code)
 // ============================================================================
 
 /**
@@ -205,6 +205,8 @@ export function opSmoothIntersection(d1: number, d2: number, k: number): number 
  * The constants 127.1 and 43758.5453 are standard values used in procedural noise generation
  * to produce pseudo-random, well-distributed values. These values are commonly found in
  * hash functions for noise algorithms, such as those by Inigo Quilez.
+ *
+ * @deprecated For new code, use simplex-noise based functions from core/math module
  */
 function hash(x: number): number {
     return (((Math.sin(x * 127.1) * 43758.5453) % 1) + 1) % 1;
@@ -216,6 +218,9 @@ function hash3(x: number, y: number, z: number): number {
 
 /**
  * 3D Value noise
+ *
+ * @deprecated For new code, use createNoise3D from core/math module which provides
+ * simplex noise with better performance and distribution
  */
 export function noise3D(x: number, y: number, z: number): number {
     const ix = Math.floor(x);
@@ -255,6 +260,9 @@ export function noise3D(x: number, y: number, z: number): number {
 
 /**
  * Fractal Brownian Motion (FBM) - layered noise
+ *
+ * @deprecated For new code, use fbm3D from core/math module which provides
+ * simplex-based FBM with configurable frequency, persistence, and lacunarity
  */
 export function fbm(x: number, y: number, z: number, octaves: number = 4): number {
     let value = 0;
@@ -274,6 +282,8 @@ export function fbm(x: number, y: number, z: number, octaves: number = 4): numbe
 
 /**
  * Domain warping for more organic shapes
+ *
+ * @deprecated For new code, use warpedNoise3D from core/math module
  */
 export function warpedFbm(x: number, y: number, z: number, octaves: number = 4): number {
     const warpStrength = 0.5;

@@ -4,6 +4,8 @@
  * @public
  */
 
+import { useRef, useCallback } from 'react';
+import { useFrame } from '@react-three/fiber';
 import type { BaseEntity, SystemFn, SystemConfig, StrataWorld } from './types';
 
 /**
@@ -131,4 +133,99 @@ export function conditionalSystem<T extends BaseEntity>(
   return (world: StrataWorld<T>, deltaTime: number) => {
     if (predicate()) system(world, deltaTime);
   };
+}
+
+/**
+ * Configuration for the useSystem hook.
+ * @public
+ */
+export interface UseSystemOptions {
+  enabled?: boolean;
+  priority?: number;
+}
+
+/**
+ * React hook for running an ECS system within React Three Fiber's render loop.
+ * Automatically executes the system on each frame using useFrame.
+ *
+ * @param world - The Strata ECS world to operate on
+ * @param system - The system function to execute each frame
+ * @param options - Optional configuration (enabled, priority)
+ * @returns Object with control methods to enable/disable the system
+ *
+ * @example
+ * ```typescript
+ * function MovementSystem() {
+ *   const world = useContext(ECSContext);
+ *
+ *   const movementSystem = createSystem<GameEntity>(
+ *     ['position', 'velocity'],
+ *     (entity, delta) => {
+ *       entity.position.x += entity.velocity!.x * delta;
+ *     }
+ *   );
+ *
+ *   const { setEnabled } = useSystem(world, movementSystem, { priority: 0 });
+ *
+ *   return null;
+ * }
+ * ```
+ */
+export function useSystem<T extends BaseEntity>(
+  world: StrataWorld<T>,
+  system: SystemFn<T>,
+  options: UseSystemOptions = {}
+): { setEnabled: (enabled: boolean) => void; isEnabled: () => boolean } {
+  const { enabled = true, priority = 0 } = options;
+  const enabledRef = useRef(enabled);
+
+  const setEnabled = useCallback((value: boolean) => {
+    enabledRef.current = value;
+  }, []);
+
+  const isEnabled = useCallback(() => enabledRef.current, []);
+
+  useFrame((_, delta) => {
+    if (enabledRef.current) {
+      system(world, delta);
+    }
+  }, priority);
+
+  return { setEnabled, isEnabled };
+}
+
+/**
+ * React hook for running a system scheduler within React Three Fiber's render loop.
+ * Executes all registered systems in priority order on each frame.
+ *
+ * @param scheduler - The system scheduler to run
+ * @param world - The Strata ECS world to operate on
+ * @param priority - Optional useFrame priority (default: 0)
+ *
+ * @example
+ * ```typescript
+ * function GameLoop() {
+ *   const world = useContext(ECSContext);
+ *   const scheduler = useMemo(() => createSystemScheduler<GameEntity>(), []);
+ *
+ *   useEffect(() => {
+ *     scheduler.register({ name: 'movement', fn: movementSystem });
+ *     scheduler.register({ name: 'physics', fn: physicsSystem, priority: 10 });
+ *     return () => scheduler.clear();
+ *   }, [scheduler]);
+ *
+ *   useScheduler(scheduler, world);
+ *
+ *   return null;
+ * }
+ * ```
+ */
+export function useScheduler<T extends BaseEntity>(
+  scheduler: SystemScheduler<T>,
+  world: StrataWorld<T>,
+  priority: number = 0
+): void {
+  useFrame((_, delta) => {
+    scheduler.run(world, delta);
+  }, priority);
 }

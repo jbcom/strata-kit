@@ -27,16 +27,13 @@
  */
 
 export { createGameStore, createPersistenceAdapter } from './store';
-export type { GameStoreApi } from './store';
+export type { GameStoreApi, GameStoreState, GameStoreActions, GameStore } from './store';
 
 export type {
   SaveData,
   CheckpointData,
   PersistenceAdapter,
   StoreConfig,
-  GameStoreState,
-  GameStoreActions,
-  GameStore,
   CheckpointOptions,
   StateChangeType,
   StateChangeEvent,

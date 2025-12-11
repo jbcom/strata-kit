@@ -116,21 +116,23 @@ export interface GameStoreApi<T> {
  * await save('slot1');
  * ```
  */
-export function createGameStore<T extends Record<string, unknown>>(
+export function createGameStore<T extends object>(
   initialState: T,
   config: StoreConfig<T> = {}
 ): GameStoreApi<T> {
   const mergedConfig = { ...DEFAULT_CONFIG, ...config };
   const persistence: PersistenceAdapter = config.persistenceAdapter ?? webPersistenceAdapter;
   const checkpoints = new Map<string, CheckpointData<T>>();
+  
+  const clonedInitial = JSON.parse(JSON.stringify(initialState)) as T;
 
   type State = GameStore<T>;
 
   const baseStore = create<State>()(
     temporal(
       immer((set, get) => ({
-        data: structuredClone(initialState),
-        _initial: structuredClone(initialState),
+        data: JSON.parse(JSON.stringify(initialState)) as T,
+        _initial: clonedInitial,
         _version: mergedConfig.version,
         _lastSaved: null,
         _isDirty: false,
@@ -159,7 +161,7 @@ export function createGameStore<T extends Record<string, unknown>>(
 
         reset: () => {
           set((state) => {
-            (state as GameStoreState<T>).data = structuredClone(state._initial as T);
+            (state as GameStoreState<T>).data = JSON.parse(JSON.stringify(clonedInitial)) as T;
             state._isDirty = false;
           });
         },

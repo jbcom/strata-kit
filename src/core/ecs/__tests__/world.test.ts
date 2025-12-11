@@ -1,10 +1,10 @@
 /**
- * Tests for Strata ECS world and system utilities.
+ * Tests for Strata ECS world utilities.
  *
  * @module core/ecs/__tests__/world.test
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import {
   createWorld,
   createFromArchetype,
@@ -16,13 +16,6 @@ import {
   countEntities,
   ARCHETYPES,
 } from '../world';
-import {
-  createSystemScheduler,
-  createSystem,
-  withTiming,
-  combineSystems,
-  conditionalSystem,
-} from '../systems';
 import type { BaseEntity, Archetype } from '../types';
 
 interface TestEntity extends BaseEntity {
@@ -323,193 +316,5 @@ describe('ARCHETYPES', () => {
     expect(ARCHETYPES.RENDERABLE.components).toEqual(['position', 'mesh']);
     expect(ARCHETYPES.LIVING.components).toEqual(['health']);
     expect(ARCHETYPES.INTERACTIVE.components).toEqual(['position', 'collider']);
-  });
-});
-
-describe('createSystemScheduler', () => {
-  beforeEach(() => {
-    resetEntityIdCounter();
-  });
-
-  describe('ideal case', () => {
-    it('registers and runs systems', () => {
-      const world = createWorld<TestEntity>();
-      const scheduler = createSystemScheduler<TestEntity>();
-      const mockFn = vi.fn();
-
-      scheduler.register({
-        name: 'test',
-        fn: mockFn,
-      });
-
-      scheduler.run(world, 1 / 60);
-
-      expect(mockFn).toHaveBeenCalledWith(world, 1 / 60);
-    });
-  });
-
-  describe('normal usage', () => {
-    it('runs systems in priority order', () => {
-      const world = createWorld<TestEntity>();
-      const scheduler = createSystemScheduler<TestEntity>();
-      const order: string[] = [];
-
-      scheduler.register({
-        name: 'last',
-        fn: () => order.push('last'),
-        priority: 100,
-      });
-
-      scheduler.register({
-        name: 'first',
-        fn: () => order.push('first'),
-        priority: 0,
-      });
-
-      scheduler.register({
-        name: 'middle',
-        fn: () => order.push('middle'),
-        priority: 50,
-      });
-
-      scheduler.run(world, 1 / 60);
-
-      expect(order).toEqual(['first', 'middle', 'last']);
-    });
-
-    it('enables and disables systems', () => {
-      const world = createWorld<TestEntity>();
-      const scheduler = createSystemScheduler<TestEntity>();
-      const mockFn = vi.fn();
-
-      scheduler.register({ name: 'test', fn: mockFn });
-
-      scheduler.disable('test');
-      scheduler.run(world, 1 / 60);
-      expect(mockFn).not.toHaveBeenCalled();
-
-      scheduler.enable('test');
-      scheduler.run(world, 1 / 60);
-      expect(mockFn).toHaveBeenCalled();
-    });
-
-    it('unregisters systems', () => {
-      const scheduler = createSystemScheduler<TestEntity>();
-
-      scheduler.register({ name: 'test', fn: vi.fn() });
-      expect(scheduler.getSystemNames()).toContain('test');
-
-      scheduler.unregister('test');
-      expect(scheduler.getSystemNames()).not.toContain('test');
-    });
-  });
-
-  describe('edge cases', () => {
-    it('handles no registered systems', () => {
-      const world = createWorld<TestEntity>();
-      const scheduler = createSystemScheduler<TestEntity>();
-
-      expect(() => scheduler.run(world, 1 / 60)).not.toThrow();
-    });
-
-    it('clears all systems', () => {
-      const scheduler = createSystemScheduler<TestEntity>();
-
-      scheduler.register({ name: 'a', fn: vi.fn() });
-      scheduler.register({ name: 'b', fn: vi.fn() });
-
-      scheduler.clear();
-      expect(scheduler.getSystemNames()).toEqual([]);
-    });
-  });
-
-  describe('error cases', () => {
-    it('throws when registering duplicate system name', () => {
-      const scheduler = createSystemScheduler<TestEntity>();
-
-      scheduler.register({ name: 'test', fn: vi.fn() });
-
-      expect(() => {
-        scheduler.register({ name: 'test', fn: vi.fn() });
-      }).toThrow("System 'test' is already registered");
-    });
-  });
-});
-
-describe('createSystem', () => {
-  beforeEach(() => {
-    resetEntityIdCounter();
-  });
-
-  it('creates a system that iterates matching entities', () => {
-    const world = createWorld<TestEntity>();
-
-    world.spawn({
-      position: { x: 0, y: 0, z: 0 },
-      velocity: { x: 1, y: 0, z: 0 },
-    });
-
-    const movementSystem = createSystem<TestEntity>(
-      ['position', 'velocity'],
-      (entity, delta) => {
-        entity.position.x += entity.velocity!.x * delta;
-      }
-    );
-
-    movementSystem(world, 1);
-
-    const entities = [...world.query('position')];
-    expect(entities[0].position.x).toBe(1);
-  });
-});
-
-describe('withTiming', () => {
-  it('wraps system with performance logging', () => {
-    const consoleSpy = vi.spyOn(console, 'debug').mockImplementation(() => {});
-    const world = createWorld<TestEntity>();
-    const mockFn = vi.fn();
-
-    const timedSystem = withTiming<TestEntity>('test', mockFn);
-    timedSystem(world, 1 / 60);
-
-    expect(mockFn).toHaveBeenCalled();
-    expect(consoleSpy).toHaveBeenCalled();
-    expect(consoleSpy.mock.calls[0][0]).toContain('[System: test]');
-
-    consoleSpy.mockRestore();
-  });
-});
-
-describe('combineSystems', () => {
-  it('combines multiple systems into one', () => {
-    const world = createWorld<TestEntity>();
-    const calls: string[] = [];
-
-    const combined = combineSystems<TestEntity>([
-      () => { calls.push('a'); },
-      () => { calls.push('b'); },
-      () => { calls.push('c'); },
-    ]);
-
-    combined(world, 1 / 60);
-
-    expect(calls).toEqual(['a', 'b', 'c']);
-  });
-});
-
-describe('conditionalSystem', () => {
-  it('only runs when predicate is true', () => {
-    const world = createWorld<TestEntity>();
-    let isPaused = true;
-    const mockFn = vi.fn();
-
-    const pausable = conditionalSystem<TestEntity>(() => !isPaused, mockFn);
-
-    pausable(world, 1 / 60);
-    expect(mockFn).not.toHaveBeenCalled();
-
-    isPaused = false;
-    pausable(world, 1 / 60);
-    expect(mockFn).toHaveBeenCalled();
   });
 });

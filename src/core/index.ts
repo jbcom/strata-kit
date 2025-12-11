@@ -315,33 +315,33 @@ export type {
     LookAtState,
 } from './animation';
 
-// State management system
+// State management system (Zustand-based)
 export {
-    GameState,
-    UndoStack,
-    SaveSystem,
-    AutoSave,
-    Checkpoint,
-    StateManager,
-    createGameState,
-    createStateManager,
-    createSaveSystem,
-    compressState,
-    decompressState,
-    diffStates,
-    mergeStates,
+    createGameStore,
+    createPersistenceAdapter,
+    calculateChecksum,
+    verifyChecksum,
+    webPersistenceAdapter,
+    createWebPersistenceAdapter,
+    create,
+    useStore,
+    temporal,
+    immer,
 } from './state';
 export type {
+    GameStore,
+    GameStoreApi,
+    GameStoreState,
+    GameStoreActions,
+    StoreConfig,
+    SaveData,
+    CheckpointData,
+    CheckpointOptions,
+    PersistenceAdapter,
     StateChangeType,
     StateChangeEvent,
     StateListener,
-    GameStateConfig,
-    Command,
-    SaveData,
-    CheckpointData,
     AutoSaveConfig,
-    StateManagerConfig,
-    StateSlot,
 } from './state';
 
 // UI system

@@ -4,7 +4,23 @@
  * Pre-configured audio settings for common game environments and scenarios.
  */
 
-import { EnvironmentConfig, AudioSourceConfig, DistanceModel } from '../core/audio';
+import type { DistanceModel, EnvironmentPreset, SpatialConfig } from '../core/audio';
+
+interface ReverbSettings {
+    decay: number;
+    preDelay?: number;
+    wet: number;
+    dry: number;
+}
+
+interface EnvironmentConfig {
+    preset: EnvironmentPreset;
+    reverb: ReverbSettings;
+    lowpassFrequency?: number;
+    highpassFrequency?: number;
+}
+
+type AudioSourceConfig = SpatialConfig;
 
 export type AudioPresetName =
     | 'forest'
@@ -59,7 +75,7 @@ export const audioPresets: Record<AudioPresetName, AudioPreset> = {
         name: 'forest',
         description: 'Peaceful forest with birds, wind, and rustling leaves',
         environment: {
-            type: 'outdoor',
+            preset: 'outdoor',
             reverb: {
                 decay: 0.8,
                 wet: 0.15,
@@ -83,7 +99,7 @@ export const audioPresets: Record<AudioPresetName, AudioPreset> = {
         name: 'cave',
         description: 'Echoing cave with dripping water and ambient sounds',
         environment: {
-            type: 'cave',
+            preset: 'cave',
             reverb: {
                 decay: 4,
                 preDelay: 0.05,
@@ -109,7 +125,7 @@ export const audioPresets: Record<AudioPresetName, AudioPreset> = {
         name: 'city',
         description: 'Urban environment with traffic, crowds, and city sounds',
         environment: {
-            type: 'outdoor',
+            preset: 'outdoor',
             reverb: {
                 decay: 1.2,
                 wet: 0.2,
@@ -133,7 +149,7 @@ export const audioPresets: Record<AudioPresetName, AudioPreset> = {
         name: 'underwater',
         description: 'Muffled underwater environment with bubbles and currents',
         environment: {
-            type: 'underwater',
+            preset: 'underwater',
             reverb: {
                 decay: 2,
                 wet: 0.4,
@@ -159,7 +175,7 @@ export const audioPresets: Record<AudioPresetName, AudioPreset> = {
         name: 'indoor',
         description: 'Generic indoor environment with room acoustics',
         environment: {
-            type: 'indoor',
+            preset: 'indoor',
             reverb: {
                 decay: 1.5,
                 wet: 0.3,
@@ -181,7 +197,7 @@ export const audioPresets: Record<AudioPresetName, AudioPreset> = {
         name: 'combat',
         description: 'Combat scenario with impacts, weapons, and action sounds',
         environment: {
-            type: 'outdoor',
+            preset: 'outdoor',
             reverb: {
                 decay: 0.5,
                 wet: 0.1,

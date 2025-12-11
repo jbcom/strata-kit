@@ -285,6 +285,8 @@ export type {
 // State Management
 export {
     GameStateProvider,
+    GameStateContext,
+    useGameStateContext,
     useGameState,
     useSaveLoad,
     useUndo,
@@ -292,9 +294,6 @@ export {
     useAutoSave,
     PersistGate,
     StateDebugger,
-    StateManagerProvider,
-    useStateManager,
-    StateManagerContext,
 } from './State';
 export type {
     GameStateContextValue,
@@ -302,13 +301,16 @@ export type {
     UseSaveLoadOptions,
     UseSaveLoadReturn,
     UseUndoReturn,
-    UseCheckpointOptions,
     UseCheckpointReturn,
     UseAutoSaveOptions,
     UseAutoSaveReturn,
     PersistGateProps,
     StateDebuggerProps,
-    StateManagerProviderProps,
+    GameStoreApi,
+    GameStore,
+    CheckpointData,
+    AutoSaveConfig,
+    StateChangeEvent,
 } from './State';
 
 // UI Components

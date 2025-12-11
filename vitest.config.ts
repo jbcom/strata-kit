@@ -12,7 +12,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['tests/unit/**/*.test.ts', 'src/__tests__/**/*.test.ts'], // Unit tests
+    include: ['tests/unit/**/*.test.ts', 'src/__tests__/**/*.test.ts', 'src/core/**/__tests__/**/*.test.ts'], // Unit tests
     exclude: ['node_modules', 'dist', 'tests/integration', 'tests/e2e'],
     coverage: {
       provider: 'v8',
