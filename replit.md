@@ -8,20 +8,9 @@ Strata is a world-class procedural 3D graphics and game development library for 
 ```
 ├── packages/
 │   ├── capacitor-plugin/     # @strata/capacitor-plugin - Cross-platform input/haptics
-│   │   ├── src/              # TypeScript source
-│   │   │   ├── definitions.ts    # Plugin interface definitions
-│   │   │   ├── index.ts          # Plugin registration
-│   │   │   ├── web.ts            # Web implementation
-│   │   │   └── react/            # React hooks (useDevice, useInput, useHaptics)
-│   │   ├── android/          # Android native code (future)
-│   │   ├── ios/              # iOS native code (future)
-│   │   └── dist/             # Compiled output
-│   └── docs/                 # @strata/docs - Documentation website
-│       ├── src/
-│       │   ├── pages/demos/  # 24 interactive demo pages
-│       │   ├── components/   # Layout, DemoLayout, etc.
-│       │   └── App.tsx       # Route definitions
-│       └── vite.config.ts    # Vite bundler config
+│   ├── docs/                 # Auto-generated TypeDoc API documentation
+│   └── examples/             # Showcase example games
+│       └── showcase/         # Feature showcase demo
 ├── src/                      # @jbcom/strata - Core library
 │   ├── components/           # React Three Fiber components
 │   ├── core/                 # Algorithms (marching cubes, SDF, particles, etc.)
@@ -30,7 +19,7 @@ Strata is a world-class procedural 3D graphics and game development library for 
 │   ├── hooks/                # React hooks (useYuka, useGameState, etc.)
 │   └── utils/                # Utility functions
 ├── tests/                    # Unit, integration, and e2e tests
-├── config/                   # Environment configuration
+├── typedoc.json              # TypeDoc configuration
 └── dist/                     # Compiled library output
 ```
 
@@ -42,19 +31,44 @@ The core 3D graphics library with all React Three Fiber components.
 ### @strata/capacitor-plugin
 Cross-platform input, device detection, and haptics for game development.
 
-**Features:**
-- Device detection (mobile/tablet/foldable/desktop, iOS/Android/Web)
-- Unified input (touch/keyboard/gamepad abstraction)
-- Haptic feedback (device vibration + gamepad rumble)
-- React hooks: `useDevice`, `useInput`, `useHaptics`, `useControlHints`
+### packages/docs (Auto-generated)
+TypeDoc-generated API documentation with Burnt Orange (#D4845C) & Dusty Teal (#5B9EA6) theme.
 
-**Platform Support:**
-- Web (pure browser)
-- iOS/Android via Capacitor
-- Desktop via Electron (@capacitor-community/electron)
+### packages/examples
+Simple showcase games demonstrating Strata capabilities:
+- **showcase/** - Interactive scene with all features
+- **fps/** - First-person exploration (planned)
+- **flythrough/** - Cinematic camera path (planned)
 
-### @strata/docs
-Interactive documentation site with live demos. Uses Material UI for responsive layout.
+## Development Commands
+
+### Root Level
+```bash
+pnpm run build          # Build core library
+pnpm run dev            # Watch mode
+pnpm run test           # Run all tests
+pnpm run lint           # ESLint
+pnpm run format         # Prettier
+pnpm run docs:build     # Generate TypeDoc API docs
+pnpm run docs:dev       # Serve docs locally
+```
+
+### Examples
+```bash
+pnpm --filter @strata/showcase dev    # Run showcase example
+pnpm --filter @strata/showcase build  # Build for web
+```
+
+## CI/CD Pipeline
+
+The GitHub Actions workflow handles:
+1. **Lint & Test** - ESLint, TypeScript, Vitest
+2. **Build Docs** - TypeDoc API documentation
+3. **Build Examples (Web)** - Vite production build
+4. **Build Examples (Android)** - Capacitor APK (releases only)
+5. **Build Examples (Desktop)** - Electron (releases only)
+6. **Deploy** - GitHub Pages (docs + web examples)
+7. **Release** - NPM publish via semantic-release
 
 ## Feature Systems
 
@@ -84,53 +98,11 @@ Interactive documentation site with live demos. Uses Material UI for responsive 
 - **Game UI** - Health bars, inventory, dialog, minimap
 - **Shader Library** - Toon, hologram, dissolve, forcefield
 
-## Development Commands
-
-### Root Level
-```bash
-pnpm run build          # Build core library
-pnpm run dev            # Watch mode
-pnpm run test           # Run all tests
-pnpm run lint           # ESLint
-pnpm run format         # Prettier
-```
-
-### Documentation Site
-```bash
-cd packages/docs && pnpm dev    # Start dev server on port 5000
-cd packages/docs && pnpm build  # Production build
-```
-
-### Capacitor Plugin
-```bash
-cd packages/capacitor-plugin && pnpm build  # Build plugin
-```
-
-## Demo Pages (24 total)
-- `/` - Homepage with hero scene
-- `/demos/terrain` - SDF terrain
-- `/demos/water` - Water components
-- `/demos/sky` - Day/night cycle
-- `/demos/vegetation` - Instanced vegetation
-- `/demos/volumetrics` - Fog effects
-- `/demos/characters` - Animated characters
-- `/demos/full-scene` - Combined features
-- `/demos/particles` - GPU particles
-- `/demos/weather` - Weather system
-- `/demos/clouds` - Procedural clouds
-- `/demos/camera` - Camera systems
-- `/demos/decals` - Decals and billboards
-- `/demos/lod` - Level of detail
-- `/demos/god-rays` - Volumetric lighting
-- `/demos/input` - 3D controls
-- `/demos/ai` - AI agents
-- `/demos/audio` - Spatial audio
-- `/demos/physics` - Physics simulation
-- `/demos/postprocessing` - Post effects
-- `/demos/animation` - Procedural animation
-- `/demos/state` - State management
-- `/demos/ui` - Game HUD
-- `/demos/shaders` - Shader materials
+## Theme Colors
+- **Burnt Orange** - #D4845C (primary accent)
+- **Dusty Teal** - #5B9EA6 (secondary accent)
+- **Warm Sand** - #C49A6C (tertiary)
+- **Dark Background** - #101418
 
 ## API Design Principles
 - Components accept `THREE.ColorRepresentation`
@@ -139,26 +111,15 @@ cd packages/capacitor-plugin && pnpm build  # Build plugin
 - Framework-agnostic core logic
 - Comprehensive JSDoc documentation
 
-## Environment Configuration
-
-| Environment | Detection | Base URL | Browser |
-|------------|-----------|----------|---------|
-| **local** | Default | localhost:5000 | Bundled Chromium |
-| **development** | `REPL_ID` set | Replit dev URL | System Chromium |
-| **staging** | `GITHUB_ACTIONS` set | localhost:5000 | Playwright MCP |
-| **production** | `NODE_ENV=production` | GitHub Pages | N/A |
-
 ## User Preferences
-- Responsive design for foldables (OnePlus Open) and tablets
-- Device-aware control hints (no WASD on mobile)
-- Thin one-line footer bar
-- Maximize canvas space in demos
-- Cross-platform support via Capacitor
+- Simple showcase examples (not complex games)
+- Auto-generated TypeDoc for API docs
+- Cross-platform builds (web/Android/desktop)
+- Burnt Orange & Dusty Teal theme
 
 ## Recent Changes (Dec 2024)
-- Reorganized to monorepo structure under `packages/`
-- Created `@strata/capacitor-plugin` for cross-platform input/haptics
-- Moved docs-site to `packages/docs`
-- Redesigned DemoLayout with responsive top toolbar
-- Fixed AI demo flocking behaviors (YUKA Vector3 compatibility)
-- Added thin one-line footer
+- Pivoted from custom docs site to TypeDoc auto-generation
+- Created packages/examples/showcase for feature demonstration
+- Set up cross-platform CI/CD (web, Android, desktop)
+- Completed library gap audits (Rapier, Drei, Postprocessing)
+- Configured Burnt Orange & Dusty Teal theme

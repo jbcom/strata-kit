@@ -12,7 +12,7 @@
   "categoryOrder": ["Core", "Components", "Presets", "Shaders", "Utils", "*"],
   "navigationLinks": {
     "GitHub": "https://github.com/jbcom/strata",
-    "Examples": "/examples"
+    "Examples": "/examples/showcase/"
   },
   "customCss": "packages/docs-theme.css",
   "favicon": "packages/docs-favicon.svg",

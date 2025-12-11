@@ -1,7 +1,9 @@
-import { Suspense, useState } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Environment, Stars, Float } from '@react-three/drei';
-import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
+import { Suspense, useState, useRef } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { OrbitControls, Stars, Float, Text3D, Center } from '@react-three/drei';
+import { EffectComposer, Bloom, Vignette, ChromaticAberration } from '@react-three/postprocessing';
+import { BlendFunction, ChromaticAberrationEffect } from 'postprocessing';
+import * as THREE from 'three';
 
 import {
   ProceduralSky,
@@ -9,6 +11,8 @@ import {
   VolumetricFog,
   GPUParticles,
   ProceduralClouds,
+  GrassInstances,
+  EnhancedFog,
 } from '@jbcom/strata';
 
 function LoadingFallback() {
@@ -20,16 +24,98 @@ function LoadingFallback() {
   );
 }
 
-function Terrain() {
+function AnimatedTerrain() {
+  const meshRef = useRef<THREE.Mesh>(null);
+  
+  useFrame(({ clock }) => {
+    if (meshRef.current) {
+      const geo = meshRef.current.geometry as THREE.PlaneGeometry;
+      const positions = geo.attributes.position;
+      const time = clock.getElapsedTime();
+      
+      for (let i = 0; i < positions.count; i++) {
+        const x = positions.getX(i);
+        const y = positions.getY(i);
+        const wave = Math.sin(x * 0.1 + time * 0.5) * Math.cos(y * 0.1 + time * 0.3) * 2;
+        positions.setZ(i, wave);
+      }
+      positions.needsUpdate = true;
+      geo.computeVertexNormals();
+    }
+  });
+  
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-      <planeGeometry args={[200, 200, 128, 128]} />
+    <mesh ref={meshRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, 0]} receiveShadow>
+      <planeGeometry args={[100, 100, 64, 64]} />
       <meshStandardMaterial 
         color="#2d4a3e" 
-        wireframe={false}
-        roughness={0.9}
+        roughness={0.8}
+        metalness={0.1}
       />
     </mesh>
+  );
+}
+
+function StrataShowcase() {
+  return (
+    <>
+      <Suspense fallback={<LoadingFallback />}>
+        <ProceduralSky 
+          sunPosition={[50, 30, 50]}
+          turbidity={8}
+          rayleigh={2}
+        />
+      </Suspense>
+      
+      <Suspense fallback={null}>
+        <Water 
+          position={[0, -1.5, 0]}
+          size={100}
+          color="#5B9EA6"
+          opacity={0.8}
+          waveAmplitude={0.2}
+          waveFrequency={0.5}
+        />
+      </Suspense>
+      
+      <Suspense fallback={null}>
+        <VolumetricFog 
+          color="#181C22"
+          density={0.02}
+          height={10}
+        />
+      </Suspense>
+      
+      <Suspense fallback={null}>
+        <GPUParticles
+          count={500}
+          position={[5, 2, -5]}
+          color="#D4845C"
+          size={0.1}
+          speed={0.5}
+          spread={3}
+        />
+      </Suspense>
+      
+      <Suspense fallback={null}>
+        <ProceduralClouds
+          position={[0, 20, 0]}
+          count={8}
+          opacity={0.7}
+          scale={15}
+        />
+      </Suspense>
+      
+      <Suspense fallback={null}>
+        <GrassInstances
+          position={[0, -1.9, 0]}
+          count={1000}
+          spread={30}
+          height={0.5}
+          color="#3a5f4a"
+        />
+      </Suspense>
+    </>
   );
 }
 
@@ -111,9 +197,10 @@ function Scene() {
       
       <Stars radius={100} depth={50} count={5000} factor={4} fade speed={1} />
       
-      <Terrain />
+      <AnimatedTerrain />
       
       <Suspense fallback={<LoadingFallback />}>
+        <StrataShowcase />
         <FeatureShowcase />
       </Suspense>
       
@@ -170,6 +257,63 @@ function HUD() {
   );
 }
 
+function FeatureList() {
+  const features = [
+    'Procedural Sky',
+    'Dynamic Water',
+    'Volumetric Fog',
+    'GPU Particles',
+    'Procedural Clouds',
+    'Instanced Grass',
+    'Post-Processing',
+  ];
+  
+  return (
+    <div style={{
+      position: 'fixed',
+      top: '1rem',
+      right: '1rem',
+      color: '#E8E6E3',
+      fontFamily: "'Inter', sans-serif",
+      zIndex: 100,
+      background: 'rgba(16, 20, 24, 0.8)',
+      backdropFilter: 'blur(10px)',
+      border: '1px solid rgba(212, 132, 92, 0.2)',
+      borderRadius: '0.5rem',
+      padding: '1rem',
+    }}>
+      <h3 style={{
+        fontSize: '0.75rem',
+        color: '#D4845C',
+        textTransform: 'uppercase',
+        letterSpacing: '0.1em',
+        marginBottom: '0.5rem',
+      }}>
+        Active Features
+      </h3>
+      <ul style={{
+        listStyle: 'none',
+        padding: 0,
+        margin: 0,
+        fontSize: '0.75rem',
+      }}>
+        {features.map((feature, i) => (
+          <li key={i} style={{
+            padding: '0.25rem 0',
+            color: '#9A9590',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+          }}>
+            <span style={{ color: '#5B9EA6' }}>✓</span>
+            {feature}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function Controls() {
   return (
     <div style={{
@@ -210,6 +354,7 @@ export default function App() {
         <Scene />
       </Canvas>
       <HUD />
+      <FeatureList />
       <Controls />
     </div>
   );
