@@ -60,6 +60,7 @@ declare module 'yuka' {
         clear(): this;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-extraneous-class
     export class Smoother {
         constructor(count: number);
     }
@@ -209,6 +210,7 @@ declare module 'yuka' {
         execute(entity: GameEntity): void;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-extraneous-class
     export class TriggerRegion {
         constructor();
     }
