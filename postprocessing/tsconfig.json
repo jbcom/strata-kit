@@ -1,0 +1,25 @@
+{
+	"include": [
+		"./src",
+		"./demo/src",
+		"./manual/js",
+		"./types"
+	],
+	"compilerOptions": {
+		"baseUrl": ".",
+		"outDir": "./build",
+		"moduleResolution": "bundler",
+		"module": "es2022",
+		"target": "es2022",
+		"strict": true,
+		"allowJs": true,
+		"sourceMap": false,
+		"skipLibCheck": true,
+		"resolveJsonModule": true,
+		"noImplicitOverride": true,
+		"paths": {
+			"postprocessing": ["./src/index.js"],
+			"temp": ["./temp"]
+		}
+	}
+}

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/index.ts"],
+  "out": "packages/docs",
+  "name": "Strata",
+  "readme": "README.md",
+  "includeVersion": true,
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeInternal": true,
+  "categorizeByGroup": true,
+  "categoryOrder": ["Core", "Components", "Presets", "Shaders", "Utils", "*"],
+  "navigationLinks": {
+    "GitHub": "https://github.com/jbcom/strata",
+    "Examples": "/examples"
+  },
+  "customCss": "packages/docs-theme.css",
+  "favicon": "packages/docs-favicon.svg",
+  "validation": {
+    "notExported": true,
+    "invalidLink": true,
+    "notDocumented": false
+  }
+}

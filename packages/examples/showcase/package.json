@@ -1,0 +1,37 @@
+{
+  "name": "@strata/showcase",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Interactive showcase demonstrating all Strata features",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 5000 --host",
+    "build": "vite build",
+    "build:android": "pnpm build && npx cap sync android && cd android && ./gradlew assembleRelease",
+    "build:desktop": "pnpm build && electron-builder",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@jbcom/strata": "workspace:*",
+    "@react-three/drei": "^9.114.0",
+    "@react-three/fiber": "^8.15.0",
+    "@react-three/postprocessing": "^3.0.4",
+    "@react-three/rapier": "^2.2.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "three": "^0.160.0",
+    "yuka": "^0.7.8"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/cli": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^4.2.0",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
+    "typescript": "^5.3.0",
+    "vite": "^6.0.0"
+  }
+}
