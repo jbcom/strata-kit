@@ -13,6 +13,17 @@ const FullSceneDemo = lazy(() => import('./pages/demos/FullSceneDemo'));
 const GettingStarted = lazy(() => import('./pages/GettingStarted'));
 const ApiReference = lazy(() => import('./pages/ApiReference'));
 
+const ParticleDemo = lazy(() => import('./pages/demos/ParticleDemo'));
+const WeatherDemo = lazy(() => import('./pages/demos/WeatherDemo'));
+const CloudsDemo = lazy(() => import('./pages/demos/CloudsDemo'));
+const CameraDemo = lazy(() => import('./pages/demos/CameraDemo'));
+const DecalsDemo = lazy(() => import('./pages/demos/DecalsDemo'));
+const LODDemo = lazy(() => import('./pages/demos/LODDemo'));
+const GodRaysDemo = lazy(() => import('./pages/demos/GodRaysDemo'));
+const InputDemo = lazy(() => import('./pages/demos/InputDemo'));
+const AIDemo = lazy(() => import('./pages/demos/AIDemo'));
+const AudioDemo = lazy(() => import('./pages/demos/AudioDemo'));
+
 function Loading() {
   return (
     <div style={{
@@ -54,6 +65,16 @@ function App() {
           <Route path="/demos/volumetrics" element={<VolumetricsDemo />} />
           <Route path="/demos/characters" element={<CharactersDemo />} />
           <Route path="/demos/full-scene" element={<FullSceneDemo />} />
+          <Route path="/demos/particles" element={<ParticleDemo />} />
+          <Route path="/demos/weather" element={<WeatherDemo />} />
+          <Route path="/demos/clouds" element={<CloudsDemo />} />
+          <Route path="/demos/camera" element={<CameraDemo />} />
+          <Route path="/demos/decals" element={<DecalsDemo />} />
+          <Route path="/demos/lod" element={<LODDemo />} />
+          <Route path="/demos/god-rays" element={<GodRaysDemo />} />
+          <Route path="/demos/input" element={<InputDemo />} />
+          <Route path="/demos/ai" element={<AIDemo />} />
+          <Route path="/demos/audio" element={<AudioDemo />} />
         </Routes>
       </Suspense>
     </Layout>

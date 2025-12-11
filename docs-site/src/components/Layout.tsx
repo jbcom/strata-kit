@@ -30,6 +30,15 @@ import GrassIcon from '@mui/icons-material/Grass';
 import CloudIcon from '@mui/icons-material/Cloud';
 import PetsIcon from '@mui/icons-material/Pets';
 import SportsEsportsIcon from '@mui/icons-material/SportsEsports';
+import FlareIcon from '@mui/icons-material/Flare';
+import AcUnitIcon from '@mui/icons-material/AcUnit';
+import VideocamIcon from '@mui/icons-material/Videocam';
+import FormatPaintIcon from '@mui/icons-material/FormatPaint';
+import ViewInArIcon from '@mui/icons-material/ViewInAr';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import GamepadIcon from '@mui/icons-material/Gamepad';
+import SmartToyIcon from '@mui/icons-material/SmartToy';
+import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 
 interface LayoutProps {
   children: ReactNode;
@@ -49,6 +58,16 @@ const demoLinks = [
   { path: '/demos/volumetrics', label: 'Volumetrics', icon: <CloudIcon fontSize="small" /> },
   { path: '/demos/characters', label: 'Characters', icon: <PetsIcon fontSize="small" /> },
   { path: '/demos/full-scene', label: 'Full Scene', icon: <SportsEsportsIcon fontSize="small" /> },
+  { path: '/demos/particles', label: 'Particles', icon: <FlareIcon fontSize="small" /> },
+  { path: '/demos/weather', label: 'Weather', icon: <AcUnitIcon fontSize="small" /> },
+  { path: '/demos/clouds', label: 'Clouds', icon: <CloudIcon fontSize="small" /> },
+  { path: '/demos/camera', label: 'Camera', icon: <VideocamIcon fontSize="small" /> },
+  { path: '/demos/decals', label: 'Decals', icon: <FormatPaintIcon fontSize="small" /> },
+  { path: '/demos/lod', label: 'LOD', icon: <ViewInArIcon fontSize="small" /> },
+  { path: '/demos/god-rays', label: 'God Rays', icon: <LightModeIcon fontSize="small" /> },
+  { path: '/demos/input', label: 'Input', icon: <GamepadIcon fontSize="small" /> },
+  { path: '/demos/ai', label: 'AI', icon: <SmartToyIcon fontSize="small" /> },
+  { path: '/demos/audio', label: 'Audio', icon: <VolumeUpIcon fontSize="small" /> },
 ];
 
 export default function Layout({ children }: LayoutProps) {
