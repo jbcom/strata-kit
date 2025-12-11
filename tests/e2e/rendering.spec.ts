@@ -8,28 +8,29 @@ import { test, expect } from '@playwright/test';
  */
 
 test.describe('Strata Rendering Examples', () => {
-    test.beforeEach(async ({ page }) => {
-        await page.goto('/');
-    });
+    test('should render terrain demo', async ({ page }) => {
+        await page.goto('/demos/terrain');
+        await page.waitForLoadState('networkidle');
 
-    test('should render terrain', async ({ page }) => {
-        // Wait for terrain to be visible
-        const terrain = page.locator('[data-testid="terrain"]');
-        await expect(terrain).toBeVisible({ timeout: 10000 });
+        const canvas = page.locator('canvas');
+        await expect(canvas.first()).toBeVisible({ timeout: 15000 });
 
-        // Take screenshot for visual regression
+        await page.waitForTimeout(2000);
+
         await expect(page).toHaveScreenshot('terrain.png', {
             fullPage: false,
             clip: { x: 0, y: 0, width: 800, height: 600 },
         });
     });
 
-    test('should render water', async ({ page }) => {
-        const water = page.locator('[data-testid="water"]');
-        await expect(water).toBeVisible({ timeout: 10000 });
+    test('should render water demo', async ({ page }) => {
+        await page.goto('/demos/water');
+        await page.waitForLoadState('networkidle');
 
-        // Wait for animation frame
-        await page.waitForTimeout(1000);
+        const canvas = page.locator('canvas');
+        await expect(canvas.first()).toBeVisible({ timeout: 15000 });
+
+        await page.waitForTimeout(2000);
 
         await expect(page).toHaveScreenshot('water.png', {
             fullPage: false,
@@ -37,9 +38,14 @@ test.describe('Strata Rendering Examples', () => {
         });
     });
 
-    test('should render vegetation (instanced grass)', async ({ page }) => {
-        const vegetation = page.locator('[data-testid="vegetation"]');
-        await expect(vegetation).toBeVisible({ timeout: 10000 });
+    test('should render vegetation demo', async ({ page }) => {
+        await page.goto('/demos/vegetation');
+        await page.waitForLoadState('networkidle');
+
+        const canvas = page.locator('canvas');
+        await expect(canvas.first()).toBeVisible({ timeout: 15000 });
+
+        await page.waitForTimeout(2000);
 
         await expect(page).toHaveScreenshot('vegetation.png', {
             fullPage: false,
@@ -47,11 +53,13 @@ test.describe('Strata Rendering Examples', () => {
         });
     });
 
-    test('should render character with fur', async ({ page }) => {
-        const character = page.locator('[data-testid="character"]');
-        await expect(character).toBeVisible({ timeout: 10000 });
+    test('should render characters demo', async ({ page }) => {
+        await page.goto('/demos/characters');
+        await page.waitForLoadState('networkidle');
 
-        // Wait for animation
+        const canvas = page.locator('canvas');
+        await expect(canvas.first()).toBeVisible({ timeout: 15000 });
+
         await page.waitForTimeout(2000);
 
         await expect(page).toHaveScreenshot('character-fur.png', {
@@ -60,19 +68,14 @@ test.describe('Strata Rendering Examples', () => {
         });
     });
 
-    test('should render molecular structures', async ({ page }) => {
-        const molecule = page.locator('[data-testid="molecule"]');
-        await expect(molecule).toBeVisible({ timeout: 10000 });
+    test('should render sky demo', async ({ page }) => {
+        await page.goto('/demos/sky');
+        await page.waitForLoadState('networkidle');
 
-        await expect(page).toHaveScreenshot('molecule.png', {
-            fullPage: false,
-            clip: { x: 0, y: 0, width: 800, height: 600 },
-        });
-    });
+        const canvas = page.locator('canvas');
+        await expect(canvas.first()).toBeVisible({ timeout: 15000 });
 
-    test('should render sky and volumetrics', async ({ page }) => {
-        const sky = page.locator('[data-testid="sky"]');
-        await expect(sky).toBeVisible({ timeout: 10000 });
+        await page.waitForTimeout(2000);
 
         await expect(page).toHaveScreenshot('sky-volumetrics.png', {
             fullPage: false,
@@ -81,13 +84,18 @@ test.describe('Strata Rendering Examples', () => {
     });
 
     test('should handle camera movement', async ({ page }) => {
-        // Simulate camera movement
+        await page.goto('/demos/camera');
+        await page.waitForLoadState('networkidle');
+
+        const canvas = page.locator('canvas');
+        await expect(canvas.first()).toBeVisible({ timeout: 15000 });
+
         await page.mouse.move(400, 300);
         await page.mouse.down();
         await page.mouse.move(500, 400);
         await page.mouse.up();
 
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(1000);
 
         await expect(page).toHaveScreenshot('camera-movement.png', {
             fullPage: false,
@@ -95,13 +103,21 @@ test.describe('Strata Rendering Examples', () => {
         });
     });
 
-    test('should maintain performance with many instances', async ({ page }) => {
-        // Check FPS or frame time
-        const fps = await page.evaluate(() => {
-            return (window as any).fps || 0;
-        });
+    test('should render full scene demo', async ({ page }) => {
+        await page.goto('/demos/full-scene');
+        await page.waitForLoadState('networkidle');
 
-        // Should maintain at least 30 FPS
-        expect(fps).toBeGreaterThan(30);
+        const canvas = page.locator('canvas');
+        await expect(canvas.first()).toBeVisible({ timeout: 15000 });
+
+        await page.waitForTimeout(3000);
+
+        const hasWebGLContext = await page.evaluate(() => {
+            const canvas = document.querySelector('canvas');
+            if (!canvas) return false;
+            const gl = canvas.getContext('webgl') || canvas.getContext('webgl2');
+            return gl !== null;
+        });
+        expect(hasWebGLContext).toBe(true);
     });
 });

@@ -28,7 +28,7 @@ function TerrainMesh({ resolution, noiseScale }: { resolution: number; noiseScal
     };
 
     const result = marchingCubes(sdf, {
-      bounds: { min: [-5, -3, -5], max: [5, 3, 5] },
+      bounds: { min: new THREE.Vector3(-5, -3, -5), max: new THREE.Vector3(5, 3, 5) },
       resolution,
     });
 
