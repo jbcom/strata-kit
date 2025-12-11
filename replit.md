@@ -201,3 +201,37 @@ Run `cd docs-site && pnpm dev` to start the documentation server on port 5000.
 - 24 demo pages with e2e tests across 5 browsers
 - Core systems, presets, and utilities fully tested
 - TypeScript compilation verified
+
+## Environment Configuration
+
+The project uses a multi-environment configuration system in `config/environments.ts`:
+
+### Environments
+| Environment | Detection | Base URL | Browser |
+|------------|-----------|----------|---------|
+| **local** | Default | localhost:5000 | Bundled Chromium |
+| **development** | `REPL_ID` set | Replit dev URL | System Chromium |
+| **staging** | `GITHUB_ACTIONS` set | localhost:5000 | Playwright MCP |
+| **production** | `NODE_ENV=production` | GitHub Pages | N/A |
+
+### Replit Development
+- Uses live dev URL from `REPLIT_DOMAINS` environment variable
+- Uses system Chromium (`CHROMIUM_PATH`) for faster tests
+- No software rendering needed - tests run ~3x faster
+
+### GitHub Copilot Staging
+- VS Code MCP configuration in `.vscode/settings.json`
+- Playwright MCP server for browser automation
+- Multi-browser testing (Chromium, Firefox, WebKit)
+
+### Running E2E Tests
+```bash
+# Replit (uses live dev URL)
+pnpm test:e2e
+
+# Local (starts dev server)
+pnpm test:e2e
+
+# Specific tests
+pnpm test:e2e --grep "Homepage"
+```
