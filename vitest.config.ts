@@ -11,7 +11,8 @@ import { resolve } from 'path';
 export default defineConfig({
   test: {
     globals: true,
-    environment: 'node',
+    environment: 'jsdom',
+    setupFiles: [resolve(__dirname, 'tests/unit/setup.ts')],
     include: ['tests/unit/**/*.test.ts', 'src/__tests__/**/*.test.ts', 'src/core/**/__tests__/**/*.test.ts'], // Unit tests
     exclude: ['node_modules', 'dist', 'tests/integration', 'tests/e2e'],
     coverage: {
