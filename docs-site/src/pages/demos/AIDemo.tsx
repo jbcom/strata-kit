@@ -1,11 +1,11 @@
 import { useRef, useState, useMemo, useEffect } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
-import { Box, Typography, Paper, Stack, ToggleButton, ToggleButtonGroup, Chip, Switch, FormControlLabel } from '@mui/material';
+import { useFrame } from '@react-three/fiber';
+import { Stack, Switch, FormControlLabel, Typography, Button } from '@mui/material';
 import * as THREE from 'three';
 import * as YUKA from 'yuka';
 
 import { YukaEntityManager, YukaVehicle, YukaPath, YukaVehicleRef } from '@jbcom/strata';
+import DemoLayout from '../../components/DemoLayout';
 
 function AgentMesh({ color, scale = 1 }: { color: string; scale?: number }) {
   return (
@@ -24,7 +24,6 @@ function AgentMesh({ color, scale = 1 }: { color: string; scale?: number }) {
 
 function PatrolAgent({ waypoints, color }: { waypoints: [number, number, number][]; color: string }) {
   const vehicleRef = useRef<YukaVehicleRef>(null);
-  const pathRef = useRef<YUKA.Path | null>(null);
 
   useEffect(() => {
     if (!vehicleRef.current) return;
@@ -32,7 +31,6 @@ function PatrolAgent({ waypoints, color }: { waypoints: [number, number, number]
     const path = new YUKA.Path();
     path.loop = true;
     waypoints.forEach(([x, y, z]) => path.add(new YUKA.Vector3(x, y, z)));
-    pathRef.current = path;
 
     const followPath = new YUKA.FollowPathBehavior(path, 0.5);
     followPath.active = true;
@@ -138,7 +136,11 @@ function FlockingAgent({
     
     if (vehicle.position.length() > 20) {
       vehicle.velocity.multiplyScalar(0.95);
-      const toCenter = vehicle.position.clone().negate().normalize();
+      const toCenter = new YUKA.Vector3(
+        -vehicle.position.x,
+        -vehicle.position.y,
+        -vehicle.position.z
+      ).normalize();
       vehicle.position.add(toCenter.multiplyScalar(0.1));
     }
   });
@@ -271,9 +273,6 @@ function Scene({
 
   return (
     <>
-      <ambientLight intensity={0.4} />
-      <directionalLight position={[20, 30, 10]} intensity={1} castShadow />
-
       <Ground />
 
       <YukaEntityManager>
@@ -293,11 +292,27 @@ function Scene({
           </>
         )}
       </YukaEntityManager>
-
-      <OrbitControls target={[0, 0, 0]} maxPolarAngle={Math.PI / 2.1} />
     </>
   );
 }
+
+const CODE_SAMPLE = `import { YukaEntityManager, YukaVehicle, YukaPath } from '@jbcom/strata';
+import * as YUKA from 'yuka';
+
+<YukaEntityManager>
+  <YukaVehicle ref={vehicleRef} maxSpeed={3}>
+    <AgentMesh />
+  </YukaVehicle>
+</YukaEntityManager>
+
+// Add steering behaviors
+const followPath = new YUKA.FollowPathBehavior(path);
+vehicleRef.current.addBehavior(followPath);
+
+// Flocking behaviors
+const alignment = new YUKA.AlignmentBehavior();
+const cohesion = new YUKA.CohesionBehavior();
+const separation = new YUKA.SeparationBehavior();`;
 
 export default function AIDemo() {
   const [showPatrol, setShowPatrol] = useState(true);
@@ -313,101 +328,81 @@ export default function AIDemo() {
     ));
   };
 
-  return (
-    <Box sx={{ height: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ flex: 1, position: 'relative' }}>
-        <Canvas camera={{ position: [25, 20, 25], fov: 50 }} shadows>
-          <Scene 
-            showPatrol={showPatrol}
-            showFlocking={showFlocking}
-            showSeeking={showSeeking}
-            seekTarget={seekTarget}
+  const controls = (
+    <Stack spacing={1.5}>
+      <FormControlLabel
+        control={
+          <Switch 
+            checked={showPatrol} 
+            onChange={(e) => setShowPatrol(e.target.checked)} 
+            size="small" 
           />
-        </Canvas>
-
-        <Paper
-          sx={{
-            position: 'absolute',
-            top: 16,
-            left: 16,
-            p: 2,
-            bgcolor: 'rgba(0,0,0,0.85)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid',
-            borderColor: 'primary.dark',
-            maxWidth: 340,
-          }}
-        >
-          <Typography variant="h6" color="primary.main" gutterBottom>
-            YukaJS AI System
+        }
+        label={
+          <Typography variant="body2" color="text.secondary">
+            Patrol Agents (Green/Yellow)
           </Typography>
-          <Typography variant="body2" color="text.secondary" paragraph>
-            AI agents with steering behaviors: patrolling guards, flocking birds, and seeking behavior.
+        }
+      />
+      <FormControlLabel
+        control={
+          <Switch 
+            checked={showFlocking} 
+            onChange={(e) => setShowFlocking(e.target.checked)} 
+            size="small" 
+          />
+        }
+        label={
+          <Typography variant="body2" color="text.secondary">
+            Flocking Agents (Blue)
           </Typography>
-
-          <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ mb: 2 }}>
-            <Chip label="YukaVehicle" size="small" variant="outlined" color="primary" />
-            <Chip label="YukaPath" size="small" variant="outlined" color="primary" />
-            <Chip label="Steering" size="small" variant="outlined" color="primary" />
-          </Stack>
-
-          <Stack spacing={1}>
-            <FormControlLabel
-              control={<Switch checked={showPatrol} onChange={(e) => setShowPatrol(e.target.checked)} size="small" />}
-              label={<Typography variant="body2" color="text.secondary">Patrol Agents (Green/Yellow)</Typography>}
-            />
-            <FormControlLabel
-              control={<Switch checked={showFlocking} onChange={(e) => setShowFlocking(e.target.checked)} size="small" />}
-              label={<Typography variant="body2" color="text.secondary">Flocking Agents (Blue)</Typography>}
-            />
-            <FormControlLabel
-              control={<Switch checked={showSeeking} onChange={(e) => setShowSeeking(e.target.checked)} size="small" />}
-              label={<Typography variant="body2" color="text.secondary">Seeking Agent (Purple)</Typography>}
-            />
-
-            <ToggleButton
-              value="target"
-              onClick={handleTargetChange}
-              size="small"
-              sx={{ mt: 1 }}
-            >
-              Randomize Seek Target
-            </ToggleButton>
-          </Stack>
-        </Paper>
-
-        <Paper
-          sx={{
-            position: 'absolute',
-            bottom: 16,
-            right: 16,
-            p: 2,
-            bgcolor: 'rgba(0,0,0,0.85)',
-            maxWidth: 440,
-          }}
-        >
-          <Typography variant="caption" component="pre" sx={{ fontFamily: 'monospace', fontSize: '0.7rem' }}>
-{`import { YukaEntityManager, YukaVehicle, YukaPath } from '@jbcom/strata';
-import * as YUKA from 'yuka';
-
-<YukaEntityManager>
-  <YukaVehicle ref={vehicleRef} maxSpeed={3}>
-    <AgentMesh />
-  </YukaVehicle>
-</YukaEntityManager>
-
-// Add steering behaviors
-const followPath = new YUKA.FollowPathBehavior(path);
-vehicleRef.current.addBehavior(followPath);`}
+        }
+      />
+      <FormControlLabel
+        control={
+          <Switch 
+            checked={showSeeking} 
+            onChange={(e) => setShowSeeking(e.target.checked)} 
+            size="small" 
+          />
+        }
+        label={
+          <Typography variant="body2" color="text.secondary">
+            Seeking Agent (Purple)
           </Typography>
-        </Paper>
-      </Box>
+        }
+      />
+      <Button 
+        variant="outlined" 
+        size="small" 
+        onClick={handleTargetChange}
+        sx={{ mt: 1 }}
+      >
+        Randomize Seek Target
+      </Button>
+    </Stack>
+  );
 
-      <Box sx={{ bgcolor: 'rgba(0,0,0,0.5)', py: 1, textAlign: 'center' }}>
-        <Typography variant="caption" color="text.secondary">
-          Uses YukaEntityManager, YukaVehicle, YukaPath from @jbcom/strata - Powered by YukaJS
-        </Typography>
-      </Box>
-    </Box>
+  return (
+    <DemoLayout
+      title="YukaJS AI System"
+      description="AI agents with steering behaviors: patrolling guards, flocking birds, and seeking behavior. Powered by YukaJS game AI library."
+      chips={['YukaVehicle', 'YukaPath', 'Steering', 'Flocking']}
+      features={[
+        'Path following with waypoints',
+        'Flocking with alignment, cohesion, separation',
+        'Seek and arrive behaviors',
+        'Wandering with boundary constraints',
+      ]}
+      code={CODE_SAMPLE}
+      controls={controls}
+    >
+      <Scene 
+        showPatrol={showPatrol}
+        showFlocking={showFlocking}
+        showSeeking={showSeeking}
+        seekTarget={seekTarget}
+      />
+    </DemoLayout>
   );
 }

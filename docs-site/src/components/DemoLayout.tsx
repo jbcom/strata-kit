@@ -3,48 +3,298 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Stats } from '@react-three/drei';
 import {
   Box,
-  Paper,
   Typography,
   IconButton,
   Tooltip,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
+  Drawer,
+  useTheme,
+  useMediaQuery,
+  Tabs,
+  Tab,
   Collapse,
-  Fab,
   Stack,
+  Chip,
 } from '@mui/material';
 import CodeIcon from '@mui/icons-material/Code';
 import BarChartIcon from '@mui/icons-material/BarChart';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import TuneIcon from '@mui/icons-material/Tune';
+import InfoIcon from '@mui/icons-material/Info';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import CloseIcon from '@mui/icons-material/Close';
 
 interface DemoLayoutProps {
   title: string;
   description: string;
-  features: string[];
+  features?: string[];
   children: ReactNode;
   code?: string;
   controls?: ReactNode;
+  chips?: string[];
 }
+
+type PanelTab = 'info' | 'controls' | 'source' | false;
 
 export default function DemoLayout({
   title,
   description,
-  features,
+  features = [],
   children,
   code,
   controls,
+  chips = [],
 }: DemoLayoutProps) {
-  const [showCode, setShowCode] = useState(false);
+  const theme = useTheme();
+  const isSmall = useMediaQuery(theme.breakpoints.down('md'));
+  const isXSmall = useMediaQuery(theme.breakpoints.down('sm'));
+  
+  const [activeTab, setActiveTab] = useState<PanelTab>(false);
   const [showStats, setShowStats] = useState(false);
-  const [infoExpanded, setInfoExpanded] = useState(true);
+  const [panelExpanded, setPanelExpanded] = useState(true);
+
+  const handleTabChange = (_: React.SyntheticEvent, newValue: PanelTab) => {
+    if (activeTab === newValue) {
+      setActiveTab(false);
+    } else {
+      setActiveTab(newValue);
+    }
+  };
+
+  const handleTabClick = (tab: PanelTab) => {
+    if (activeTab === tab) {
+      setActiveTab(false);
+    } else {
+      setActiveTab(tab);
+    }
+  };
+
+  const closePanel = () => setActiveTab(false);
+
+  const InfoContent = () => (
+    <Box sx={{ p: 2 }}>
+      <Typography variant="h6" color="primary.main" gutterBottom sx={{ fontWeight: 600 }}>
+        {title}
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        {description}
+      </Typography>
+      {chips.length > 0 && (
+        <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ gap: 0.5, mb: 2 }}>
+          {chips.map((chip, i) => (
+            <Chip key={i} label={chip} size="small" variant="outlined" color="primary" />
+          ))}
+        </Stack>
+      )}
+      {features.length > 0 && (
+        <Box>
+          <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+            Features:
+          </Typography>
+          <Stack spacing={0.5}>
+            {features.map((feature, i) => (
+              <Typography key={i} variant="body2" color="text.secondary" sx={{ pl: 1 }}>
+                • {feature}
+              </Typography>
+            ))}
+          </Stack>
+        </Box>
+      )}
+    </Box>
+  );
+
+  const ControlsContent = () => (
+    <Box sx={{ p: 2 }}>
+      {controls || (
+        <Typography variant="body2" color="text.secondary">
+          No controls available for this demo.
+        </Typography>
+      )}
+    </Box>
+  );
+
+  const SourceContent = () => (
+    <Box sx={{ p: 2, maxHeight: isSmall ? '50vh' : 400, overflow: 'auto' }}>
+      {code ? (
+        <Box
+          component="pre"
+          sx={{
+            m: 0,
+            fontSize: isXSmall ? '0.65rem' : '0.75rem',
+            lineHeight: 1.5,
+            color: 'text.primary',
+            fontFamily: '"Fira Code", "Monaco", monospace',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+          }}
+        >
+          <code>{code}</code>
+        </Box>
+      ) : (
+        <Typography variant="body2" color="text.secondary">
+          No source code available.
+        </Typography>
+      )}
+    </Box>
+  );
+
+  const getPanelContent = () => {
+    if (activeTab === 'info') return <InfoContent />;
+    if (activeTab === 'controls') return <ControlsContent />;
+    if (activeTab === 'source') return <SourceContent />;
+    return null;
+  };
+
+  const ToolbarContent = () => (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        px: { xs: 1, sm: 2 },
+        py: 0.5,
+        bgcolor: 'rgba(5, 5, 8, 0.95)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+        minHeight: 48,
+        flexWrap: 'wrap',
+        gap: 1,
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+        <Typography
+          variant="subtitle1"
+          sx={{
+            color: 'primary.main',
+            fontWeight: 600,
+            letterSpacing: '0.05em',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            fontSize: { xs: '0.875rem', sm: '1rem' },
+          }}
+        >
+          {title}
+        </Typography>
+      </Box>
+
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 } }}>
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+          sx={{
+            minHeight: 36,
+            '& .MuiTab-root': {
+              minHeight: 36,
+              minWidth: { xs: 'auto', sm: 80 },
+              px: { xs: 1, sm: 2 },
+              fontSize: { xs: '0.7rem', sm: '0.8rem' },
+            },
+          }}
+        >
+          <Tab
+            icon={<InfoIcon sx={{ fontSize: { xs: 16, sm: 18 } }} />}
+            iconPosition="start"
+            label={isXSmall ? '' : 'Info'}
+            value="info"
+            onClick={() => handleTabClick('info')}
+          />
+          {controls && (
+            <Tab
+              icon={<TuneIcon sx={{ fontSize: { xs: 16, sm: 18 } }} />}
+              iconPosition="start"
+              label={isXSmall ? '' : 'Controls'}
+              value="controls"
+              onClick={() => handleTabClick('controls')}
+            />
+          )}
+          {code && (
+            <Tab
+              icon={<CodeIcon sx={{ fontSize: { xs: 16, sm: 18 } }} />}
+              iconPosition="start"
+              label={isXSmall ? '' : 'Source'}
+              value="source"
+              onClick={() => handleTabClick('source')}
+            />
+          )}
+        </Tabs>
+
+        <Tooltip title="Toggle Stats">
+          <IconButton
+            size="small"
+            onClick={() => setShowStats(!showStats)}
+            sx={{
+              color: showStats ? 'primary.main' : 'text.secondary',
+              bgcolor: showStats ? 'rgba(212, 175, 55, 0.1)' : 'transparent',
+            }}
+          >
+            <BarChartIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+
+        {activeTab !== false && !isSmall && (
+          <Tooltip title={panelExpanded ? 'Collapse' : 'Expand'}>
+            <IconButton
+              size="small"
+              onClick={() => setPanelExpanded(!panelExpanded)}
+              sx={{ color: 'text.secondary' }}
+            >
+              {panelExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
+    </Box>
+  );
+
+  const DesktopPanel = () => (
+    <Collapse in={activeTab !== false && panelExpanded}>
+      <Box
+        sx={{
+          bgcolor: 'rgba(0, 0, 0, 0.9)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+          maxHeight: 300,
+          overflow: 'auto',
+        }}
+      >
+        {getPanelContent()}
+      </Box>
+    </Collapse>
+  );
+
+  const MobileDrawer = () => (
+    <Drawer
+      anchor="bottom"
+      open={activeTab !== false}
+      onClose={closePanel}
+      PaperProps={{
+        sx: {
+          bgcolor: 'rgba(10, 10, 15, 0.98)',
+          borderTopLeftRadius: 16,
+          borderTopRightRadius: 16,
+          maxHeight: '70vh',
+        },
+      }}
+    >
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 1, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+        <Typography variant="subtitle2" color="primary.main" sx={{ pl: 1 }}>
+          {activeTab === 'info' && 'Info'}
+          {activeTab === 'controls' && 'Controls'}
+          {activeTab === 'source' && 'Source Code'}
+        </Typography>
+        <IconButton size="small" onClick={closePanel}>
+          <CloseIcon />
+        </IconButton>
+      </Box>
+      {getPanelContent()}
+    </Drawer>
+  );
 
   return (
     <Box sx={{ height: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ position: 'relative', flex: 1 }}>
+      <ToolbarContent />
+      
+      {!isSmall && <DesktopPanel />}
+
+      <Box sx={{ flex: 1, position: 'relative', minHeight: 0 }}>
         <Canvas
           camera={{ position: [5, 5, 5], fov: 60 }}
           style={{
@@ -68,178 +318,22 @@ export default function DemoLayout({
           <directionalLight position={[10, 10, 5]} intensity={1} castShadow />
           {children}
         </Canvas>
-
-        <Paper
-          elevation={8}
-          sx={{
-            position: 'absolute',
-            top: 16,
-            left: 16,
-            maxWidth: 340,
-            bgcolor: 'rgba(0, 0, 0, 0.85)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid',
-            borderColor: 'primary.dark',
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              p: 2,
-              cursor: 'pointer',
-            }}
-            onClick={() => setInfoExpanded(!infoExpanded)}
-          >
-            <Typography
-              variant="h6"
-              sx={{
-                color: 'primary.main',
-                letterSpacing: '0.1em',
-                fontWeight: 700,
-              }}
-            >
-              {title}
-            </Typography>
-            <IconButton size="small" color="primary">
-              {infoExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-            </IconButton>
-          </Box>
-
-          <Collapse in={infoExpanded}>
-            <Box sx={{ px: 2, pb: 2 }}>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                {description}
-              </Typography>
-              <List dense disablePadding>
-                {features.map((feature, i) => (
-                  <ListItem key={i} disablePadding sx={{ py: 0.25 }}>
-                    <ListItemIcon sx={{ minWidth: 28 }}>
-                      <ArrowForwardIcon sx={{ fontSize: 14, color: 'primary.main' }} />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={feature}
-                      primaryTypographyProps={{
-                        variant: 'body2',
-                        color: 'text.secondary',
-                      }}
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            </Box>
-          </Collapse>
-        </Paper>
-
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={{
-            position: 'absolute',
-            top: 16,
-            right: 16,
-          }}
-        >
-          <Tooltip title="Toggle Stats">
-            <Fab
-              size="small"
-              onClick={() => setShowStats(!showStats)}
-              sx={{
-                bgcolor: showStats ? 'primary.dark' : 'rgba(0, 0, 0, 0.7)',
-                color: showStats ? 'primary.contrastText' : 'text.secondary',
-                border: '1px solid',
-                borderColor: 'primary.dark',
-                '&:hover': {
-                  bgcolor: 'primary.dark',
-                },
-              }}
-            >
-              <BarChartIcon fontSize="small" />
-            </Fab>
-          </Tooltip>
-          {code && (
-            <Tooltip title="Toggle Code">
-              <Fab
-                size="small"
-                onClick={() => setShowCode(!showCode)}
-                sx={{
-                  bgcolor: showCode ? 'primary.dark' : 'rgba(0, 0, 0, 0.7)',
-                  color: showCode ? 'primary.contrastText' : 'text.secondary',
-                  border: '1px solid',
-                  borderColor: 'primary.dark',
-                  '&:hover': {
-                    bgcolor: 'primary.dark',
-                  },
-                }}
-              >
-                <CodeIcon fontSize="small" />
-              </Fab>
-            </Tooltip>
-          )}
-        </Stack>
-
-        {controls && (
-          <Paper
-            elevation={8}
-            sx={{
-              position: 'absolute',
-              bottom: 16,
-              left: 16,
-              p: 2,
-              bgcolor: 'rgba(0, 0, 0, 0.85)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-            }}
-          >
-            {controls}
-          </Paper>
-        )}
-
-        {showCode && code && (
-          <Paper
-            elevation={8}
-            sx={{
-              position: 'absolute',
-              bottom: 16,
-              right: 16,
-              maxWidth: 500,
-              maxHeight: 400,
-              overflow: 'auto',
-              p: 2,
-              bgcolor: 'rgba(0, 0, 0, 0.95)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid',
-              borderColor: 'primary.dark',
-            }}
-          >
-            <Box
-              component="pre"
-              sx={{
-                m: 0,
-                fontSize: '0.8rem',
-                lineHeight: 1.6,
-                color: 'text.primary',
-                fontFamily: '"Fira Code", monospace',
-              }}
-            >
-              <code>{code}</code>
-            </Box>
-          </Paper>
-        )}
       </Box>
 
       <Box
         sx={{
-          bgcolor: 'rgba(0, 0, 0, 0.5)',
-          py: 1,
+          bgcolor: 'rgba(0, 0, 0, 0.6)',
+          py: 0.5,
           textAlign: 'center',
+          borderTop: '1px solid rgba(255, 255, 255, 0.05)',
         }}
       >
-        <Typography variant="caption" color="text.secondary">
-          Click and drag to rotate | Scroll to zoom | Right-click to pan
+        <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>
+          Drag to rotate • Scroll to zoom • Right-click to pan
         </Typography>
       </Box>
+
+      {isSmall && <MobileDrawer />}
     </Box>
   );
 }
