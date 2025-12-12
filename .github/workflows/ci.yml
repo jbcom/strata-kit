@@ -33,7 +33,10 @@ jobs:
             - name: Get pnpm store directory
               id: pnpm-cache
               shell: bash
-              run: echo "store=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+              run: |
+                  STORE_PATH=$(pnpm store path --silent 2>/dev/null || true)
+                  STORE_PATH="${STORE_PATH:-${XDG_DATA_HOME:-$HOME/.local/share}/pnpm/store}"
+                  echo "store=$STORE_PATH" >> $GITHUB_OUTPUT
 
             - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
               with:
