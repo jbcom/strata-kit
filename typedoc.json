@@ -1,0 +1,39 @@
+{
+    "$schema": "https://typedoc.org/schema.json",
+    "entryPoints": [
+        "src/index.ts",
+        "src/core/index.ts",
+        "src/components/index.ts",
+        "src/shaders/index.ts",
+        "src/utils/index.ts",
+        "src/presets/index.ts"
+    ],
+    "entryPointStrategy": "expand",
+    "out": "docs/api",
+    "name": "Strata",
+    "readme": "docs/GETTING_STARTED.md",
+    "includeVersion": true,
+    "excludePrivate": true,
+    "excludeProtected": true,
+    "excludeInternal": true,
+    "categorizeByGroup": true,
+    "categoryOrder": [
+        "Overview",
+        "World Building",
+        "Entities & Simulation",
+        "Effects & Atmosphere",
+        "Player Experience",
+        "Game Systems",
+        "Rendering Pipeline",
+        "*"
+    ],
+    "navigationLinks": {
+        "GitHub": "https://github.com/jbcom/strata",
+        "Examples": "/examples/showcase/"
+    },
+    "validation": {
+        "notExported": true,
+        "invalidLink": true,
+        "notDocumented": false
+    }
+}
