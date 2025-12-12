@@ -53,8 +53,8 @@
     "dependencies": {
         "@capacitor/core": "6.2.1",
         "@capacitor/haptics": "6.0.3",
-        "@types/react": "18.3.27"
-    },
+    "@types/react": "19.2.7"
+  },
     "devDependencies": {
         "@capacitor/cli": "6.0.0",
         "@capacitor/docgen": "0.2.2",
