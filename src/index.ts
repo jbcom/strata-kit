@@ -100,3 +100,6 @@ export * from './shaders';
 
 // Utilities
 export * from './utils';
+
+// Hooks (Yuka steering behaviors)
+export * from './hooks';

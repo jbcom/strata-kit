@@ -45,6 +45,9 @@ importers:
       '@types/three':
         specifier: ^0.160.0
         version: 0.160.0
+      '@types/yuka':
+        specifier: ^0.7.4
+        version: 0.7.4
       '@typescript-eslint/eslint-plugin':
         specifier: ^7.0.0
         version: 7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
@@ -93,6 +96,9 @@ importers:
       vitest:
         specifier: ^2.1.0
         version: 2.1.9(jsdom@27.2.0(postcss@8.5.6))
+      yuka:
+        specifier: ^0.7.8
+        version: 0.7.8
 
 packages:
 
@@ -775,6 +781,9 @@ packages:
 
   '@types/webxr@0.5.24':
     resolution: {integrity: sha512-h8fgEd/DpoS9CBrjEQXR+dIDraopAEfu4wYVNY2tEPwk60stPWhvZMf4Foo5FakuQ7HFZoa8WceaWFervK2Ovg==}
+
+  '@types/yuka@0.7.4':
+    resolution: {integrity: sha512-nyfp47Re8wtzG0DdBPQ6PepXOU0CiMpPVWZ21y1mRImbnz53ADdHUbDY2GRNbIdsl7qlV3XWS+gVpj3zoIIPXA==}
 
   '@typescript-eslint/eslint-plugin@7.18.0':
     resolution: {integrity: sha512-94EQTWZ40mzBc42ATNIBimBEDltSJ9RQHCC8vc/PDbxi4k8dVwUAv4o98dk50M1zB+JGFxp43FP7f8+FP8R6Sw==}
@@ -3247,6 +3256,9 @@ packages:
     resolution: {integrity: sha512-CzhO+pFNo8ajLM2d2IW/R93ipy99LWjtwblvC1RsoSUMZgyLbYFr221TnSNT7GjGdYui6P459mw9JH/g/zW2ug==}
     engines: {node: '>=18'}
 
+  yuka@0.7.8:
+    resolution: {integrity: sha512-G/pFcMZh2Azz7Yy500NSV1jQ0Ru7h9hTNyEW+HjRXcdzjJIyp/3mCGspnx7VJVP06zxORqK6mkl5TywLqVUnVg==}
+
   zundo@2.3.0:
     resolution: {integrity: sha512-4GXYxXA17SIKYhVbWHdSEU04P697IMyVGXrC2TnzoyohEAWytFNOKqOp5gTGvaW93F/PM5Y0evbGtOPF0PWQwQ==}
     peerDependencies:
@@ -3966,6 +3978,8 @@ snapshots:
   '@types/unist@3.0.3': {}
 
   '@types/webxr@0.5.24': {}
+
+  '@types/yuka@0.7.4': {}
 
   '@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)':
     dependencies:
@@ -6513,6 +6527,8 @@ snapshots:
   yocto-queue@0.1.0: {}
 
   yoctocolors@2.1.2: {}
+
+  yuka@0.7.8: {}
 
   zundo@2.3.0(zustand@5.0.9(@types/react@18.3.27)(immer@11.0.1)(react@18.3.1)(use-sync-external-store@1.6.0(react@18.3.1))):
     dependencies:
