@@ -14,7 +14,7 @@
     "forceConsistentCasingInFileNames": true,
     "jsx": "react-jsx",
     "lib": ["ES2022", "DOM"],
-    "types": ["vitest/globals"]
+    "types": ["vitest/globals", "node", "react", "three"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "tests"]
