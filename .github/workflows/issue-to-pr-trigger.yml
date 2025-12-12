@@ -1,0 +1,43 @@
+# Issue-to-PR Trigger
+# Dispatches the Issue-to-PR reusable workflow
+name: Issue-to-PR Trigger
+
+on:
+  workflow_dispatch:
+    inputs:
+      issue-number:
+        description: 'Issue number to process'
+        required: true
+        type: string
+      base-branch:
+        description: 'Base branch to create PR against'
+        required: false
+        type: string
+        default: 'main'
+      model:
+        description: 'AI model to use'
+        required: false
+        type: string
+        default: 'openrouter/auto'
+      chat-timeout:
+        description: 'Timeout in minutes'
+        required: false
+        type: string
+        default: '10'
+
+permissions:
+  issues: read
+  pull-requests: write
+  contents: write
+
+jobs:
+  issue-to-pr:
+    uses: ./.github/workflows/Issue-to-pr.yml
+    with:
+      issue-number: ${{ fromJson(inputs.issue-number) }}
+      base-branch: ${{ inputs.base-branch }}
+      model: ${{ inputs.model }}
+      chat-timeout: ${{ fromJson(inputs.chat-timeout) }}
+    secrets:
+      api_key_env_value: ${{ secrets.OPENROUTER_API_KEY }}
+      openrouter_api_key: ${{ secrets.OPENROUTER_API_KEY }}

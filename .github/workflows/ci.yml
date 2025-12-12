@@ -99,13 +99,6 @@ jobs:
               run: pnpm run test:e2e
               continue-on-error: true
 
-            - name: Upload test results to Mergify
-              if: success() || failure()
-              uses: mergifyio/gha-mergify-ci@v8
-              with:
-                  token: ${{ secrets.MERGIFY_TOKEN }}
-                  test-results: junit.xml
-
     release:
         name: Release
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
