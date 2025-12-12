@@ -31,6 +31,7 @@ npm-debug.log*
 test-results/
 playwright-report/
 playwright/.cache/
+junit.xml
 
 # Lock files (use pnpm)
 package-lock.json
