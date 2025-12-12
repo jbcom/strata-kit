@@ -84,3 +84,9 @@ export type {
     AnimationChunk,
     EffectsChunk,
 } from './shaders';
+
+// Decals
+export * from './decals';
+
+// LOD
+export * from './lod';
