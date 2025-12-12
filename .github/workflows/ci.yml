@@ -170,11 +170,6 @@ jobs:
               with:
                   version: 9
 
-            - name: Authenticate to npm
-              run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
-              env:
-                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
             - run: pnpm install
 
             - name: Download build artifacts
@@ -188,3 +183,4 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

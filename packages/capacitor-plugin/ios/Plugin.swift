@@ -329,7 +329,9 @@ public class StrataPlugin: CAPPlugin, CAPBridgedPlugin {
     }
     
     @objc func vibrate(_ call: CAPPluginCall) {
-        AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
+        DispatchQueue.main.async { [weak self] in
+            self?.heavyImpactGenerator?.impactOccurred()
+        }
         call.resolve()
     }
     

@@ -35,15 +35,21 @@ export function InputProvider({ children }: { children: ReactNode }) {
   const [snapshot, setSnapshot] = useState<InputSnapshot>(defaultSnapshot);
 
   useEffect(() => {
+    let mounted = true;
     let removeListener: (() => void) | undefined;
 
     Strata.addListener('inputChange', (newSnapshot: InputSnapshot) => {
-      setSnapshot(newSnapshot);
+      if (mounted) setSnapshot(newSnapshot);
     }).then(handle => {
-      removeListener = handle.remove;
+      if (mounted) {
+        removeListener = handle.remove;
+      } else {
+        handle.remove();
+      }
     });
 
     return () => {
+      mounted = false;
       removeListener?.();
     };
   }, []);

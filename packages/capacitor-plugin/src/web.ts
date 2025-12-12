@@ -72,8 +72,6 @@ export class StrataWeb extends WebPlugin implements StrataPlugin, StrataPlatform
     window.addEventListener('resize', this.handleResize);
     this.orientationMediaQuery = window.matchMedia('(orientation: portrait)');
     this.orientationMediaQuery.addEventListener('change', this.handleOrientationChange);
-
-    this.startInputLoop();
   }
 
   private handleKeyDown = (e: KeyboardEvent): void => {
@@ -154,6 +152,8 @@ export class StrataWeb extends WebPlugin implements StrataPlugin, StrataPlatform
   }
 
   private startInputLoop(): void {
+    if (this.animationFrameId !== null) return;
+
     const loop = (): void => {
       this.gamepads = navigator.getGamepads ? Array.from(navigator.getGamepads()) : [];
       
@@ -169,6 +169,13 @@ export class StrataWeb extends WebPlugin implements StrataPlugin, StrataPlatform
       this.animationFrameId = requestAnimationFrame(loop);
     };
     loop();
+  }
+
+  private stopInputLoop(): void {
+    if (this.animationFrameId !== null) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
   }
 
   private hasInputChanged(current: InputSnapshot): boolean {
@@ -449,7 +456,17 @@ export class StrataWeb extends WebPlugin implements StrataPlugin, StrataPlatform
         return { remove: async () => removeFromArray(this.deviceListeners, callback) };
       case 'inputChange':
         this.inputListeners.push(callback);
-        return { remove: async () => removeFromArray(this.inputListeners, callback) };
+        if (this.inputListeners.length === 1) {
+          this.startInputLoop();
+        }
+        return {
+          remove: async () => {
+            removeFromArray(this.inputListeners, callback);
+            if (this.inputListeners.length === 0) {
+              this.stopInputLoop();
+            }
+          },
+        };
       case 'gamepadConnected':
         this.gamepadConnectedListeners.push(callback);
         return { remove: async () => removeFromArray(this.gamepadConnectedListeners, callback) };

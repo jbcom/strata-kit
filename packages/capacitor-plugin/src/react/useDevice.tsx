@@ -26,17 +26,25 @@ export function DeviceProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<DeviceProfile>(defaultProfile);
 
   useEffect(() => {
-    Strata.getDeviceProfile().then(setProfile);
-
+    let mounted = true;
     let removeListener: (() => void) | undefined;
 
+    Strata.getDeviceProfile().then(p => {
+      if (mounted) setProfile(p);
+    });
+
     Strata.addListener('deviceChange', (newProfile: DeviceProfile) => {
-      setProfile(newProfile);
+      if (mounted) setProfile(newProfile);
     }).then(handle => {
-      removeListener = handle.remove;
+      if (mounted) {
+        removeListener = handle.remove;
+      } else {
+        handle.remove();
+      }
     });
 
     return () => {
+      mounted = false;
       removeListener?.();
     };
   }, []);

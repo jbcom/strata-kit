@@ -351,8 +351,12 @@ public class StrataPlugin extends Plugin {
 
     private List<String> jsArrayToStringList(JSArray array) throws JSONException {
         List<String> list = new ArrayList<>();
-        for (int i = 0; i < array.length(); i++) {
-            list.add(array.getString(i));
+        int length = Math.min(array.length(), 5);
+        for (int i = 0; i < length; i++) {
+            String val = array.getString(i);
+            if (val != null && val.length() < 32) {
+                list.add(val);
+            }
         }
         return list;
     }

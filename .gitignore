@@ -35,3 +35,10 @@ playwright/.cache/
 # Lock files (use pnpm)
 package-lock.json
 yarn.lock
+
+# Generated Docs
+packages/docs/
+
+# Security
+.npmrc
+
