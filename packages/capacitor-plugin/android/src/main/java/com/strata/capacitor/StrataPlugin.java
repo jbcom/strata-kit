@@ -32,6 +32,9 @@ import java.util.Map;
 @CapacitorPlugin(name = "Strata")
 public class StrataPlugin extends Plugin {
 
+    private static final int MAX_INPUT_MAPPING_SIZE = 5;
+    private static final int MAX_INPUT_ACTION_LENGTH = 32;
+
     private Map<String, List<String>> inputMapping = new HashMap<>();
     private Map<Integer, JSObject> activeTouches = new HashMap<>();
     private Vibrator vibrator;
@@ -351,10 +354,10 @@ public class StrataPlugin extends Plugin {
 
     private List<String> jsArrayToStringList(JSArray array) throws JSONException {
         List<String> list = new ArrayList<>();
-        int length = Math.min(array.length(), 5);
+        int length = Math.min(array.length(), MAX_INPUT_MAPPING_SIZE);
         for (int i = 0; i < length; i++) {
             String val = array.getString(i);
-            if (val != null && val.length() < 32) {
+            if (val != null && val.length() < MAX_INPUT_ACTION_LENGTH) {
                 list.add(val);
             }
         }
