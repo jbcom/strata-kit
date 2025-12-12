@@ -57,3 +57,56 @@ export type {
     VolumetricFogMeshUniforms,
     UnderwaterOverlayUniforms,
 } from './volumetrics-components';
+
+// Cloud shaders
+export {
+    cloudLayerVertexShader,
+    cloudLayerFragmentShader,
+    volumetricCloudVertexShader,
+    volumetricCloudFragmentShader,
+    createCloudLayerUniforms,
+    createVolumetricCloudUniforms,
+} from './clouds';
+export type { CloudLayerUniforms, VolumetricCloudUniforms } from './clouds';
+
+// God rays shaders
+export {
+    godRaysVertexShader,
+    godRaysFragmentShader,
+    volumetricSpotlightVertexShader,
+    volumetricSpotlightFragmentShader,
+    volumetricPointLightVertexShader,
+    volumetricPointLightFragmentShader,
+    createGodRaysUniforms,
+    createVolumetricSpotlightUniforms,
+    createVolumetricPointLightUniforms,
+} from './godRays';
+export type {
+    GodRaysUniforms,
+    VolumetricSpotlightUniforms,
+    VolumetricPointLightUniforms,
+} from './godRays';
+
+// Custom shader materials
+export {
+    createToonMaterial,
+    createHologramMaterial,
+    createDissolveMaterial,
+    createForcefieldMaterial,
+    createGlitchMaterial,
+    createCrystalMaterial,
+    createOutlineMaterial,
+    createGradientMaterial,
+    createScanlineMaterial,
+} from './materials';
+export type {
+    ToonMaterialOptions,
+    HologramMaterialOptions,
+    DissolveMaterialOptions,
+    ForcefieldMaterialOptions,
+    GlitchMaterialOptions,
+    CrystalMaterialOptions,
+    OutlineMaterialOptions,
+    GradientMaterialOptions,
+    ScanlineMaterialOptions,
+} from './materials';
