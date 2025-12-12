@@ -7,6 +7,10 @@ assignees: ''
 
 ---
 
+**Before submitting:**
+- [ ] I have searched existing issues to ensure this rendering bug hasn't already been reported
+- [ ] I am using the latest version of @jbcom/strata
+
 **Describe the rendering issue**
 A clear and concise description of the visual problem or shader error.
 
@@ -24,14 +28,25 @@ Common shader errors include:
 - "Shader compilation failed"
 ```
 
-**Affected Component**
-Which preset or component shows the rendering issue?
-- [ ] Water (reflections, refractions, waves)
-- [ ] Terrain (height mapping, textures, normals)
-- [ ] Sky (atmosphere, sun, clouds)
-- [ ] Vegetation (grass, trees, wind animation)
-- [ ] Character (fur, skin, animation)
-- [ ] Volumetrics (fog, god rays)
+**Affected Preset**
+Which Strata preset shows the rendering issue?
+
+*Background Layer:*
+- [ ] Sky (procedural sky with time-of-day and weather)
+- [ ] Volumetrics (volumetric fog, god rays, underwater effects)
+- [ ] Terrain (SDF-based terrain generation)
+- [ ] MarchingCubes (mesh generation from SDFs)
+
+*Midground Layer:*
+- [ ] Water (advanced water rendering with reflections/refractions)
+- [ ] Vegetation (GPU-instanced grass, trees, rocks)
+- [ ] Raymarching (GPU-accelerated SDF rendering)
+
+*Foreground Layer:*
+- [ ] Character (articulated character system)
+- [ ] Fur (shell-based fur rendering)
+- [ ] Molecular (molecular structure visualization)
+
 - [ ] Other: [specify]
 
 **Rendering Configuration**
@@ -51,7 +66,7 @@ Which preset or component shows the rendering issue?
 
 **Reproduction**
 Link to a minimal reproduction (critical for shader bugs):
-- CodeSandbox, StackBlitz, or GitHub repository link
+- Provide a StackBlitz or GitHub repository link
 
 **Does the issue occur on:**
 - [ ] Desktop (Chrome)

@@ -7,8 +7,18 @@ assignees: ''
 
 ---
 
+**Before submitting:**
+- [ ] I have searched existing issues to ensure this performance problem hasn't already been reported
+- [ ] I am using the latest version of @jbcom/strata
+
 **Describe the performance issue**
 A clear and concise description of the performance problem you're experiencing.
+
+**Device Tier**
+What type of device are you testing on?
+- [ ] High-end (dedicated GPU, gaming/workstation)
+- [ ] Mid-range (integrated GPU, modern laptop)
+- [ ] Low-end (older hardware, mobile)
 
 **Performance Metrics**
  - Current FPS: [e.g. 15fps]
@@ -22,15 +32,25 @@ A clear and concise description of the performance problem you're experiencing.
  - Texture resolution: [e.g. 4K textures]
  - Draw calls: [if known]
 
-**Affected Components**
-Which Strata presets/components are in use?
-- [ ] Water
-- [ ] Terrain
-- [ ] Sky
-- [ ] Vegetation
-- [ ] Character
-- [ ] Volumetrics
-- [ ] GodRays
+**Affected Presets**
+Which Strata presets are in use?
+
+*Background Layer:*
+- [ ] Sky (procedural sky with time-of-day and weather)
+- [ ] Volumetrics (volumetric fog, god rays, underwater effects)
+- [ ] Terrain (SDF-based terrain generation)
+- [ ] MarchingCubes (mesh generation from SDFs)
+
+*Midground Layer:*
+- [ ] Water (advanced water rendering with reflections/refractions)
+- [ ] Vegetation (GPU-instanced grass, trees, rocks)
+- [ ] Raymarching (GPU-accelerated SDF rendering)
+
+*Foreground Layer:*
+- [ ] Character (articulated character system)
+- [ ] Fur (shell-based fur rendering)
+- [ ] Molecular (molecular structure visualization)
+
 - [ ] Other: [specify]
 
 **Environment:**
@@ -44,7 +64,7 @@ Which Strata presets/components are in use?
 
 **Reproduction**
 Link to a minimal reproduction:
-- CodeSandbox, StackBlitz, or GitHub repository link
+- Provide a StackBlitz or GitHub repository link
 
 **Profiling Data (if available)**
 If you've used browser DevTools or other profilers, please include:

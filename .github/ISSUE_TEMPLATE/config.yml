@@ -6,6 +6,6 @@ contact_links:
   - name: 💬 Discussions
     url: https://github.com/jbcom/strata/discussions
     about: Ask questions and discuss ideas
-  - name: 🎮 Live Demos
+  - name: 📂 Demo Source Code
     url: https://github.com/jbcom/strata/tree/main/docs/demos
-    about: Try interactive demos to see features in action
+    about: Browse demo source code and examples
