@@ -953,20 +953,23 @@ export interface RagdollRef {
 }
 
 interface RagdollSphericalJointProps {
-    bodyA: RefObject<RapierRigidBody>;
-    bodyB: RefObject<RapierRigidBody>;
+    bodyA: RefObject<RapierRigidBody | null>;
+    bodyB: RefObject<RapierRigidBody | null>;
     anchor1: [number, number, number];
     anchor2: [number, number, number];
 }
 
 const RagdollSphericalJoint = ({ bodyA, bodyB, anchor1, anchor2 }: RagdollSphericalJointProps) => {
-    useSphericalJoint(bodyA, bodyB, [anchor1, anchor2]);
+    useSphericalJoint(bodyA as RefObject<RapierRigidBody>, bodyB as RefObject<RapierRigidBody>, [
+        anchor1,
+        anchor2,
+    ]);
     return null;
 };
 
 interface RagdollRevoluteJointProps {
-    bodyA: RefObject<RapierRigidBody>;
-    bodyB: RefObject<RapierRigidBody>;
+    bodyA: RefObject<RapierRigidBody | null>;
+    bodyB: RefObject<RapierRigidBody | null>;
     anchor1: [number, number, number];
     anchor2: [number, number, number];
     axis: [number, number, number];
@@ -979,7 +982,11 @@ const RagdollRevoluteJoint = ({
     anchor2,
     axis,
 }: RagdollRevoluteJointProps) => {
-    useRevoluteJoint(bodyA, bodyB, [anchor1, anchor2, axis]);
+    useRevoluteJoint(bodyA as RefObject<RapierRigidBody>, bodyB as RefObject<RapierRigidBody>, [
+        anchor1,
+        anchor2,
+        axis,
+    ]);
     return null;
 };
 
@@ -1022,7 +1029,7 @@ export const Ragdoll = forwardRef<RagdollRef, RagdollProps>(
         const [isActive, setIsActive] = useState(active);
 
         const bodyPartRefs = useMemo(() => {
-            const refs: Record<string, RefObject<RapierRigidBody>> = {};
+            const refs: Record<string, RefObject<RapierRigidBody | null>> = {};
             config.bodyParts.forEach((part) => {
                 refs[part.name] = createRef<RapierRigidBody>();
             });

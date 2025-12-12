@@ -269,7 +269,7 @@ export interface YukaEntityManagerProps {
  * @param props - YukaEntityManagerProps
  * @returns Provider component for Yuka AI context
  */
-export function YukaEntityManager({ children }: YukaEntityManagerProps): JSX.Element {
+export function YukaEntityManager({ children }: YukaEntityManagerProps): React.JSX.Element {
     const managerRef = useRef<YUKA.EntityManager>(new YUKA.EntityManager());
     const timeRef = useRef<YUKA.Time>(new YUKA.Time());
 
