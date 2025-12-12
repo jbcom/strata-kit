@@ -56,3 +56,31 @@ export {
     generateTerrainChunk,
 } from './marching-cubes';
 export type { MarchingCubesResult, MarchingCubesOptions, TerrainChunk } from './marching-cubes';
+
+// Shader utilities
+export {
+    ShaderChunks,
+    composeShaderChunks,
+    buildVertexShader,
+    buildFragmentShader,
+    createTimeUniform,
+    createProgressUniform,
+    createColorUniform,
+    createVector2Uniform,
+    createVector3Uniform,
+    noiseSnippet,
+    lightingSnippet,
+    colorSnippet,
+    animationSnippet,
+} from './shaders';
+export type {
+    ShaderUniform,
+    ShaderUniforms,
+    ShaderChunkCategory,
+    NoiseChunk,
+    LightingChunk,
+    UVChunk,
+    ColorChunk,
+    AnimationChunk,
+    EffectsChunk,
+} from './shaders';
