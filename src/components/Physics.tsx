@@ -6,7 +6,7 @@
  * @module components/Physics
  */
 
-import {
+import React, {
     useRef,
     useEffect,
     useState,
@@ -953,8 +953,8 @@ export interface RagdollRef {
 }
 
 interface RagdollSphericalJointProps {
-    bodyA: RefObject<RapierRigidBody | null>;
-    bodyB: RefObject<RapierRigidBody | null>;
+    bodyA: RefObject<RapierRigidBody>;
+    bodyB: RefObject<RapierRigidBody>;
     anchor1: [number, number, number];
     anchor2: [number, number, number];
 }
@@ -968,8 +968,8 @@ const RagdollSphericalJoint = ({ bodyA, bodyB, anchor1, anchor2 }: RagdollSpheri
 };
 
 interface RagdollRevoluteJointProps {
-    bodyA: RefObject<RapierRigidBody | null>;
-    bodyB: RefObject<RapierRigidBody | null>;
+    bodyA: RefObject<RapierRigidBody>;
+    bodyB: RefObject<RapierRigidBody>;
     anchor1: [number, number, number];
     anchor2: [number, number, number];
     axis: [number, number, number];
@@ -1029,9 +1029,10 @@ export const Ragdoll = forwardRef<RagdollRef, RagdollProps>(
         const [isActive, setIsActive] = useState(active);
 
         const bodyPartRefs = useMemo(() => {
-            const refs: Record<string, RefObject<RapierRigidBody | null>> = {};
+            const refs: Record<string, RefObject<RapierRigidBody>> = {};
             config.bodyParts.forEach((part) => {
-                refs[part.name] = createRef<RapierRigidBody>();
+                refs[part.name] =
+                    createRef<RapierRigidBody>() as unknown as RefObject<RapierRigidBody>;
             });
             return refs;
         }, [config.bodyParts]);
