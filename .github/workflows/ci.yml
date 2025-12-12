@@ -182,5 +182,7 @@ jobs:
               run: npx semantic-release
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+                  # Prefer the standard npm auth env var (avoid writing tokens to disk)
                   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+                  # semantic-release/npm still expects this name
+                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

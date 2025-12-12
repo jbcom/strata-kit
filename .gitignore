@@ -32,12 +32,12 @@ test-results/
 playwright-report/
 playwright/.cache/
 
+# Generated TypeDoc output (build in CI, don't commit)
+packages/docs/
+
 # Lock files (use pnpm)
 package-lock.json
 yarn.lock
-
-# Generated Docs
-packages/docs/
 
 # Security
 .npmrc
