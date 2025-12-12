@@ -323,15 +323,15 @@ export function createGodRaysUniforms(
 ): GodRaysUniforms {
     return {
         uTime: { value: 0 },
-        uLightPosition: { value: lightPosition },
-        uLightColor: { value: lightColor },
+        uLightPosition: { value: lightPosition.clone() },
+        uLightColor: { value: lightColor.clone() },
         uIntensity: { value: options.intensity ?? 1.0 },
         uDecay: { value: options.decay ?? 0.95 },
         uDensity: { value: options.density ?? 1.0 },
         uWeight: { value: options.weight ?? 0.01 },
         uExposure: { value: options.exposure ?? 1.0 },
         uSamples: { value: options.samples ?? 50 },
-        uResolution: { value: options.resolution ?? new THREE.Vector2(1920, 1080) },
+        uResolution: { value: options.resolution?.clone() ?? new THREE.Vector2(1920, 1080) },
         uScattering: { value: options.scattering ?? 2.0 },
         uNoiseFactor: { value: options.noiseFactor ?? 0.3 },
     };
@@ -351,14 +351,14 @@ export function createVolumetricSpotlightUniforms(
 ): VolumetricSpotlightUniforms {
     return {
         uTime: { value: 0 },
-        uLightColor: { value: lightColor },
+        uLightColor: { value: lightColor.clone() },
         uIntensity: { value: options.intensity ?? 1.0 },
         uAngle: { value: options.angle ?? Math.PI / 6 },
         uPenumbra: { value: options.penumbra ?? 0.1 },
         uDistance: { value: options.distance ?? 10 },
         uDustDensity: { value: options.dustDensity ?? 0.5 },
-        uLightPosition: { value: lightPosition },
-        uLightDirection: { value: lightDirection },
+        uLightPosition: { value: lightPosition.clone() },
+        uLightDirection: { value: lightDirection.clone().normalize() },
     };
 }
 
@@ -374,11 +374,11 @@ export function createVolumetricPointLightUniforms(
 ): VolumetricPointLightUniforms {
     return {
         uTime: { value: 0 },
-        uLightColor: { value: lightColor },
+        uLightColor: { value: lightColor.clone() },
         uIntensity: { value: options.intensity ?? 1.0 },
         uRadius: { value: options.radius ?? 5 },
         uDustDensity: { value: options.dustDensity ?? 0.5 },
         uFlicker: { value: options.flicker ?? 0 },
-        uLightPosition: { value: lightPosition },
+        uLightPosition: { value: lightPosition.clone() },
     };
 }
