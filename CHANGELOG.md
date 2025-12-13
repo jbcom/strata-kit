@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+***
+
+## v1.1.2
+*Release Date: 2023-10-27*
+
+A small patch release focusing on internal improvements to ensure better long-term stability for the library.
+
+## Internal
+
+-   We have improved our internal testing suite to bolster the stability of future releases. This update involves the removal of flaky End-to-End (E2E) tests and the correction of unit test expectations, resulting in a more robust and reliable CI pipeline. (#126) (@Copilot)
+All notable changes to this project will be documented in this file.
+
 Of course! Here is a user-friendly changelog for version 1.1.1 based on the provided commit.
 
 ---
