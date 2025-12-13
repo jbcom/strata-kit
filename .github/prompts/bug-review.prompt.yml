@@ -29,7 +29,7 @@ messages:
   - role: user
     content: '{{input}}'
 
-model: openai/gpt-4.1
+model: qwen2.5-coder:7b
 modelParameters:
   max_tokens: 400
   temperature: 0.2

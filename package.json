@@ -60,10 +60,10 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e",
-    "prepublishOnly": "npm run build && npm run test:unit",
+    "test:all": "pnpm run test:unit && pnpm run test:integration && pnpm run test:e2e",
+    "prepublishOnly": "pnpm run build && pnpm run test:unit",
     "prepare": "husky",
-    "triage": "node internal/triage/dist/cli.js",
+    "triage": "tsx internal/triage/src/cli.ts",
     "typecheck": "tsc --noEmit",
     "docs": "typedoc"
   },
@@ -101,11 +101,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jbcom/strata"
+    "url": "https://github.com/jbdevprimary/strata"
   },
-  "homepage": "https://github.com/jbcom/strata#readme",
+  "homepage": "https://github.com/jbdevprimary/strata#readme",
   "bugs": {
-    "url": "https://github.com/jbcom/strata/issues"
+    "url": "https://github.com/jbdevprimary/strata/issues"
   },
   "peerDependencies": {
     "@react-three/drei": ">=9.0.0",
@@ -181,6 +181,7 @@
     "semantic-release": "^24.2.0",
     "simplex-noise": "^4.0.3",
     "three": "^0.160.0",
+    "tsx": "^4.19.0",
     "typedoc": "^0.26.0",
     "typescript": "^5.3.0",
     "vitest": "^2.1.0",

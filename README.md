@@ -30,7 +30,7 @@ All organized into **presets** that you can drop into your game.
 ## 🚀 Quick Start
 
 ```bash
-npm install @jbcom/strata @react-three/fiber @react-three/drei three
+pnpm install @jbcom/strata @react-three/fiber @react-three/drei three
 ```
 
 ```tsx
@@ -82,16 +82,16 @@ Strata organizes features into **presets** - ready-to-use game development primi
 
 ```bash
 # Unit tests (core algorithms)
-npm run test:unit
+pnpm run test:unit
 
 # Integration tests (React components)
-npm run test:integration
+pnpm run test:integration
 
 # E2E tests (Playwright)
-npm run test:e2e
+pnpm run test:e2e
 
 # All tests
-npm run test:all
+pnpm run test:all
 ```
 
 See [tests/README.md](./tests/README.md) for test documentation.
@@ -101,11 +101,11 @@ See [tests/README.md](./tests/README.md) for test documentation.
 ```bash
 # Basic examples
 cd examples/basic/water
-npm install && npm run dev
+pnpm install && pnpm run dev
 
 # Comprehensive example
 cd examples/comprehensive
-npm install && npm run dev
+pnpm install && pnpm run dev
 ```
 
 See [examples/README.md](./examples/README.md) for all examples.
@@ -186,7 +186,7 @@ APIs not in PUBLIC_API.md are **internal** and may change without notice.
 
 ## 🤝 Contributing
 
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines.
+See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for guidelines.
 
 ## 📄 License
 

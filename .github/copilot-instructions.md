@@ -41,8 +41,8 @@ pnpm run lint
 # Format code
 pnpm run format
 
-# Type check
-pnpm run typecheck
+# Check code (lint + format)
+pnpm run check
 ```
 
 ## Testing Architecture
@@ -94,11 +94,7 @@ Use conventional commits:
 2. Ensure all tests pass
 3. Ensure lint checks pass
 4. Update documentation if changing public APIs
-5. Request reviews from AI agents:
-   - `@claude` for architecture and best practices
-   - `/q review` for security and bugs
-   - `/gemini review` for code quality
-   - `@cursor review` for refactoring suggestions
+5. AI code reviews are handled automatically by the `@strata/triage` CLI via GitHub Actions when PRs are opened
 
 ## Issue Management
 

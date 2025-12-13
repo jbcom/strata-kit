@@ -1,41 +1,55 @@
+/**
+ * Review Command
+ *
+ * AI-powered code review that ACTS, not just suggests:
+ * - Analyzes PR diff for issues
+ * - Uses MCP filesystem tools to fix issues
+ * - Commits and pushes fixes
+ * - Comments with summary of actions taken
+ */
+
 import pc from 'picocolors';
+import { execFileSync } from 'node:child_process';
 import { getPullRequest, commentOnPR } from '../github.js';
-import { generate } from '../ai.js';
+import { generateWithTools } from '../ai.js';
+import { createInlineFilesystemClient, type MCPClient } from '../mcp.js';
 
-const SYSTEM_PROMPT = `You are a code reviewer for Strata, a procedural 3D graphics library for React Three Fiber.
+const SYSTEM_PROMPT = `You are an autonomous code reviewer for Strata, a procedural 3D graphics library for React Three Fiber.
 
-Review the pull request and provide feedback on:
-1. Code quality and TypeScript best practices
-2. Potential bugs, edge cases, division by zero
-3. Performance (especially for shaders and rendering)
-4. Memory leaks (useEffect cleanup, subscriptions)
-5. Security concerns
+You MUST FIX issues, not just report them. You have access to file system tools:
+- read_file: Read a file's contents
+- write_file: Write content to a file
+- list_files: List files in a directory
+- search_files: Search for files matching a pattern
 
-Be constructive and helpful. Keep responses concise. Format as:
+Your workflow:
+1. Analyze the diff to identify issues
+2. For each issue you can fix:
+   - Use read_file to get the current file contents
+   - Use write_file to apply the fix
+3. After fixing, summarize what you did
 
-## Summary
-<1-2 sentences>
+Issues to fix (in priority order):
+1. Division by zero - add guards (e.g., denominator !== 0 ? a/b : 0)
+2. Missing useEffect cleanup - add return cleanup functions
+3. TypeScript errors - fix type issues
+4. Memory leaks - fix subscription/event listener cleanup
+5. Security issues - fix input validation, XSS, etc.
 
-## Score: <1-5>/5 ⭐
+If you cannot fix an issue automatically, note it in the summary for manual review.
 
-## Issues
-<bulleted list or "None found">
-
-## Suggestions
-<bulleted list of improvements>
-
-## Verdict
-<APPROVE, REQUEST_CHANGES, or COMMENT>`;
+IMPORTANT: Actually use the tools to fix files. Do not just suggest changes.`;
 
 export interface ReviewOptions {
     dryRun?: boolean;
     verbose?: boolean;
+    maxSteps?: number;
 }
 
 export async function review(prNumber: number, options: ReviewOptions = {}): Promise<void> {
-    const { dryRun = false, verbose = false } = options;
+    const { dryRun = false, verbose = false, maxSteps = 10 } = options;
 
-    console.log(pc.blue(`Reviewing PR #${prNumber}...`));
+    console.log(pc.blue(`🔧 Reviewing and fixing PR #${prNumber}...`));
 
     const pr = getPullRequest(prNumber);
 
@@ -44,13 +58,27 @@ export async function review(prNumber: number, options: ReviewOptions = {}): Pro
         console.log(pc.dim(`Files: ${pr.files.length}`));
     }
 
-    // Truncate large diffs
-    const maxDiffSize = 30000;
-    const diffPreview = pr.diff.length > maxDiffSize
-        ? pr.diff.slice(0, maxDiffSize) + '\n...(truncated)'
-        : pr.diff;
+    const workingDirectory = process.cwd();
+    console.log(pc.dim(`Working directory: ${workingDirectory}`));
 
-    const prompt = `Review this pull request:
+    let mcpClient: MCPClient | null = null;
+
+    try {
+        // Create MCP filesystem client
+        console.log(pc.dim('Connecting to filesystem MCP server...'));
+        mcpClient = await createInlineFilesystemClient(workingDirectory);
+
+        // Get tools from MCP
+        const tools = await mcpClient.tools();
+        console.log(pc.dim(`Available tools: ${Object.keys(tools).join(', ')}`));
+
+        // Truncate large diffs
+        const maxDiffSize = 30000;
+        const diffPreview = pr.diff.length > maxDiffSize
+            ? pr.diff.slice(0, maxDiffSize) + '\n...(truncated)'
+            : pr.diff;
+
+        const prompt = `Review this pull request and FIX any issues you find:
 
 **Title:** ${pr.title}
 
@@ -62,24 +90,116 @@ ${pr.body || '(no description provided)'}
 **Diff:**
 \`\`\`diff
 ${diffPreview}
-\`\`\``;
+\`\`\`
 
-    if (verbose) {
-        console.log(pc.dim('Analyzing with AI...'));
+INSTRUCTIONS:
+1. Identify fixable issues in the diff
+2. Use read_file to get the full file contents
+3. Use write_file to apply fixes
+4. Respond with a summary of what you fixed
+
+If there are no issues to fix, just say "No issues found."`;
+
+        if (dryRun) {
+            console.log(pc.yellow('\n[Dry run] Would execute AI with filesystem tools'));
+            console.log(pc.dim('Prompt preview:'));
+            console.log(prompt.slice(0, 500) + '...');
+            return;
+        }
+
+        console.log(pc.blue('\nStarting AI-powered review...'));
+
+        // Run AI with tools
+        const result = await generateWithTools(prompt, tools, {
+            systemPrompt: SYSTEM_PROMPT,
+        });
+
+        console.log('\n' + pc.green('Review Summary:'));
+        console.log(result.text);
+
+        if (result.toolCalls.length > 0) {
+            console.log(pc.dim(`\nTool calls made: ${result.toolCalls.length}`));
+        }
+
+        // Check if any files were modified
+        const writeOps = (result.toolResults as Array<{ toolName?: string }>).filter(
+            (r) => r.toolName === 'write_file'
+        );
+
+        if (writeOps.length > 0) {
+            console.log(pc.green(`\n✅ Modified ${writeOps.length} file(s)`));
+
+            // Stage and commit changes
+            console.log(pc.blue('\nStaging changes...'));
+            execFileSync('git', ['add', '-A'], { cwd: workingDirectory });
+
+            const status = execFileSync('git', ['status', '--short'], {
+                cwd: workingDirectory,
+                encoding: 'utf-8',
+            });
+
+            if (status.trim()) {
+                console.log(pc.dim(status));
+
+                // Commit
+                const commitMessage = `fix: auto-fix issues from AI review
+
+AI-generated fixes for PR #${prNumber}.
+
+Generated by @strata/triage`;
+
+                execFileSync('git', ['commit', '-m', commitMessage], {
+                    cwd: workingDirectory,
+                });
+
+                console.log(pc.green('✅ Changes committed'));
+
+                // Push
+                try {
+                    execFileSync('git', ['push'], { cwd: workingDirectory });
+                    console.log(pc.green('✅ Changes pushed'));
+                } catch (pushErr) {
+                    console.log(pc.yellow('⚠️ Could not push (may need manual push)'));
+                    if (verbose) {
+                        console.log(pc.dim(String(pushErr)));
+                    }
+                }
+            } else {
+                console.log(pc.yellow('No changes to commit'));
+            }
+        } else {
+            console.log(pc.dim('\nNo files were modified'));
+        }
+
+        // Post summary comment
+        const summary = result.text.length > 1500
+            ? result.text.slice(0, 1500) + '...'
+            : result.text;
+
+        const comment = writeOps.length > 0
+            ? `## 🤖 AI Auto-Fix Review
+
+${summary}
+
+_Applied ${writeOps.length} fixes automatically._
+
+---
+_Generated by @strata/triage_`
+            : `## 🤖 AI Review
+
+${summary}
+
+---
+_Generated by @strata/triage_`;
+
+        console.log(pc.blue('\nPosting review comment...'));
+        commentOnPR(prNumber, comment);
+
+        console.log(pc.green('\nDone!'));
+
+    } finally {
+        if (mcpClient) {
+            await mcpClient.close();
+        }
     }
-
-    const response = await generate(prompt, { systemPrompt: SYSTEM_PROMPT });
-
-    console.log('\n' + pc.green('Review:'));
-    console.log(response);
-
-    if (dryRun) {
-        console.log(pc.yellow('\n[Dry run] Would post review comment'));
-        return;
-    }
-
-    console.log(pc.blue('Posting review comment...'));
-    commentOnPR(prNumber, `${response}\n\n---\n_Generated by @strata/triage_`);
-
-    console.log(pc.green('Done!'));
 }

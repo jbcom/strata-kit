@@ -1,0 +1,80 @@
+name: 📚 Documentation
+description: Report documentation issues or request examples
+title: "[Docs] "
+labels: ["documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help us improve the documentation!
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Preflight Checklist
+      options:
+        - label: I have searched existing issues to ensure this hasn't been reported
+          required: true
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Request Type
+      options:
+        - Documentation improvement
+        - New example/demo request
+        - Tutorial request
+        - API reference issue
+        - Typo/error fix
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Documentation Area
+      options:
+        - Getting started guide
+        - API reference
+        - Preset documentation
+        - Example code
+        - README
+        - Other
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What's unclear, missing, or incorrect?
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested Improvement
+      description: What would you like to see instead?
+
+  - type: dropdown
+    id: preset
+    attributes:
+      label: Related Preset
+      options:
+        - General/Core
+        - Sky
+        - Volumetrics
+        - Terrain
+        - MarchingCubes
+        - Water
+        - Vegetation
+        - Raymarching
+        - Character
+        - Fur
+        - Molecular
+        - Multiple presets
+        - Other
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context

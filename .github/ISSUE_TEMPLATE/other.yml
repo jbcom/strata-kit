@@ -1,0 +1,58 @@
+name: 🔧 Other
+description: CI/CD, infrastructure, tooling, or other issues
+title: "[Other] "
+labels: ["needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for CI/CD, infrastructure, tooling, or anything that doesn't fit other templates.
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Preflight Checklist
+      options:
+        - label: I have searched existing issues to ensure this hasn't been reported
+          required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - CI/CD / GitHub Actions
+        - Build / Tooling
+        - Dependencies
+        - Release / Publishing
+        - Repository configuration
+        - Security
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the issue or request
+    validations:
+      required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: Steps to reproduce, logs, or additional context
+      render: markdown
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed Solution
+      description: If you have a solution in mind, describe it here
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context

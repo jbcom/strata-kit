@@ -1,48 +1,92 @@
 /**
- * MCP Filesystem Client
+ * MCP Client Manager
  *
- * Uses @ai-sdk/mcp to connect to filesystem-mcp-server for file operations.
- * This enables the AI to read, write, and modify files in the repository.
+ * Connects to all configured MCP servers and provides unified tool access:
+ * - GitHub MCP: Issues, PRs, repos, commits
+ * - Playwright MCP: Browser automation, screenshots, testing
+ * - Filesystem MCP: Read/write files in the workspace
+ * - Context7 MCP: Documentation and context lookup
  */
 
 import { experimental_createMCPClient as createMCPClient } from '@ai-sdk/mcp';
 import { Experimental_StdioMCPTransport as StdioMCPTransport } from '@ai-sdk/mcp/mcp-stdio';
 
 export type MCPClient = Awaited<ReturnType<typeof createMCPClient>>;
+export type MCPTools = Awaited<ReturnType<MCPClient['tools']>>;
 
 /**
- * Create an MCP client connected to the filesystem server
- *
- * @param workingDirectory - The directory to use as the base for file operations
+ * Get filesystem tools from an MCP client
  */
-export async function createFilesystemClient(
-    workingDirectory: string
-): Promise<MCPClient> {
-    // Use npx to run filesystem-mcp-server if not installed globally
+export async function getFilesystemTools(client: MCPClient): Promise<MCPTools> {
+    return client.tools();
+}
+
+export interface MCPClients {
+    github?: MCPClient;
+    playwright?: MCPClient;
+    filesystem?: MCPClient;
+}
+
+/**
+ * Create GitHub MCP client for repo operations
+ */
+export async function createGitHubClient(): Promise<MCPClient> {
+    const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+    if (!token) {
+        throw new Error('GITHUB_TOKEN or GH_TOKEN required for GitHub MCP');
+    }
+
+    const transport = new StdioMCPTransport({
+        command: 'npx',
+        args: ['-y', '@modelcontextprotocol/server-github'],
+        env: {
+            ...process.env,
+            GITHUB_PERSONAL_ACCESS_TOKEN: token,
+        },
+    });
+
+    return createMCPClient({
+        transport,
+        name: 'strata-triage-github',
+        version: '1.0.0',
+    });
+}
+
+/**
+ * Create Playwright MCP client for browser automation
+ */
+export async function createPlaywrightClient(): Promise<MCPClient> {
+    const transport = new StdioMCPTransport({
+        command: 'npx',
+        args: ['-y', '@playwright/mcp@latest'],
+    });
+
+    return createMCPClient({
+        transport,
+        name: 'strata-triage-playwright',
+        version: '1.0.0',
+    });
+}
+
+/**
+ * Create Filesystem MCP client for file operations (external server)
+ */
+export async function createFilesystemClient(workingDirectory: string): Promise<MCPClient> {
     const transport = new StdioMCPTransport({
         command: 'npx',
         args: ['-y', '@anthropic/filesystem-mcp-server', workingDirectory],
         cwd: workingDirectory,
     });
 
-    const client = await createMCPClient({
+    return createMCPClient({
         transport,
-        name: 'strata-triage',
+        name: 'strata-triage-filesystem',
         version: '1.0.0',
     });
-
-    return client;
 }
 
 /**
- * Get filesystem tools from the MCP client
- */
-export async function getFilesystemTools(client: MCPClient): Promise<Awaited<ReturnType<MCPClient['tools']>>> {
-    return client.tools();
-}
-
-/**
- * Create a simple inline MCP server for filesystem operations
+ * Create an inline MCP server for filesystem operations
  * This avoids external dependencies by implementing basic file ops directly
  */
 export async function createInlineFilesystemClient(
@@ -177,7 +221,6 @@ rl.on('line', async (input) => {
                         break;
                     }
                     case 'search_files': {
-                        // Simple glob-like search
                         const searchDir = resolvePath(args.path || '.');
                         const pattern = args.pattern.replace(/\\*/g, '.*');
                         const regex = new RegExp(pattern);
@@ -236,9 +279,165 @@ rl.on('line', async (input) => {
 
     const client = await createMCPClient({
         transport,
-        name: 'strata-triage',
+        name: 'strata-triage-inline-fs',
         version: '1.0.0',
     });
 
     return client;
+}
+
+/**
+ * Initialize all MCP clients
+ *
+ * @param options - Which clients to initialize
+ */
+export async function initializeMCPClients(options: {
+    github?: boolean;
+    playwright?: boolean;
+    filesystem?: boolean | string;
+}): Promise<MCPClients> {
+    const clients: MCPClients = {};
+
+    const initPromises: Promise<void>[] = [];
+
+    if (options.github) {
+        initPromises.push(
+            createGitHubClient()
+                .then(client => { clients.github = client; })
+                .catch(err => console.warn('GitHub MCP unavailable:', err.message))
+        );
+    }
+
+    if (options.playwright) {
+        initPromises.push(
+            createPlaywrightClient()
+                .then(client => { clients.playwright = client; })
+                .catch(err => console.warn('Playwright MCP unavailable:', err.message))
+        );
+    }
+
+    if (options.filesystem) {
+        const dir = typeof options.filesystem === 'string' ? options.filesystem : process.cwd();
+        initPromises.push(
+            createFilesystemClient(dir)
+                .then(client => { clients.filesystem = client; })
+                .catch(err => console.warn('Filesystem MCP unavailable:', err.message))
+        );
+    }
+
+    await Promise.all(initPromises);
+
+    return clients;
+}
+
+/**
+ * Get combined tools from all active MCP clients
+ */
+export async function getAllTools(clients: MCPClients): Promise<MCPTools> {
+    const allTools: MCPTools = {};
+
+    for (const [name, client] of Object.entries(clients)) {
+        if (client) {
+            try {
+                const tools = await client.tools();
+                // Prefix tools with client name to avoid collisions
+                for (const [toolName, tool] of Object.entries(tools)) {
+                    allTools[`${name}_${toolName}`] = tool;
+                }
+            } catch (err) {
+                console.warn(`Failed to get tools from ${name} MCP:`, err);
+            }
+        }
+    }
+
+    return allTools;
+}
+
+/**
+ * Close all MCP clients
+ */
+export async function closeMCPClients(clients: MCPClients): Promise<void> {
+    const closePromises: Promise<void>[] = [];
+
+    for (const client of Object.values(clients)) {
+        if (client) {
+            closePromises.push(
+                client.close().catch(() => { /* ignore cleanup errors */ })
+            );
+        }
+    }
+
+    await Promise.all(closePromises);
+}
+
+/**
+ * Run an agentic task with MCP tools
+ *
+ * This is the main entry point for running AI tasks that need to take action.
+ * It initializes the appropriate MCP clients, runs the AI with tools, and cleans up.
+ */
+export async function runAgenticTask(options: {
+    systemPrompt: string;
+    userPrompt: string;
+    mcpClients?: {
+        github?: boolean;
+        playwright?: boolean;
+        filesystem?: boolean | string;
+    };
+    maxSteps?: number;
+    onToolCall?: (toolName: string, args: unknown) => void;
+}): Promise<{ text: string; toolCallCount: number }> {
+    const {
+        systemPrompt,
+        userPrompt,
+        mcpClients: clientOptions = { github: true, filesystem: true },
+        maxSteps = 15,
+        onToolCall,
+    } = options;
+
+    // Initialize MCP clients
+    const clients = await initializeMCPClients(clientOptions);
+
+    try {
+        // Get all tools from all clients
+        const tools = await getAllTools(clients);
+
+        if (Object.keys(tools).length === 0) {
+            throw new Error('No MCP tools available');
+        }
+
+        // Import AI SDK
+        const { generateText } = await import('ai');
+        const { getProvider, getModel } = await import('./ai.js');
+
+        const provider = getProvider();
+        const modelId = getModel();
+
+        // Run the AI with tools
+        const result = await generateText({
+            model: provider(modelId),
+            system: systemPrompt,
+            prompt: userPrompt,
+            tools,
+            maxSteps,
+            onStepFinish: ({ toolCalls }) => {
+                if (toolCalls && onToolCall) {
+                    for (const call of toolCalls) {
+                        onToolCall(call.toolName, call.args);
+                    }
+                }
+            },
+        });
+
+        const toolCallCount = result.steps?.reduce(
+            (acc, s) => acc + (s.toolCalls?.length || 0),
+            0
+        ) || 0;
+
+        return { text: result.text, toolCallCount };
+
+    } finally {
+        // Always clean up
+        await closeMCPClients(clients);
+    }
 }

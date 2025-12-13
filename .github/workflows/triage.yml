@@ -112,10 +112,10 @@ on:
       - created         # → respond, extract action items
 
   # ==========================================
-  # REPOSITORY EVENTS - No branch restrictions!
-  # Jobs use if conditions to determine behavior
+  # REPOSITORY EVENTS
   # ==========================================
-  push:                 # → build on all branches, release only on main
+  push:
+    branches: [main]    # → release only, PRs handle feature branch validation
 
   create:               # → new branch/tag created
 
@@ -230,9 +230,8 @@ permissions:
   issues: write
   pull-requests: write
 
-# All secrets passed at step level only - no global exposure
-env:
-  OLLAMA_MODEL: ${{ vars.OLLAMA_MODEL || 'glm-4.6:cloud' }}
+# OLLAMA_MODEL defaults to glm-4.6:cloud in ai.ts
+# Override via repository variable vars.OLLAMA_MODEL if needed
 
 jobs:
   # ============================================
@@ -282,10 +281,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Build all packages
-        run: |
-          pnpm run build
-          pnpm --filter @strata/triage build
+      - name: Build strata package
+        run: pnpm run build
+        # Note: @strata/triage is NOT built - CLI runs via tsx, reporters are loaded as TypeScript (requires source files to be present).
+        # Since only 'dist' is uploaded as a build artifact, test jobs that need to run the CLI with reporters as TypeScript must check out the source code directly (not use the build artifact).
 
       - name: Lint
         run: pnpm run lint
@@ -296,9 +295,8 @@ jobs:
       - name: Check if tests should run
         id: changes
         run: |
-          # Run tests on PRs and pushes to main
-          if [[ "${{ github.event_name }}" == "pull_request" ]] || \
-             [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]]; then
+          # Tests only run on PRs - pushes to main already passed tests before merge
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             echo "should_test=true" >> $GITHUB_OUTPUT
           else
             echo "should_test=false" >> $GITHUB_OUTPUT
@@ -310,9 +308,7 @@ jobs:
           name: build-output
           path: |
             dist
-            internal/triage/dist
-            internal/triage/package.json
-            internal/triage/node_modules
+            internal/triage/src
           retention-days: 1
 
   # ============================================
@@ -342,8 +338,7 @@ jobs:
           name: build-output
 
       - name: Run tests with Strata reporter
-        run: pnpm run test -- --reporter=default --reporter=./internal/triage/dist/reporters/vitest.js
-        continue-on-error: true
+        run: pnpm run test -- --reporter=default --reporter=./internal/triage/src/reporters/vitest.ts
 
       - name: Upload test results
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
@@ -355,11 +350,17 @@ jobs:
 
   # ============================================
   # E2E: Playwright tests
+  # Runs on schedule (nightly) or when PR has 'run-e2e' label
+  # Unit tests must pass first
   # ============================================
   e2e:
     name: E2E Tests
-    needs: build
-    if: needs.build.outputs.should_test == 'true'
+    needs: [build, test]
+    if: >-
+      needs.test.result == 'success' &&
+      (github.event_name == 'schedule' ||
+       github.event_name == 'workflow_dispatch' ||
+       contains(github.event.pull_request.labels.*.name, 'run-e2e'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
@@ -383,8 +384,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run E2E tests
-        run: pnpm run test:e2e -- --reporter=./internal/triage/dist/reporters/playwright.js
-        continue-on-error: true
+        run: pnpm run test:e2e -- --reporter=./internal/triage/src/reporters/playwright.ts
 
       - name: Upload E2E results
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
@@ -457,49 +457,12 @@ jobs:
           comment-summary-in-pr: always
 
   # ============================================
-  # CUSTOM SCANNER: Strata-specific security checks
-  # ============================================
-  custom-scanner:
-    name: Strata Security Scanner
-    needs: build
-    if: github.event_name == 'push' || github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-    steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
-
-      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
-        with:
-          node-version: '22'
-
-      - uses: pnpm/action-setup@9fd676a19091d4595eefd76e4bd31c97133911f1 # v4.2.0
-        with:
-          version: 9
-
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
-        with:
-          name: build-output
-
-      - name: Run Strata security scanner
-        run: pnpm run triage -- scan --sarif strata-scan.sarif --verbose
-        continue-on-error: true
-
-      - name: Upload scanner SARIF
-        if: always() && hashFiles('strata-scan.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: strata-scan.sarif
-          category: strata-scanner
-        continue-on-error: true
-
-  # ============================================
   # AI SECURITY: Analyze security findings
   # ============================================
   security-analysis:
     name: AI Security Analysis
-    needs: [build, codeql, custom-scanner]
-    if: always() && (needs.codeql.result == 'success' || needs.custom-scanner.result == 'success')
+    needs: [build, codeql]
+    if: always() && needs.codeql.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -522,7 +485,9 @@ jobs:
         with:
           name: codeql-results
           path: codeql-results/
-        continue-on-error: true
+
+      - name: Install dependencies
+        run: pnpm install
 
       - name: Analyze security findings with AI
         run: |
@@ -533,7 +498,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
-        continue-on-error: true
 
       - name: Upload SARIF to GitHub Code Scanning
         if: always() && hashFiles('strata-security.sarif') != ''
@@ -541,15 +505,14 @@ jobs:
         with:
           sarif_file: strata-security.sarif
           category: strata-triage
-        continue-on-error: true
 
   # ============================================
   # AI DIAGNOSE: Analyze test failures
   # ============================================
   diagnose-failures:
     name: AI Test Diagnosis
-    needs: [build, test, e2e]
-    if: always() && (needs.test.result == 'failure' || needs.e2e.result == 'failure')
+    needs: [build, test]
+    if: always() && needs.test.result == 'failure'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
@@ -570,7 +533,9 @@ jobs:
         with:
           name: test-results
           path: test-results/
-        continue-on-error: true
+
+      - name: Install dependencies
+        run: pnpm install
 
       - name: Diagnose failures
         run: |
@@ -581,18 +546,20 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
-        continue-on-error: true
 
   # ============================================
   # RELEASE: Semantic release to npm (on main)
+  # Runs only on push to main. Assumes tests have passed during PR review; direct pushes to main are technically possible (though discouraged) and may bypass PR tests. Consider enforcing branch protection to prevent this.
+  # CodeQL security scanning must pass to gate the release
   # ============================================
   release:
     name: Release
-    needs: [build, test]
+    needs: [build, codeql]
     if: >-
-      github.event_name == 'push' && 
+      github.event_name == 'push' &&
       github.ref == 'refs/heads/main' &&
-      needs.test.result == 'success'
+      needs.build.result == 'success' &&
+      needs.codeql.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -672,7 +639,6 @@ jobs:
 
       - name: Generate TypeDoc
         run: pnpm run docs
-        continue-on-error: true
 
       - name: Setup Pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
@@ -712,6 +678,9 @@ jobs:
         with:
           name: build-output
 
+      - name: Install dependencies
+        run: pnpm install
+
       - name: Auto-label issue
         run: pnpm run triage -- label ${{ github.event.issue.number }}
         env:
@@ -742,6 +711,9 @@ jobs:
       - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: build-output
+
+      - name: Install dependencies
+        run: pnpm install
 
       - name: Assess issue
         run: pnpm run triage -- assess ${{ github.event.issue.number }} --verbose
@@ -777,6 +749,9 @@ jobs:
       - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: build-output
+
+      - name: Install dependencies
+        run: pnpm install
 
       - name: Configure git
         run: |
@@ -866,6 +841,9 @@ jobs:
         with:
           name: build-output
 
+      - name: Install dependencies
+        run: pnpm install
+
       - name: Review PR
         run: pnpm run triage -- review ${{ github.event.pull_request.number }} --verbose
         env:
@@ -897,6 +875,9 @@ jobs:
       - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: build-output
+
+      - name: Install dependencies
+        run: pnpm install
 
       - name: Create project plan
         run: pnpm run triage -- plan ${{ github.event.issue.number }} --verbose
@@ -1053,6 +1034,9 @@ jobs:
         with:
           name: build-output
 
+      - name: Install dependencies
+        run: pnpm install
+
       - name: Get PR number
         id: pr
         run: |
@@ -1198,6 +1182,9 @@ jobs:
         with:
           name: build-output
 
+      - name: Install dependencies
+        run: pnpm install
+
       - name: Check if Monday 9am UTC
         id: check
         run: |
@@ -1238,6 +1225,9 @@ jobs:
       - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: build-output
+
+      - name: Install dependencies
+        run: pnpm install
 
       - name: Check if 1st of month at 9am UTC
         id: check
@@ -1280,6 +1270,9 @@ jobs:
         with:
           name: build-output
 
+      - name: Install dependencies
+        run: pnpm install
+
       - name: Check if midnight UTC (daily run)
         id: check
         run: |
@@ -1316,10 +1309,8 @@ jobs:
         with:
           version: 9
 
-      - name: Install and build
-        run: |
-          pnpm install
-          pnpm --filter @strata/triage build
+      - name: Install dependencies
+        run: pnpm install
 
       - name: Handle CI failure
         if: github.event.workflow_run.conclusion == 'failure'
@@ -1357,10 +1348,8 @@ jobs:
         with:
           version: 9
 
-      - name: Install and build
-        run: |
-          pnpm install
-          pnpm --filter @strata/triage build
+      - name: Install dependencies
+        run: pnpm install
 
       - name: Get associated PR
         id: pr
@@ -1401,7 +1390,7 @@ jobs:
   # Note: security-alert job removed because dependabot_alert,
   # code_scanning_alert, and secret_scanning_alert are not valid
   # GitHub Actions event triggers. Security is handled through
-  # CodeQL, custom-scanner, and security-analysis jobs.
+  # CodeQL and security-analysis jobs.
   # ============================================
 
   # ============================================
@@ -1422,10 +1411,8 @@ jobs:
         with:
           version: 9
 
-      - name: Install and build
-        run: |
-          pnpm install
-          pnpm --filter @strata/triage build
+      - name: Install dependencies
+        run: pnpm install
 
       - name: Sprint opened
         if: github.event.action == 'opened'

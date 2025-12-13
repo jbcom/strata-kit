@@ -97,8 +97,12 @@ const SCAN_RULES: ScanRule[] = [
         pattern: /\[.*\]\s*=/,
         filePattern: /\.tsx?$/,
         validate: (match, line, context) => {
+            // Ignore array index access (number in brackets)
+            if (/\[\d+\]/.test(match[0]) || /\[i\]/.test(match[0]) || /\[j\]/.test(match[0]) || /\[k\]/.test(match[0])) {
+                return false;
+            }
             // Only flag if it's assignment to dynamic key from user input
-            return line.includes('input') || line.includes('data') || line.includes('params');
+            return line.includes('userInput') || line.includes('req.body') || line.includes('req.params');
         },
     },
     {
@@ -110,8 +114,8 @@ const SCAN_RULES: ScanRule[] = [
         filePattern: /\.tsx?$/,
         validate: (match, line) => {
             // Ignore type definitions and examples
-            return !line.includes('process.env') && 
-                   !line.includes('interface') && 
+            return !line.includes('process.env') &&
+                   !line.includes('interface') &&
                    !line.includes('type ') &&
                    !line.includes('// example');
         },
@@ -126,8 +130,8 @@ const SCAN_RULES: ScanRule[] = [
         validate: (match, line, context) => {
             // Only flag in security-sensitive contexts
             const contextStr = context.join('\n').toLowerCase();
-            return contextStr.includes('token') || 
-                   contextStr.includes('key') || 
+            return contextStr.includes('token') ||
+                   contextStr.includes('key') ||
                    contextStr.includes('secret') ||
                    contextStr.includes('password');
         },
@@ -166,8 +170,14 @@ export async function scan(options: ScanOptions = {}): Promise<ScanResult[]> {
 
     // Find all TypeScript files
     const patterns = directories.map(dir => `${dir}/**/*.{ts,tsx}`);
-    const files = globSync(patterns, { 
-        ignore: ['**/node_modules/**', '**/dist/**', '**/*.test.ts', '**/*.test.tsx'],
+    const files = globSync(patterns, {
+        ignore: [
+            '**/node_modules/**',
+            '**/dist/**',
+            '**/*.test.ts',
+            '**/*.test.tsx',
+            '**/scan.ts',  // Don't scan the scanner itself (patterns match their own definitions)
+        ],
     });
 
     console.log(pc.dim(`Scanning ${files.length} files...`));
@@ -224,7 +234,7 @@ export async function scan(options: ScanOptions = {}): Promise<ScanResult[]> {
         for (const [file, fileResults] of byFile) {
             console.log(pc.bold(relative(process.cwd(), file)));
             for (const result of fileResults) {
-                const color = result.severity === 'error' ? pc.red : 
+                const color = result.severity === 'error' ? pc.red :
                              result.severity === 'warning' ? pc.yellow : pc.dim;
                 console.log(color(`  ${result.line}:${result.column} ${result.rule}`));
                 console.log(pc.dim(`    ${result.message}`));

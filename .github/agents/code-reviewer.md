@@ -145,10 +145,6 @@ Use clear, actionable feedback:
 - Object3D cleanup on unmount
 - Frame-based updates use useFrame
 
-### Requesting Additional Reviews
+### AI Reviews
 
-When you need specialized review:
-- `@claude` - Architecture, complex logic
-- `/q review` - Security, AWS patterns
-- `/gemini review` - Code quality, suggestions
-- `@cursor review` - Refactoring, modernization
+AI code reviews are handled automatically by the `@strata/triage` CLI via GitHub Actions when PRs are opened.

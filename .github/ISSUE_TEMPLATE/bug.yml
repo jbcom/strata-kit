@@ -1,0 +1,101 @@
+name: 🐛 Bug Report
+description: Report a bug, rendering issue, or performance problem
+title: "[Bug] "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please fill out the sections below.
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Preflight Checklist
+      options:
+        - label: I have searched existing issues to ensure this hasn't been reported
+          required: true
+        - label: I am using the latest version of @jbcom/strata
+          required: true
+
+  - type: dropdown
+    id: bug-type
+    attributes:
+      label: Bug Type
+      description: What kind of bug is this?
+      options:
+        - General bug
+        - Shader/Rendering issue
+        - Performance problem
+        - CI/Build failure
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear description of the bug
+      placeholder: What happened? What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this issue?
+      placeholder: |
+        1. Import preset: `import { Water } from '@jbcom/strata'`
+        2. Configure with: `...`
+        3. Observe behavior: `...`
+    validations:
+      required: true
+
+  - type: dropdown
+    id: preset
+    attributes:
+      label: Affected Preset
+      description: Which preset is affected? (select N/A for CI/infra issues)
+      options:
+        - N/A (CI/Infrastructure)
+        - Sky
+        - Volumetrics
+        - Terrain
+        - MarchingCubes
+        - Water
+        - Vegetation
+        - Raymarching
+        - Character
+        - Fur
+        - Molecular
+        - Multiple presets
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Your environment details
+      placeholder: |
+        - OS: Windows 11 / macOS 14 / Ubuntu 22.04
+        - Browser: Chrome 120
+        - GPU: NVIDIA RTX 3060
+        - @jbcom/strata version: 1.0.0
+      render: markdown
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Errors
+      description: Any relevant console output, errors, or screenshots
+      render: shell
+
+  - type: input
+    id: reproduction-link
+    attributes:
+      label: Reproduction Link
+      description: Link to StackBlitz, CodeSandbox, or GitHub repo
+      placeholder: https://stackblitz.com/...

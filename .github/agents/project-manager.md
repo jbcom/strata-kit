@@ -178,22 +178,4 @@ gh pr view 123 --json reviews,statusCheckRollup
 | `priority:high` | Urgent work |
 | `priority:low` | Can wait |
 
-### Review Request Automation
 
-Request reviews from all agents (each needs a SEPARATE comment):
-
-```bash
-# Request reviews from all agents
-gh pr comment <PR_NUMBER> --body "@claude Please review"
-gh pr comment <PR_NUMBER> --body "/q review"
-gh pr comment <PR_NUMBER> --body "/gemini review"
-gh pr comment <PR_NUMBER> --body "@cursor review"
-
-# Batch review multiple PRs
-for pr in <PR1> <PR2> <PR3>; do
-  gh pr comment $pr --body "@claude Please review"
-  gh pr comment $pr --body "/q review"
-  gh pr comment $pr --body "/gemini review"
-  gh pr comment $pr --body "@cursor review"
-done
-```

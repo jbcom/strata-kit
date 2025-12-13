@@ -87,7 +87,7 @@ OLLAMA_MODEL=glm-4.6:cloud      # Model to use (default: glm-4.6:cloud)
 
 ## Architecture
 
-```
+```text
 internal/triage/
 ├── src/
 │   ├── cli.ts              # CLI entry point (commander.js)
@@ -145,17 +145,20 @@ The triage CLI is designed to run within the unified `triage.yml` workflow:
 ### Triggering Commands
 
 **Via workflow_dispatch:**
+
 ```bash
 gh workflow run triage.yml -f command=assess -f number=123
 ```
 
 **Via issue/PR events:**
+
 - New issue → `auto-label` → `assess`
 - PR opened → `review`
 - PR review submitted → `feedback`
 - Tests fail → `diagnose`
 
 **Via schedule:**
+
 - Daily: stale issue check
 - Weekly: sprint planning
 - Monthly: roadmap review
@@ -198,19 +201,148 @@ The `scan` command checks for Strata-specific security patterns:
 
 ## AI Integration
 
-Uses Vercel AI SDK with Ollama Cloud:
+Uses Vercel AI SDK with Ollama Cloud. The key principle is **agentic execution** - the AI takes action, it doesn't just suggest.
+
+### Model Configuration
+
+The model is configured in `ai.ts` (single source of truth):
 
 ```typescript
-import { generate, generateWithTools } from './ai.js';
+export const DEFAULT_MODEL = 'glm-4.6:cloud';
+```
 
-// Simple generation
+Override via `OLLAMA_MODEL` environment variable or repository variable `vars.OLLAMA_MODEL`.
+
+### Simple Generation
+
+```typescript
+import { generate } from './ai.js';
+
 const analysis = await generate(prompt, { systemPrompt });
+```
 
-// With MCP tools
-const result = await generateWithTools(prompt, {
-  systemPrompt,
-  tools: await getFilesystemTools(client),
+### Agentic Execution with MCP Tools
+
+```typescript
+import { generateWithTools } from './ai.js';
+import { createInlineFilesystemClient } from './mcp.js';
+
+// Connect to MCP server
+const mcpClient = await createInlineFilesystemClient(process.cwd());
+const tools = await mcpClient.tools();
+
+// AI uses tools to take action
+const result = await generateWithTools(prompt, tools, {
+    systemPrompt: AGENTIC_PROMPT,
 });
+
+// result.toolCalls contains the actions taken
+// result.text contains the summary
+```
+
+## MCP Integration
+
+The triage CLI uses Model Context Protocol (MCP) servers for tool access:
+
+### Available MCP Servers
+
+| Server | Package | Purpose |
+|--------|---------|---------|
+| **Filesystem** | `@anthropic/filesystem-mcp-server` | Read/write files in workspace |
+| **GitHub** | `@modelcontextprotocol/server-github` | Issues, PRs, repos, commits |
+| **Playwright** | `@playwright/mcp` | Browser automation, screenshots |
+| **Context7** | `https://mcp.context7.com/mcp` | Documentation lookup |
+
+### Filesystem Tools
+
+Used by `develop`, `review`, `feedback` commands:
+
+```typescript
+import { createInlineFilesystemClient } from './mcp.js';
+
+const client = await createInlineFilesystemClient(workingDirectory);
+const tools = await client.tools();
+
+// Available tools:
+// - read_file: Read file contents
+// - write_file: Write content to file
+// - list_files: List directory contents
+// - search_files: Find files matching pattern
+```
+
+### Playwright Tools
+
+Used by `verify`, `test` commands:
+
+```typescript
+import { createPlaywrightClient, getPlaywrightTools } from './playwright.js';
+
+const client = await createPlaywrightClient({ headless: true });
+const tools = await getPlaywrightTools(client);
+
+// Available tools:
+// - browser_navigate: Go to URL
+// - browser_click: Click element
+// - browser_type: Type text
+// - browser_snapshot: Get page snapshot
+// - browser_take_screenshot: Capture visual
+// - browser_verify_*: Assertions
+```
+
+### GitHub Tools
+
+Used by `assess`, `label`, `plan` commands:
+
+```typescript
+import { createGitHubClient } from './mcp.js';
+
+const client = await createGitHubClient();
+const tools = await client.tools();
+
+// Available tools (from @modelcontextprotocol/server-github):
+// - create_issue, update_issue, add_label
+// - create_pull_request, merge_pull_request
+// - get_file_contents, create_or_update_file
+// - search_repositories, search_issues
+```
+
+### Unified Tool Access
+
+For commands needing multiple MCP servers:
+
+```typescript
+import { initializeMCPClients, getAllTools, closeMCPClients } from './mcp.js';
+
+const clients = await initializeMCPClients({
+    github: true,
+    filesystem: true,
+    playwright: true,
+});
+
+const tools = await getAllTools(clients);
+// Tools are prefixed: github_create_issue, filesystem_read_file, etc.
+
+// Always cleanup
+await closeMCPClients(clients);
+```
+
+### Agentic Task Helper
+
+For simple agentic tasks:
+
+```typescript
+import { runAgenticTask } from './mcp.js';
+
+const result = await runAgenticTask({
+    systemPrompt: 'You are a code fixer...',
+    userPrompt: 'Fix the division by zero in math.ts',
+    mcpClients: { filesystem: true },
+    maxSteps: 10,
+    onToolCall: (name, args) => console.log(`Using ${name}`),
+});
+
+console.log(result.text);  // Summary
+console.log(result.toolCallCount);  // Actions taken
 ```
 
 ## Release Flow
