@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.1.4] - 2023-10-27
+
+### Under the Hood
+*   **A significant refactor of the core architecture** has been completed. The library now uses a new "MCP-first" architecture, leveraging a GraphQL integration with GitHub to manage data and resources. This foundational change improves the long-term maintainability and stability of the library. (@Jon Bogaty in #169)
+All notable changes to this project will be documented in this file.
+
 # 1.1.3
 
 ## Internal
