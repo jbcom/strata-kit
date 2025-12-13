@@ -79,17 +79,67 @@ export {
 // ============================================================================
 
 /**
- * MCP filesystem integration for AI file operations
+ * MCP (Model Context Protocol) Integration
+ *
+ * Provides unified access to all MCP servers:
+ * - **Filesystem**: Read/write files (critical for Ollama's limited context)
+ * - **GitHub**: Issues, PRs, projects, commits
+ * - **Playwright**: Browser automation, E2E testing
+ * - **Context7**: Library documentation (prevents hallucinations!)
+ * - **Vite React**: React component debugging
  *
  * @example
  * ```typescript
- * import { createInlineFilesystemClient, getFilesystemTools } from '@strata/triage';
+ * import { runAgenticTask, initializeMCPClients } from '@strata/triage';
  *
- * const client = await createInlineFilesystemClient(process.cwd());
- * const tools = await getFilesystemTools(client);
+ * // Simple agentic task
+ * const result = await runAgenticTask({
+ *     systemPrompt: 'You are a code fixer...',
+ *     userPrompt: 'Fix the bug...',
+ *     mcpClients: { filesystem: true, context7: true },
+ * });
+ *
+ * // Manual client management
+ * const clients = await initializeMCPClients({
+ *     filesystem: process.cwd(),
+ *     context7: true,
+ *     github: true,
+ * });
+ * const tools = await getAllTools(clients);
+ * // ... use tools ...
+ * await closeMCPClients(clients);
  * ```
  */
-export { createFilesystemClient, createInlineFilesystemClient, getFilesystemTools, type MCPClient } from './mcp.js';
+export {
+    // Filesystem MCP
+    createFilesystemClient,
+    createInlineFilesystemClient,
+    getFilesystemTools,
+    FILESYSTEM_TOOLS,
+    // GitHub MCP
+    createGitHubClient,
+    getGitHubTools,
+    // Context7 MCP (prevents hallucinations!)
+    createContext7Client,
+    getContext7Tools,
+    CONTEXT7_TOOLS,
+    // Vite React MCP
+    createViteReactClient,
+    getViteReactTools,
+    VITE_REACT_TOOLS,
+    // Unified MCP access
+    initializeMCPClients,
+    getAllTools,
+    closeMCPClients,
+    // Agentic task execution
+    runAgenticTask,
+    // Types
+    type MCPClient,
+    type MCPClients,
+    type MCPClientOptions,
+    type AgenticTaskOptions,
+    type AgenticTaskResult,
+} from './mcp.js';
 
 /**
  * Playwright MCP for E2E test automation

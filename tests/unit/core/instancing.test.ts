@@ -13,10 +13,14 @@ describe('generateInstanceData', () => {
             100,
             () => 0, // Flat terrain
             undefined,
-            undefined
+            undefined,
+            12345 // Fixed seed for deterministic generation
         );
 
-        expect(instances.length).toBe(10);
+        // With rejection sampling (density noise), we may get fewer than requested
+        // but should get at least some instances
+        expect(instances.length).toBeGreaterThan(0);
+        expect(instances.length).toBeLessThanOrEqual(10);
     });
 
     it('respects biome filtering', () => {

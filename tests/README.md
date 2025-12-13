@@ -6,9 +6,9 @@ This directory contains all automated tests for Strata, organized by test type.
 
 ```
 tests/
-├── unit/           # Unit tests for core algorithms (pure TypeScript)
-├── integration/    # Integration tests for React components
-└── e2e/           # End-to-end Playwright tests with visual regression
+├── unit/                      # Unit tests for core algorithms (pure TypeScript)
+├── integration/               # Integration tests for React components (Vitest)
+└── integration-playwright/    # Integration tests with Playwright (browser-based)
 ```
 
 ## Running Tests
@@ -20,17 +20,14 @@ npm test
 # Unit tests with coverage
 npm run test:coverage
 
-# Integration tests (when implemented)
+# Integration tests (Vitest)
 npm run test:integration
 
-# E2E tests
-npm run test:e2e
-
-# E2E tests with UI
-npm run test:e2e:ui
+# Integration tests (Playwright)
+npm run test:integration:playwright
 
 # All tests
-npm run test && npm run test:e2e
+npm run test:all
 ```
 
 ## Test Types
@@ -93,29 +90,34 @@ test('Water component renders', () => {
 
 **Tools**: Vitest + @testing-library/react + @react-three/test-renderer
 
-### E2E Tests (`tests/e2e/`)
+### Playwright Integration Tests (`tests/integration-playwright/`)
 
-**Purpose**: Test complete rendering pipeline in real browsers
+**Purpose**: Test library public API in real browser environments
 
 **Scope**:
-- Visual regression testing
+- Core API functions (SDF, instancing, materials)
+- React component rendering with React Three Fiber
+- Preset systems (particles, billboards, decals, etc.)
 - Cross-browser compatibility
 - Performance metrics
-- User interactions
-- Complete examples
+- Visual verification with screenshots
 
 **Example**:
 ```ts
-// tests/e2e/rendering.spec.ts
-test('should render terrain', async ({ page }) => {
-  await page.goto('/examples/comprehensive');
-  const terrain = page.locator('[data-testid="terrain"]');
-  await expect(terrain).toBeVisible();
-  await expect(page).toHaveScreenshot('terrain.png');
+// tests/integration-playwright/components.spec.ts
+test('should render Water component', async ({ page }) => {
+  await page.goto('/');
+  // Load library and create scene
+  await page.evaluate(() => {
+    // Create React Three Fiber scene with Water component
+  });
+  await page.screenshot({ path: 'test-results/water-component.png' });
 });
 ```
 
-**Tools**: Playwright
+**Tools**: Playwright + JUnit XML reporter + Testomat.io integration
+
+**Note**: These are **library integration tests**, not end-to-end application tests. They test that Strata's public API works correctly in browsers, not full applications using Strata.
 
 ## Test Data
 
@@ -127,15 +129,15 @@ test('should render terrain', async ({ page }) => {
 ## Coverage Goals
 
 - **Unit tests**: 90%+ coverage of core functions
-- **Integration tests**: 80%+ coverage of components
-- **E2E tests**: All major features and examples
+- **Integration tests (Vitest)**: 80%+ coverage of components
+- **Integration tests (Playwright)**: All major public API features
 
 ## Continuous Integration
 
 All tests run in CI:
 - Unit tests: Fast, run on every commit
-- Integration tests: Medium speed, run on PRs
-- E2E tests: Slower, run on main branch and releases
+- Integration tests (Vitest): Medium speed, run on every commit
+- Integration tests (Playwright): Slower, run on every commit with browser automation
 
 ## Writing Tests
 
@@ -155,13 +157,15 @@ All tests run in CI:
 4. Mock external dependencies
 5. Test error boundaries
 
-### E2E Test Guidelines
+### Playwright Integration Test Guidelines
 
-1. Test user-visible features
-2. Use data-testid attributes
-3. Take screenshots for visual regression
-4. Test performance metrics
-5. Test across multiple browsers/devices
+1. Test library public API, not full applications
+2. Create minimal test scenarios programmatically
+3. Take screenshots for visual verification
+4. Test core functions work in browser environment
+5. Test React components can be instantiated
+6. Test across multiple browsers (Chromium, Firefox, WebKit)
+7. Use Testomat.io tags for organization (@S1, @S2, @S3)
 
 ## Examples vs Tests
 

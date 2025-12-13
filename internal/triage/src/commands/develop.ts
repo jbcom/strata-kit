@@ -1,27 +1,66 @@
+/**
+ * Develop Command
+ *
+ * AI-powered development using Ollama + Vercel AI SDK with MCP tools:
+ *
+ * - **Filesystem MCP**: Read existing code, write changes
+ * - **Context7 MCP**: Look up library documentation for correct API usage
+ *
+ * The AI uses tools to explore the codebase and make targeted changes.
+ */
+
 import pc from 'picocolors';
 import { execFileSync } from 'node:child_process';
 import { getIssue, commentOnIssue } from '../github.js';
-import { generateWithTools } from '../ai.js';
-import { createInlineFilesystemClient, type MCPClient } from '../mcp.js';
+import { runAgenticTask } from '../mcp.js';
 
+/**
+ * System prompt for development
+ *
+ * Key principles:
+ * 1. Explore before coding - understand the codebase
+ * 2. Use Context7 for library docs - don't guess APIs
+ * 3. Make minimal, focused changes
+ */
 const SYSTEM_PROMPT = `You are an expert TypeScript developer working on Strata, a procedural 3D graphics library for React Three Fiber.
 
-Your task is to implement changes based on the GitHub issue provided. You have access to file system tools:
-- read_file: Read a file's contents
-- write_file: Write content to a file
-- list_files: List files in a directory
-- search_files: Search for files matching a pattern
+## Your Tools
 
-Guidelines:
-1. First, explore the codebase to understand the structure
-2. Read relevant existing files before making changes
-3. Make minimal, focused changes that address the issue
-4. Follow the existing code style (TypeScript, React functional components)
-5. Add proper types - no 'any'
-6. Include JSDoc comments for public APIs
-7. Handle edge cases (division by zero, null checks)
+### File Tools (USE THESE!)
+- **read_file**: Read file contents - ALWAYS do this before modifying a file
+- **write_file**: Write content to create or update files
+- **list_files**: Explore directory structure
+- **search_files**: Find files matching a pattern
 
-After making changes, summarize what you did.`;
+### Documentation Tools (PREVENTS HALLUCINATIONS!)
+- **resolve-library-id**: Find Context7 ID for a library (e.g., "three.js" → "/mrdoob/three.js")
+- **get-library-docs**: Get up-to-date documentation for correct API usage
+
+## Workflow
+
+1. **Understand the issue** - Read the requirements carefully
+2. **Explore the codebase** - Use list_files and search_files to find relevant code
+3. **Read existing code** - ALWAYS read files before modifying them
+4. **Check documentation** - If using a library API, verify with Context7 first
+5. **Make minimal changes** - Focus on what's needed, don't over-engineer
+6. **Write the code** - Use write_file to save your changes
+
+## Code Standards
+
+- TypeScript strict mode - no \`any\` types
+- React functional components only
+- forwardRef when exposing refs
+- useEffect must have cleanup functions
+- Three.js: dispose geometries/materials
+- JSDoc comments for public APIs
+- Handle edge cases (division by zero, null checks)
+
+## Important
+
+- **Read before writing** - ALWAYS use read_file to see existing code first
+- **Check the docs** - If unsure about an API, look it up with Context7
+- **Minimal changes** - Don't refactor unrelated code
+- **Explain your work** - End with a summary of what you did`;
 
 export interface DevelopOptions {
     dryRun?: boolean;
@@ -30,70 +69,89 @@ export interface DevelopOptions {
 }
 
 export async function develop(issueNumber: number, options: DevelopOptions = {}): Promise<void> {
-    const { dryRun = false, verbose = false, maxSteps = 10 } = options;
+    const { dryRun = false, verbose = false, maxSteps = 25 } = options;
 
-    console.log(pc.blue(`Developing for issue #${issueNumber}...`));
+    console.log(pc.blue(`🔧 Developing for issue #${issueNumber}...`));
 
     // Get issue details
     const issue = getIssue(issueNumber);
 
-    if (verbose) {
-        console.log(pc.dim(`Title: ${issue.title}`));
+    console.log(pc.dim(`Title: ${issue.title}`));
+    if (verbose && issue.body) {
+        console.log(pc.dim(`Description: ${issue.body.slice(0, 200)}...`));
     }
 
     // Get working directory
     const workingDirectory = process.cwd();
     console.log(pc.dim(`Working directory: ${workingDirectory}`));
 
-    let mcpClient: MCPClient | null = null;
+    // Build prompt
+    const userPrompt = `# Development Task
 
-    try {
-        // Create MCP filesystem client
-        console.log(pc.dim('Connecting to filesystem MCP server...'));
-        mcpClient = await createInlineFilesystemClient(workingDirectory);
-
-        // Get tools from MCP
-        const tools = await mcpClient.tools();
-        console.log(pc.dim(`Available tools: ${Object.keys(tools).join(', ')}`));
-
-        // Build prompt
-        const prompt = `Implement the following GitHub issue:
-
-**Issue #${issueNumber}: ${issue.title}**
+## GitHub Issue #${issueNumber}
+**Title:** ${issue.title}
 
 **Description:**
 ${issue.body || '(no description provided)'}
 
-Start by exploring the codebase structure, then implement the necessary changes.`;
+---
 
-        if (dryRun) {
-            console.log(pc.yellow('\n[Dry run] Would execute AI with filesystem tools'));
-            console.log(pc.dim('Prompt:'));
-            console.log(prompt);
-            return;
-        }
+## Your Task
 
-        console.log(pc.blue('\nStarting AI-powered development...'));
+1. First, explore the codebase to understand its structure
+2. Find the relevant files for this issue
+3. Read the existing code before making changes
+4. If using library APIs, check the documentation with Context7
+5. Implement the necessary changes
+6. Summarize what you did
 
-        // Run AI with tools
-        const result = await generateWithTools(prompt, tools, {
+START DEVELOPING:`;
+
+    if (dryRun) {
+        console.log(pc.yellow('\n[Dry run] Would execute AI with:'));
+        console.log(pc.dim('Max steps: ' + maxSteps));
+        console.log(pc.dim('MCPs: filesystem, context7'));
+        console.log(pc.dim('\nPrompt preview:'));
+        console.log(userPrompt.slice(0, 500) + '...');
+        return;
+    }
+
+    console.log(pc.blue('\nStarting AI-powered development...'));
+    if (verbose) {
+        console.log(pc.dim('Using: Filesystem MCP (read/write), Context7 MCP (docs)'));
+    }
+
+    try {
+        const result = await runAgenticTask({
             systemPrompt: SYSTEM_PROMPT,
+            userPrompt,
+            mcpClients: {
+                filesystem: workingDirectory,
+                context7: true,  // Enable documentation lookup
+            },
+            maxSteps,
+            onToolCall: verbose ? (toolName, args) => {
+                const argsStr = JSON.stringify(args);
+                const truncatedArgs = argsStr.length > 60 ? argsStr.slice(0, 60) + '...' : argsStr;
+                console.log(pc.dim(`  → ${toolName}(${truncatedArgs})`));
+            } : undefined,
         });
 
-        console.log('\n' + pc.green('Development Summary:'));
+        console.log('\n' + pc.green('═══ Development Summary ═══'));
         console.log(result.text);
 
-        if (result.toolCalls.length > 0) {
-            console.log(pc.dim(`\nTool calls made: ${result.toolCalls.length}`));
+        if (verbose) {
+            console.log(pc.dim(`\nSteps: ${result.steps.length}, Tool calls: ${result.toolCallCount}`));
         }
 
-        // Check if any files were modified
-        const writeOps = (result.toolResults as Array<{ toolName?: string }>).filter(
-            (r) => r.toolName === 'write_file'
-        );
+        // Check if any files were modified (look for write_file calls)
+        const writeOperations = result.steps.flatMap((step: unknown) => {
+            const s = step as { toolCalls?: Array<{ toolName: string }> };
+            return s.toolCalls?.filter(tc => tc.toolName === 'write_file') || [];
+        });
 
-        if (writeOps.length > 0) {
-            console.log(pc.green(`\n✅ Modified ${writeOps.length} file(s)`));
+        if (writeOperations.length > 0) {
+            console.log(pc.green(`\n✅ Modified ${writeOperations.length} file(s)`));
 
             // Stage and commit changes
             console.log(pc.blue('\nStaging changes...'));
@@ -127,8 +185,8 @@ Generated by @strata/triage`;
         }
 
         // Comment on issue
-        const summary = result.text.length > 1000
-            ? result.text.slice(0, 1000) + '...'
+        const summary = result.text.length > 1500
+            ? result.text.slice(0, 1500) + '...'
             : result.text;
 
         commentOnIssue(issueNumber, `## 🤖 AI Development Progress
@@ -136,13 +194,18 @@ Generated by @strata/triage`;
 ${summary}
 
 ---
-_Generated by @strata/triage_`);
+<sub>Generated by @strata/triage • ${result.toolCallCount} tool calls</sub>`);
 
-        console.log(pc.green('\nDone!'));
+        console.log(pc.green('\n✅ Done!'));
 
-    } finally {
-        if (mcpClient) {
-            await mcpClient.close();
+    } catch (error) {
+        console.error(pc.red('\n❌ Development failed:'));
+        if (error instanceof Error) {
+            console.error(pc.red(error.message));
+            if (verbose && error.stack) {
+                console.error(pc.dim(error.stack));
+            }
         }
+        throw error;
     }
 }

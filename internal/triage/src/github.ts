@@ -149,3 +149,17 @@ export function getDefaultBranch(): string {
     const json = gh(['repo', 'view', '--json', 'defaultBranchRef']);
     return JSON.parse(json).defaultBranchRef.name;
 }
+
+export interface RepoInfo {
+    owner: string;
+    repo: string;
+}
+
+export function getRepoInfo(): RepoInfo {
+    const json = gh(['repo', 'view', '--json', 'owner,name']);
+    const data = JSON.parse(json);
+    return {
+        owner: data.owner.login,
+        repo: data.name,
+    };
+}

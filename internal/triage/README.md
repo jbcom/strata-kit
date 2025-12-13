@@ -83,6 +83,7 @@ OLLAMA_API_KEY=xxx            # Ollama Cloud API key
 # Optional
 OLLAMA_HOST=https://ollama.com  # Ollama API endpoint (default: cloud)
 OLLAMA_MODEL=glm-4.6:cloud      # Model to use (default: glm-4.6:cloud)
+CONTEXT7_API_KEY=xxx            # Context7 API key for documentation lookup
 ```
 
 ## Architecture
@@ -242,16 +243,25 @@ const result = await generateWithTools(prompt, tools, {
 
 ## MCP Integration
 
-The triage CLI uses Model Context Protocol (MCP) servers for tool access:
+The triage CLI uses Model Context Protocol (MCP) servers for tool access. This is **critical** because Ollama models have **limited context windows** - we can't fit entire codebases in the prompt, so the AI uses tools instead.
 
 ### Available MCP Servers
 
-| Server | Package | Purpose |
-|--------|---------|---------|
-| **Filesystem** | `@anthropic/filesystem-mcp-server` | Read/write files in workspace |
+| Server | Package/URL | Purpose |
+|--------|-------------|---------|
+| **Filesystem** | Inline server | Read/write files - **MOST IMPORTANT** |
 | **GitHub** | `@modelcontextprotocol/server-github` | Issues, PRs, repos, commits |
-| **Playwright** | `@playwright/mcp` | Browser automation, screenshots |
-| **Context7** | `https://mcp.context7.com/mcp` | Documentation lookup |
+| **Playwright** | `@playwright/mcp` | Browser automation, E2E testing |
+| **Context7** | `https://mcp.context7.com/mcp` | Library docs - **PREVENTS HALLUCINATIONS!** |
+| **Vite React** | `vite-react-mcp` | React component debugging |
+
+### Why Each Server Matters
+
+- **Filesystem**: Ollama can't fit everything in context. The AI reads/writes files directly.
+- **Context7**: Instead of hallucinating API details, the AI looks up actual documentation.
+- **GitHub**: Full API access without shelling out to `gh` CLI.
+- **Playwright**: Automated browser testing and visual verification.
+- **Vite React**: Inspect component tree, props, state, and track unnecessary re-renders.
 
 ### Filesystem Tools
 

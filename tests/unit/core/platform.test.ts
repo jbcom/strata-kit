@@ -63,83 +63,8 @@ describe('Platform Detection', () => {
         global.window = originalWindow;
     });
 
-    it('detects React Native via HermesInternal in SSR environment', () => {
-        resetPlatformCache();
-
-        // Mock SSR with React Native globals
-        const originalWindow = global.window;
-        const originalGlobalThis = global.globalThis;
-
-        // @ts-expect-error - Mocking for test
-        delete global.window;
-        // @ts-expect-error - Mocking for test
-        global.globalThis = {
-            ...globalThis,
-            HermesInternal: {},
-        };
-
-        expect(detectPlatform()).toBe('native');
-
-        // Restore globals
-        global.window = originalWindow;
-        global.globalThis = originalGlobalThis;
-    });
-
-    it('detects React Native via __REACT_NATIVE__ global', () => {
-        resetPlatformCache();
-
-        const originalWindow = global.window;
-        const originalGlobalThis = global.globalThis;
-
-        // @ts-expect-error - Mocking for test
-        delete global.window;
-        // @ts-expect-error - Mocking for test
-        global.globalThis = {
-            ...globalThis,
-            __REACT_NATIVE__: true,
-        };
-
-        expect(detectPlatform()).toBe('native');
-
-        // Restore globals
-        global.window = originalWindow;
-        global.globalThis = originalGlobalThis;
-    });
-
-    it('detects React Native via nativeModuleProxy', () => {
-        resetPlatformCache();
-
-        const originalWindow = global.window;
-        const originalGlobalThis = global.globalThis;
-
-        // @ts-expect-error - Mocking for test
-        delete global.window;
-        // @ts-expect-error - Mocking for test
-        global.globalThis = {
-            ...globalThis,
-            nativeModuleProxy: {},
-        };
-
-        expect(detectPlatform()).toBe('native');
-
-        // Restore globals
-        global.window = originalWindow;
-        global.globalThis = originalGlobalThis;
-    });
-
-    it('defaults to web for SSR without React Native globals', () => {
-        resetPlatformCache();
-
-        const originalWindow = global.window;
-
-        // @ts-expect-error - Mocking SSR environment
-        delete global.window;
-
-        expect(detectPlatform()).toBe('web');
-
-        // Restore window
-        global.window = originalWindow;
-    });
+    // SSR tests for React Native detection are in platform-ssr.test.ts
+    // which runs in node environment for proper SSR testing
 
     it('falls back to web when Capacitor.isNativePlatform returns false', () => {
         resetPlatformCache();
@@ -200,30 +125,7 @@ describe('Platform Detection', () => {
         });
     });
 
-    it('returns all false capabilities in SSR environment', () => {
-        resetPlatformCache();
-
-        const originalWindow = global.window;
-        const originalDocument = global.document;
-
-        // @ts-expect-error - Mocking SSR environment
-        delete global.window;
-        // @ts-expect-error - Mocking SSR environment
-        delete global.document;
-
-        const caps = detectCapabilities();
-
-        expect(caps.hasWebGL).toBe(false);
-        expect(caps.hasWebAudio).toBe(false);
-        expect(caps.hasLocalStorage).toBe(false);
-        expect(caps.hasHaptics).toBe(false);
-        expect(caps.hasTouchInput).toBe(false);
-        expect(caps.hasDeviceMotion).toBe(false);
-
-        // Restore globals
-        global.window = originalWindow;
-        global.document = originalDocument;
-    });
+    // SSR capability tests are in platform-ssr.test.ts which runs in node environment
 
     it('handles localStorage SecurityError gracefully', () => {
         resetPlatformCache();

@@ -10,8 +10,7 @@
 import pc from 'picocolors';
 import { readFileSync, existsSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { generate, generateWithTools } from '../ai.js';
-import { createInlineFilesystemClient, type MCPClient } from '../mcp.js';
+import { runAgenticTask, type MCPClient } from '../mcp.js';
 import {
     parseTestReport,
     getFailedTests,
@@ -23,30 +22,47 @@ import { commentOnIssue, commentOnPR, addLabels } from '../github.js';
 
 const SYSTEM_PROMPT = `You are an expert test failure diagnostician for Strata, a procedural 3D graphics library for React Three Fiber.
 
-Analyze test failures and provide actionable diagnosis:
+## Your Tools
 
-1. **Root Cause Analysis**
-   - Identify the actual cause (not just symptoms)
-   - Distinguish between test bugs vs code bugs vs flaky tests
+### File Tools
+- **read_file**: Read test files and source code to understand the failure
+- **list_files**: Find related files
+- **search_files**: Search for patterns
 
-2. **Classification**
-   - Bug: Actual code defect
-   - Test Issue: Test is incorrect or flaky
-   - Environment: CI/environment-specific issue
-   - Regression: Previously working code broken
+### Documentation Tools (prevents hallucinations!)
+- **resolve-library-id**: Find Context7 ID for a library
+- **get-library-docs**: Check if API usage is correct
 
-3. **Severity Assessment**
-   - Critical: Blocks core functionality
-   - High: Significant feature broken
-   - Medium: Non-critical functionality affected
-   - Low: Minor issue or cosmetic
+## Diagnosis Process
 
-4. **Fix Suggestions**
-   - Provide specific code changes when possible
-   - Reference exact files and lines
-   - Consider related code that might need changes
+1. **Read the failing test** - Use read_file to see the test code
+2. **Read the source code** - Understand what's being tested
+3. **Check library docs** - If API usage looks suspicious, verify with Context7
+4. **Root cause analysis** - Distinguish test bug vs code bug vs flaky test
 
-When you have access to filesystem tools, read the relevant source files to provide more accurate diagnosis.`;
+## Output Format
+
+For each failure:
+
+### [Test Name]
+**Classification:** Bug | Test Issue | Environment | Regression
+**Severity:** 🔴 Critical | 🟠 High | 🟡 Medium | 🟢 Low
+
+**Root Cause:**
+[What's actually wrong]
+
+**Fix:**
+\`\`\`typescript
+// Specific code change
+\`\`\`
+
+---
+
+## Classifications
+- **Bug**: Actual code defect
+- **Test Issue**: Test is incorrect or flaky
+- **Environment**: CI/environment-specific issue
+- **Regression**: Previously working code broken`;
 
 export interface DiagnoseOptions {
     /** Path to test report file */
@@ -100,36 +116,45 @@ export async function diagnose(options: DiagnoseOptions): Promise<void> {
     // Format report for AI
     const formattedReport = formatForAI(report);
 
-    let fsClient: MCPClient | null = null;
-
     try {
-        // Get filesystem tools for deeper analysis
-        const workingDirectory = process.cwd();
-        fsClient = await createInlineFilesystemClient(workingDirectory);
-
-        const tools = await fsClient.tools();
-
         // Build diagnosis prompt
-        const prompt = `Analyze these test failures and provide diagnosis:
+        const prompt = `# Test Failure Diagnosis
 
+## Test Report
 ${formattedReport}
 
-For each failure:
-1. Read the test file and relevant source files
-2. Identify the root cause
-3. Classify the failure type
-4. Suggest specific fixes
+## Your Task
+1. Read the failing test files using read_file
+2. Read the source code being tested
+3. If API usage looks wrong, check with Context7
+4. Provide diagnosis for each failure in the format specified
 
-Provide a structured diagnosis for each failure.`;
+START DIAGNOSIS:`;
 
         console.log(pc.blue('\nAnalyzing with AI...'));
+        if (verbose) {
+            console.log(pc.dim('Using: Filesystem MCP (read files), Context7 MCP (check docs)'));
+        }
 
-        const result = await generateWithTools(prompt, tools, {
+        const result = await runAgenticTask({
             systemPrompt: SYSTEM_PROMPT,
+            userPrompt: prompt,
+            mcpClients: {
+                filesystem: process.cwd(),
+                context7: true,  // Check library docs to verify correct usage
+            },
+            maxSteps: 20,
+            onToolCall: verbose ? (toolName, args) => {
+                console.log(pc.dim(`  → ${toolName}()`));
+            } : undefined,
         });
 
-        console.log('\n' + pc.green('Diagnosis Report:'));
+        console.log('\n' + pc.green('═══ Diagnosis Report ═══'));
         console.log(result.text);
+
+        if (verbose) {
+            console.log(pc.dim(`\nTool calls: ${result.toolCallCount}`));
+        }
 
         if (dryRun) {
             console.log(pc.yellow('\n[Dry run] Would post diagnosis'));
@@ -155,14 +180,18 @@ _Analyzed by @strata/triage_`;
         }
 
         // Attempt auto-fix for simple issues
-        if (autoFix && fsClient) {
-            await attemptAutoFix(failed, result.text, fsClient, dryRun);
+        if (autoFix) {
+            await attemptAutoFix(failed, result.text, dryRun);
         }
 
-        console.log(pc.green('\nDiagnosis complete!'));
+        console.log(pc.green('\n✅ Diagnosis complete!'));
 
-    } finally {
-        if (fsClient) await fsClient.close();
+    } catch (error) {
+        console.error(pc.red('\n❌ Diagnosis failed:'));
+        if (error instanceof Error) {
+            console.error(pc.red(error.message));
+        }
+        throw error;
     }
 }
 
@@ -244,7 +273,6 @@ _Auto-created by @strata/triage_`;
 async function attemptAutoFix(
     failures: TestResult[],
     diagnosis: string,
-    fsClient: MCPClient,
     dryRun: boolean
 ): Promise<void> {
     console.log(pc.blue('\nAttempting auto-fix for simple issues...'));
