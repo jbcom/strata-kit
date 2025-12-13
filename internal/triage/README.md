@@ -88,14 +88,16 @@ CONTEXT7_API_KEY=xxx            # Context7 API key for documentation lookup
 
 ## Architecture
 
+The triage CLI uses a **MCP-first architecture** where all external operations go through Model Context Protocol servers. This isolates HTTP/fetch operations to subprocess communication, providing clean separation of concerns.
+
 ```text
 internal/triage/
 ├── src/
 │   ├── cli.ts              # CLI entry point (commander.js)
-│   ├── ai.ts               # Vercel AI SDK + Ollama integration
-│   ├── octokit.ts          # GitHub API (REST + GraphQL)
-│   ├── github.ts           # gh CLI helpers
-│   ├── mcp.ts              # MCP filesystem integration
+│   ├── ai.ts               # Vercel AI SDK + Ollama (only HTTP in main process)
+│   ├── mcp.ts              # MCP client manager (GitHub, GraphQL, Filesystem, Playwright)
+│   ├── octokit.ts          # GitHub operations via MCP (REST + GraphQL wrappers)
+│   ├── github.ts           # gh CLI helpers (fallback for local operations)
 │   ├── playwright.ts       # Playwright MCP for E2E
 │   │
 │   ├── commands/           # CLI command implementations
@@ -251,6 +253,7 @@ The triage CLI uses Model Context Protocol (MCP) servers for tool access. This i
 |--------|-------------|---------|
 | **Filesystem** | Inline server | Read/write files - **MOST IMPORTANT** |
 | **GitHub** | `@modelcontextprotocol/server-github` | Issues, PRs, repos, commits |
+| **GraphQL** | `mcp-graphql` | GraphQL API: Projects V2, review threads, auto-merge |
 | **Playwright** | `@playwright/mcp` | Browser automation, E2E testing |
 | **Context7** | `https://mcp.context7.com/mcp` | Library docs - **PREVENTS HALLUCINATIONS!** |
 | **Vite React** | `vite-react-mcp` | React component debugging |
@@ -259,9 +262,40 @@ The triage CLI uses Model Context Protocol (MCP) servers for tool access. This i
 
 - **Filesystem**: Ollama can't fit everything in context. The AI reads/writes files directly.
 - **Context7**: Instead of hallucinating API details, the AI looks up actual documentation.
-- **GitHub**: Full API access without shelling out to `gh` CLI.
+- **GitHub**: Full REST API access without shelling out to `gh` CLI.
+- **GraphQL**: Access to GitHub GraphQL API for Projects V2, review threads, auto-merge, etc.
 - **Playwright**: Automated browser testing and visual verification.
 - **Vite React**: Inspect component tree, props, state, and track unnecessary re-renders.
+
+### Data Flow
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Triage CLI                                │
+│                                                                  │
+│  ┌──────────┐     ┌──────────┐     ┌──────────┐                 │
+│  │  ai.ts   │────▶│  Vercel  │────▶│  Ollama  │  (HTTP)         │
+│  │          │     │  AI SDK  │     │  Cloud   │                 │
+│  └──────────┘     └──────────┘     └──────────┘                 │
+│                                                                  │
+│  ┌──────────┐     ┌──────────────────────────────────────────┐  │
+│  │octokit.ts│────▶│              MCP Clients                  │  │
+│  │(wrappers)│     │  ┌────────┐  ┌────────┐  ┌────────────┐  │  │
+│  └──────────┘     │  │ GitHub │  │GraphQL │  │ Filesystem │  │  │
+│                   │  │  MCP   │  │  MCP   │  │    MCP     │  │  │
+│                   │  └────┬───┘  └────┬───┘  └─────┬──────┘  │  │
+│                   └───────┼───────────┼───────────┼──────────┘  │
+│                           │           │           │              │
+└───────────────────────────┼───────────┼───────────┼──────────────┘
+                            │ (stdio)   │ (stdio)   │ (stdio)
+                            ▼           ▼           ▼
+                      ┌──────────┐ ┌──────────┐ ┌──────────┐
+                      │  GitHub  │ │  GitHub  │ │   Local  │
+                      │ REST API │ │ GraphQL  │ │   Files  │
+                      └──────────┘ └──────────┘ └──────────┘
+```
+
+**Key principle**: Only `ai.ts` makes HTTP requests from the main process. All GitHub operations go through MCP subprocesses.
 
 ### Filesystem Tools
 
@@ -304,16 +338,54 @@ const tools = await getPlaywrightTools(client);
 Used by `assess`, `label`, `plan` commands:
 
 ```typescript
-import { createGitHubClient } from './mcp.js';
+import { createGitHubClient, createGraphQLClient } from './mcp.js';
 
-const client = await createGitHubClient();
-const tools = await client.tools();
-
-// Available tools (from @modelcontextprotocol/server-github):
+// REST API operations via GitHub MCP
+const githubClient = await createGitHubClient();
+const tools = await githubClient.tools();
 // - create_issue, update_issue, add_label
 // - create_pull_request, merge_pull_request
 // - get_file_contents, create_or_update_file
 // - search_repositories, search_issues
+
+// GraphQL operations via mcp-graphql
+const graphqlClient = await createGraphQLClient();
+// Used internally by octokit.ts for:
+// - convertPRToDraft, markPRReadyForReview
+// - enableAutoMerge, disableAutoMerge
+// - getPRReviewThreads, resolveReviewThread
+// - getCheckRuns, waitForChecks
+// - submitPRReview, getPRReviews
+```
+
+### High-Level Wrappers (octokit.ts)
+
+For most use cases, use the wrappers in `octokit.ts`:
+
+```typescript
+import {
+    getIssue,
+    searchIssues,
+    updateIssue,
+    getPullRequest,
+    // GraphQL operations (auto-routed to mcp-graphql)
+    convertPRToDraft,
+    enableAutoMerge,
+    getPRReviewThreads,
+    submitPRReview,
+    getCheckRuns,
+    waitForChecks,
+} from './octokit.js';
+
+// Simple search
+const issues = await searchIssues('is:open label:bug');
+
+// PR management
+await convertPRToDraft(123);
+await enableAutoMerge(123, 'SQUASH');
+
+// Wait for CI
+const status = await waitForChecks('main', { timeout: 300000 });
 ```
 
 ### Unified Tool Access
@@ -324,13 +396,14 @@ For commands needing multiple MCP servers:
 import { initializeMCPClients, getAllTools, closeMCPClients } from './mcp.js';
 
 const clients = await initializeMCPClients({
-    github: true,
-    filesystem: true,
-    playwright: true,
+    github: true,      // GitHub REST API
+    graphql: true,     // GitHub GraphQL API
+    filesystem: true,  // Local file operations
+    playwright: true,  // Browser automation
 });
 
 const tools = await getAllTools(clients);
-// Tools are prefixed: github_create_issue, filesystem_read_file, etc.
+// Tools are prefixed: github_create_issue, graphql_query, filesystem_read_file, etc.
 
 // Always cleanup
 await closeMCPClients(clients);

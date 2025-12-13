@@ -16,7 +16,7 @@ import {
     groupByType,
 } from './weights.js';
 import { analyzeBacklogHealth } from './balance.js';
-import { getOctokit, getRepoContext } from '../octokit.js';
+import { getRepoContext, searchIssues } from '../octokit.js';
 
 const SYSTEM_PROMPT = `You are a product manager creating a roadmap for Strata, a procedural 3D graphics library for React Three Fiber.
 
@@ -183,34 +183,37 @@ Format as:
 }
 
 async function fetchAllIssues(includeCompleted: boolean): Promise<IssueMetrics[]> {
-    const octokit = getOctokit();
     const { owner, repo } = getRepoContext();
 
-    const issues = await octokit.paginate(octokit.rest.issues.listForRepo, {
-        owner,
-        repo,
-        state: includeCompleted ? 'all' : 'open',
-        per_page: 100,
-    });
+    // Search for issues via GitHub MCP
+    // Use state filter in the search query
+    const stateQuery = includeCompleted ? '' : 'is:open';
+    const query = `${stateQuery} is:issue`.trim();
+
+    const issues = await searchIssues(query);
+
+    // Note: GitHub MCP search returns limited data compared to Octokit
+    // We fill in defaults for missing fields
+    const now = new Date().toISOString();
 
     return issues.map((issue) => ({
         number: issue.number,
         title: issue.title,
-        nodeId: issue.node_id,
-        createdAt: issue.created_at,
-        updatedAt: issue.updated_at,
-        closedAt: issue.closed_at ?? undefined,
-        reactions: issue.reactions?.total_count ?? 0,
-        comments: issue.comments,
+        nodeId: `issue_${owner}_${repo}_${issue.number}`, // Generated ID
+        createdAt: now, // Not available via search
+        updatedAt: now, // Not available via search
+        closedAt: undefined,
+        reactions: 0, // Not available via search
+        comments: 0, // Not available via search
         participants: 1,
         hasMaintainerResponse: true,
-        labels: issue.labels.map((l) => (typeof l === 'string' ? l : l.name ?? '')),
-        type: detectIssueType(issue.labels.map((l) => (typeof l === 'string' ? l : l.name ?? ''))),
+        labels: issue.labels,
+        type: detectIssueType(issue.labels),
         blockedBy: [],
         blocks: [],
         isOpen: issue.state === 'open',
-        isPR: !!issue.pull_request,
-        milestone: issue.milestone?.title,
+        isPR: false, // Search filtered to issues only
+        milestone: undefined, // Not available via search
     }));
 }
 

@@ -8,27 +8,27 @@
  */
 
 import * as THREE from 'three';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
     type BoneChain,
     type BoneConstraint,
-    type GaitConfig,
-    type SpringConfig,
     CCDSolver,
-    FABRIKSolver,
-    LookAtController,
-    ProceduralGait,
-    SpringChain,
-    SpringDynamics,
-    TwoBoneIKSolver,
     calculateBoneRotation,
     clampAngle,
     createBoneChain,
     createBoneChainFromLengths,
     dampedSpring,
     dampedSpringVector3,
+    FABRIKSolver,
+    type GaitConfig,
     hermiteInterpolate,
+    LookAtController,
+    ProceduralGait,
+    SpringChain,
+    type SpringConfig,
+    SpringDynamics,
     sampleCurve,
+    TwoBoneIKSolver,
 } from '../../../src/core/animation';
 
 // Helper to create a simple bone hierarchy
@@ -760,7 +760,7 @@ describe('Utility Functions', () => {
 
         it('slows near target', () => {
             const velocity = { value: 5 };
-            let current = 9;
+            const current = 9;
 
             dampedSpring(current, 10, velocity, 100, 50, 0.016);
             expect(velocity.value).toBeLessThan(5);

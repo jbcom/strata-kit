@@ -432,6 +432,46 @@ export async function getViteReactTools(client: MCPClient): Promise<ToolSet> {
 }
 
 // =============================================================================
+// GRAPHQL MCP
+// =============================================================================
+
+/**
+ * Create GraphQL MCP client for GitHub GraphQL API operations
+ *
+ * Uses mcp-graphql to execute GraphQL queries/mutations against GitHub's API.
+ * Required for: Projects V2, review threads, draft PR conversion, auto-merge, etc.
+ */
+export async function createGraphQLClient(): Promise<MCPClient> {
+    const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+    if (!token) {
+        throw new Error('GITHUB_TOKEN or GH_TOKEN required for GraphQL MCP');
+    }
+
+    const transport = new StdioMCPTransport({
+        command: 'npx',
+        args: [
+            '-y',
+            'mcp-graphql',
+            '--endpoint', 'https://api.github.com/graphql',
+            '--header', `Authorization: Bearer ${token}`,
+        ],
+    });
+
+    return createMCPClient({
+        transport,
+        name: 'strata-triage-graphql',
+        version: '1.0.0',
+    });
+}
+
+/**
+ * Get GraphQL tools from client
+ */
+export async function getGraphQLTools(client: MCPClient): Promise<ToolSet> {
+    return client.tools();
+}
+
+// =============================================================================
 // UNIFIED MCP ACCESS
 // =============================================================================
 
@@ -441,6 +481,7 @@ export interface MCPClients {
     playwright?: MCPClient;
     context7?: MCPClient;
     viteReact?: MCPClient;
+    graphql?: MCPClient;
 }
 
 export interface MCPClientOptions {
@@ -464,6 +505,9 @@ export interface MCPClientOptions {
         url?: string;
         port?: number;
     };
+
+    /** Enable GitHub GraphQL API access via mcp-graphql */
+    graphql?: boolean;
 }
 
 /**
@@ -520,6 +564,14 @@ export async function initializeMCPClients(options: MCPClientOptions): Promise<M
             createViteReactClient(viteOpts)
                 .then(client => { clients.viteReact = client; })
                 .catch(err => console.warn('⚠️ Vite React MCP unavailable:', err.message))
+        );
+    }
+
+    if (options.graphql) {
+        initPromises.push(
+            createGraphQLClient()
+                .then(client => { clients.graphql = client; })
+                .catch(err => console.warn('⚠️ GraphQL MCP unavailable:', err.message))
         );
     }
 
@@ -648,6 +700,10 @@ export async function runAgenticTask(options: AgenticTaskOptions): Promise<Agent
                 // Track tool calls
                 if (step.toolCalls && onToolCall) {
                     for (const call of step.toolCalls) {
+                        // The Vercel AI SDK's ToolCall type uses a generic for the tool name
+                        // and arguments, but MCP tools have dynamic tool names that can't be
+                        // known at compile time. We cast to any to access toolName/input/args
+                        // properties that exist at runtime but aren't in the generic type.
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         const tc = call as any;
                         onToolCall(tc.toolName, tc.input || tc.args);

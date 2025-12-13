@@ -13,7 +13,7 @@ import pc from 'picocolors';
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { generate } from '../ai.js';
-import { getOctokit, getRepoContext } from '../octokit.js';
+import { getRepoContext } from '../octokit.js';
 
 const CHANGELOG_PROMPT = `You are a technical writer creating release notes for Strata, a procedural 3D graphics library for React Three Fiber.
 
@@ -350,16 +350,25 @@ async function createGitHubRelease(
     isBreaking: boolean,
     prerelease?: string
 ): Promise<void> {
-    const octokit = getOctokit();
     const { owner, repo } = getRepoContext();
 
-    await octokit.rest.repos.createRelease({
-        owner,
-        repo,
-        tag_name: `v${version}`,
-        name: `v${version}`,
-        body: changelog,
-        prerelease: !!prerelease,
-        generate_release_notes: false,
-    });
+    // GitHub release creation not available via MCP
+    // Use gh CLI as fallback
+    console.log(pc.dim(`Creating GitHub release v${version}...`));
+
+    try {
+        const args = [
+            'release', 'create',
+            `v${version}`,
+            '--title', `v${version}`,
+            '--notes', changelog,
+        ];
+        if (prerelease) {
+            args.push('--prerelease');
+        }
+        execFileSync('gh', args, { encoding: 'utf-8', stdio: 'pipe' });
+    } catch (error) {
+        console.log(pc.yellow(`Could not create GitHub release: ${error}`));
+        console.log(pc.dim('Create release manually on GitHub'));
+    }
 }
