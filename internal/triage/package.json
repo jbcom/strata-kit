@@ -1,0 +1,76 @@
+{
+    "name": "@strata/triage",
+    "version": "1.0.0",
+    "description": "AI-powered development automation: issue triage, code review, testing, security scanning, and release management for Strata",
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "bin": {
+        "triage": "./dist/cli.js"
+    },
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        },
+        "./reporters/vitest": {
+            "types": "./dist/reporters/vitest.d.ts",
+            "import": "./dist/reporters/vitest.js"
+        },
+        "./reporters/playwright": {
+            "types": "./dist/reporters/playwright.d.ts",
+            "import": "./dist/reporters/playwright.js"
+        }
+    },
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc --watch",
+        "clean": "rimraf dist"
+    },
+    "keywords": [
+        "triage",
+        "ai",
+        "automation",
+        "ollama",
+        "vercel-ai-sdk",
+        "mcp",
+        "playwright",
+        "testing",
+        "security",
+        "codeql",
+        "sarif",
+        "github",
+        "octokit",
+        "cli",
+        "sprint-planning",
+        "release-management"
+    ],
+    "author": "Jon Bogaty <jon@jonbogaty.com>",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/jbcom/strata.git",
+        "directory": "internal/triage"
+    },
+    "homepage": "https://github.com/jbcom/strata/tree/main/internal/triage#readme",
+    "bugs": {
+        "url": "https://github.com/jbcom/strata/issues"
+    },
+    "dependencies": {
+        "@ai-sdk/mcp": "^1.0.0-beta.33",
+        "@playwright/mcp": "latest",
+        "ai": "^5.0.0",
+        "ai-sdk-ollama": "^0.9.0",
+        "commander": "^12.1.0",
+        "glob": "^11.0.0",
+        "octokit": "^4.0.0",
+        "ollama": "^0.5.11",
+        "picocolors": "^1.1.1",
+        "zod": "^3.25.0"
+    },
+    "devDependencies": {
+        "@types/node": "^22.0.0",
+        "rimraf": "^5.0.0",
+        "typescript": "^5.3.0"
+    }
+}

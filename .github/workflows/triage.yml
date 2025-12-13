@@ -1,0 +1,1397 @@
+# Unified Triage Workflow
+# Autonomous AI-powered sprint cycle with comprehensive event triggers
+# Uses @strata/triage CLI with Vercel AI SDK + Ollama Cloud + Playwright MCP
+name: Triage
+
+on:
+  # ==========================================
+  # SCHEDULED EVENTS - Sprint cadence
+  # ==========================================
+  schedule:
+    - cron: '0 9 * * 1'    # Monday 9am: Weekly sprint planning
+    - cron: '0 9 1 * *'    # 1st of month: Monthly roadmap review
+    - cron: '0 0 * * *'    # Daily: Stale issue check, backlog grooming
+
+  # ==========================================
+  # ISSUE LIFECYCLE - Triage & Planning
+  # ==========================================
+  issues:
+    types:
+      - opened          # → assess, label
+      - edited          # → re-assess if significant
+      - labeled         # → develop (ready-for-aider), plan (needs-planning), test (needs-tests)
+      - unlabeled       # → update project board
+      - assigned        # → notify, update sprint
+      - unassigned      # → reassign or return to backlog
+      - milestoned      # → update sprint capacity
+      - demilestoned    # → return to backlog
+      - closed          # → verify resolution, update metrics
+      - reopened        # → re-triage, investigate
+
+  # ==========================================
+  # PR LIFECYCLE - Development & Review
+  # ==========================================
+  pull_request:
+    types:
+      - opened          # → review, security scan
+      - edited          # → re-review if description changed
+      - synchronize     # → re-run tests, update review
+      - ready_for_review # → full review, verification
+      - converted_to_draft # → pause review
+      - labeled         # → automerge (auto-merge), verify (needs-verification)
+      - unlabeled       # → disable automerge if removed
+      - assigned        # → notify reviewer
+      - review_requested # → prioritize review
+      - closed          # → if merged: update issues, metrics; if closed: analyze why
+
+  pull_request_review:
+    types:
+      - submitted       # → feedback, respond to review
+      - edited          # → re-assess feedback
+      - dismissed       # → log, re-request if needed
+
+  pull_request_review_comment:
+    types:
+      - created         # → respond to inline comments
+
+  # ==========================================
+  # CI/CD INTEGRATION - Test & Deploy
+  # ==========================================
+  check_suite:
+    types:
+      - completed       # → diagnose failures, automerge if passed
+
+  check_run:
+    types:
+      - completed       # → detailed failure analysis
+      - rerequested     # → re-run with fresh context
+
+  status:               # → legacy status checks
+    types: []           # all status events
+
+  deployment_status:
+    types: []           # → verify deployment, run smoke tests
+
+  # ==========================================
+  # RELEASE LIFECYCLE
+  # ==========================================
+  release:
+    types:
+      - published       # → announce, update docs
+      - created         # → prepare release notes
+      - edited          # → update announcements
+
+  # ==========================================
+  # PROJECT MANAGEMENT
+  # ==========================================
+  milestone:
+    types:
+      - opened          # → sprint kickoff
+      - closed          # → sprint retrospective, velocity calc
+      - edited          # → adjust capacity
+      - deleted         # → redistribute issues
+
+  # Note: project events require separate workflow due to permissions
+  # project:
+  #   types: [created, edited, closed, reopened, deleted]
+  # project_card:
+  #   types: [created, moved, converted, edited, deleted]
+
+  # ==========================================
+  # COMMUNITY & COLLABORATION
+  # ==========================================
+  issue_comment:
+    types:
+      - created         # → @cursor mentions, commands
+      - edited          # → re-process if command edited
+
+  discussion:
+    types:
+      - created         # → convert to issue if actionable
+      - answered        # → close related issues
+
+  discussion_comment:
+    types:
+      - created         # → respond, extract action items
+
+  # ==========================================
+  # REPOSITORY EVENTS - No branch restrictions!
+  # Jobs use if conditions to determine behavior
+  # ==========================================
+  push:                 # → build on all branches, release only on main
+
+  create:               # → new branch/tag created
+
+  delete:               # → cleanup related items
+
+  # Passive tracking events (no jobs, just metrics)
+  # fork:
+  # star:
+  # watch:
+
+  # ==========================================
+  # SECURITY
+  # ==========================================
+  dependabot_alert:
+    types:
+      - created         # → assess severity, create issue
+      - dismissed       # → log reason
+      - fixed           # → close issue
+      - reintroduced    # → reopen issue
+
+  code_scanning_alert:
+    types:
+      - created         # → assess, prioritize
+      - reopened        # → investigate regression
+      - closed          # → verify fix
+
+  secret_scanning_alert:
+    types:
+      - created         # → immediate response
+      - resolved        # → verify rotation
+
+  # ==========================================
+  # WORKFLOW ORCHESTRATION
+  # ==========================================
+  workflow_run:
+    workflows: [CI]
+    types:
+      - completed       # → cascade: diagnose if failed, proceed if passed
+
+  workflow_dispatch:
+    inputs:
+      command:
+        description: 'Command to run'
+        required: true
+        type: choice
+        options:
+          - assess
+          - review
+          - label
+          - develop
+          - test
+          - plan
+          - verify
+          - generate
+          - diagnose
+          - coverage
+          - security
+          - scan
+          - configure
+          - automerge
+          - sprint
+          - roadmap
+          - cascade
+          - harness
+          - feedback
+          - release
+      number:
+        description: 'Issue or PR number'
+        required: false
+        type: string
+      source_file:
+        description: 'Source file path (for generate command)'
+        required: false
+        type: string
+      report_file:
+        description: 'Report file path (for diagnose/coverage commands)'
+        required: false
+        type: string
+        default: 'test-results/strata-report.json'
+      test_type:
+        description: 'Test type (for test/generate commands)'
+        required: false
+        type: choice
+        default: 'all'
+        options:
+          - unit
+          - integration
+          - e2e
+          - all
+      automerge_action:
+        description: 'Automerge action'
+        required: false
+        type: choice
+        default: 'status'
+        options:
+          - enable
+          - disable
+          - status
+          - wait
+          - draft
+          - ready
+      create_tasks:
+        description: 'Create sub-task issues (for plan command)'
+        required: false
+        type: boolean
+        default: false
+      create_issues:
+        description: 'Create issues for failures/gaps (for diagnose/coverage)'
+        required: false
+        type: boolean
+        default: false
+      ready_for_review:
+        description: 'Mark PR as ready for review after feedback (for feedback command)'
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: triage-${{ github.event.issue.number || github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+# Minimal permissions - jobs override as needed
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+# All secrets passed at step level only - no global exposure
+env:
+  OLLAMA_MODEL: ${{ vars.OLLAMA_MODEL || 'glm-4.6:cloud' }}
+
+jobs:
+  # ============================================
+  # BUILD: Full project build (replaces ci.yml)
+  # Runs on code changes, PRs, and events needing CLI
+  # ============================================
+  build:
+    name: Build
+    # Run on code changes OR events that need the triage CLI
+    if: >-
+      github.event_name == 'push' ||
+      github.event_name == 'pull_request' ||
+      github.event_name == 'pull_request_review' ||
+      github.event_name == 'pull_request_review_comment' ||
+      github.event_name == 'issue_comment' ||
+      github.event_name == 'issues' ||
+      github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    outputs:
+      should_test: ${{ steps.changes.outputs.should_test }}
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        with:
+          node-version: '22'
+
+      - uses: pnpm/action-setup@9fd676a19091d4595eefd76e4bd31c97133911f1 # v4.2.0
+        with:
+          version: 9
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          STORE_PATH=$(pnpm store path --silent 2>/dev/null || true)
+          STORE_PATH="${STORE_PATH:-${XDG_DATA_HOME:-$HOME/.local/share}/pnpm/store}"
+          echo "store=$STORE_PATH" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ steps.pnpm-cache.outputs.store }}
+          key: pnpm-store-${{ hashFiles('pnpm-lock.yaml', 'package.json', 'internal/triage/package.json') }}
+          restore-keys: pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build all packages
+        run: |
+          pnpm run build
+          pnpm --filter @strata/triage build
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Type check
+        run: pnpm run typecheck
+
+      - name: Check if tests should run
+        id: changes
+        run: |
+          # Run tests on PRs and pushes to main
+          if [[ "${{ github.event_name }}" == "pull_request" ]] || \
+             [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "should_test=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_test=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: build-output
+          path: |
+            dist
+            internal/triage/dist
+            internal/triage/package.json
+            internal/triage/node_modules
+          retention-days: 1
+
+  # ============================================
+  # TEST: Unit tests with Strata reporter
+  # ============================================
+  test:
+    name: Unit Tests
+    needs: build
+    if: needs.build.outputs.should_test == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        with:
+          node-version: '22'
+
+      - uses: pnpm/action-setup@9fd676a19091d4595eefd76e4bd31c97133911f1 # v4.2.0
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: build-output
+
+      - name: Run tests with Strata reporter
+        run: pnpm run test -- --reporter=default --reporter=./internal/triage/dist/reporters/vitest.js
+        continue-on-error: true
+
+      - name: Upload test results
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        if: always()
+        with:
+          name: test-results
+          path: test-results/
+          retention-days: 7
+
+  # ============================================
+  # E2E: Playwright tests
+  # ============================================
+  e2e:
+    name: E2E Tests
+    needs: build
+    if: needs.build.outputs.should_test == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        with:
+          node-version: '22'
+
+      - uses: pnpm/action-setup@9fd676a19091d4595eefd76e4bd31c97133911f1 # v4.2.0
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: build-output
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: pnpm run test:e2e -- --reporter=./internal/triage/dist/reporters/playwright.js
+        continue-on-error: true
+
+      - name: Upload E2E results
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        if: always()
+        with:
+          name: e2e-results
+          path: test-results/
+          retention-days: 7
+
+  # ============================================
+  # CODEQL: Security scanning (in-house)
+  # ============================================
+  codeql:
+    name: CodeQL Analysis
+    needs: build
+    if: >-
+      github.event_name == 'push' ||
+      github.event_name == 'pull_request' ||
+      github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          queries: security-and-quality
+          # Custom queries can be added here
+          # config-file: .github/codeql/codeql-config.yml
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript-typescript"
+          output: codeql-results
+          upload: true
+
+      - name: Upload CodeQL results
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        if: always()
+        with:
+          name: codeql-results
+          path: codeql-results/
+          retention-days: 7
+
+  # ============================================
+  # DEPENDENCY REVIEW: Check for vulnerabilities
+  # ============================================
+  dependency-review:
+    name: Dependency Review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: always
+
+  # ============================================
+  # CUSTOM SCANNER: Strata-specific security checks
+  # ============================================
+  custom-scanner:
+    name: Strata Security Scanner
+    needs: build
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        with:
+          node-version: '22'
+
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: build-output
+
+      - name: Run Strata security scanner
+        run: node internal/triage/dist/cli.js scan --sarif strata-scan.sarif --verbose
+        continue-on-error: true
+
+      - name: Upload scanner SARIF
+        if: always() && hashFiles('strata-scan.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: strata-scan.sarif
+          category: strata-scanner
+        continue-on-error: true
+
+  # ============================================
+  # AI SECURITY: Analyze security findings
+  # ============================================
+  security-analysis:
+    name: AI Security Analysis
+    needs: [build, codeql, custom-scanner]
+    if: always() && (needs.codeql.result == 'success' || needs.custom-scanner.result == 'success')
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        with:
+          node-version: '22'
+
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: build-output
+
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: codeql-results
+          path: codeql-results/
+        continue-on-error: true
+
+      - name: Analyze security findings with AI
+        run: |
+          node internal/triage/dist/cli.js security \
+            --pr ${{ github.event.pull_request.number || '' }} \
+            --sarif strata-security.sarif \
+            --verbose
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+        continue-on-error: true
+
+      - name: Upload SARIF to GitHub Code Scanning
+        if: always() && hashFiles('strata-security.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: strata-security.sarif
+          category: strata-triage
+        continue-on-error: true
+
+  # ============================================
+  # AI DIAGNOSE: Analyze test failures
+  # ============================================
+  diagnose-failures:
+    name: AI Test Diagnosis
+    needs: [build, test, e2e]
+    if: always() && (needs.test.result == 'failure' || needs.e2e.result == 'failure')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        with:
+          node-version: '22'
+
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: build-output
+
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: test-results
+          path: test-results/
+        continue-on-error: true
+
+      - name: Diagnose failures
+        run: |
+          node internal/triage/dist/cli.js diagnose \
+            --report test-results/strata-report.json \
+            --pr ${{ github.event.pull_request.number || '' }} \
+            --verbose
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+        continue-on-error: true
+
+  # ============================================
+  # RELEASE: Semantic release to npm (on main)
+  # ============================================
+  release:
+    name: Release
+    needs: [build, test]
+    if: >-
+      github.event_name == 'push' && 
+      github.ref == 'refs/heads/main' &&
+      needs.test.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      released: ${{ steps.release.outputs.new_release_published }}
+      version: ${{ steps.release.outputs.new_release_version }}
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.CI_GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org/'
+
+      - uses: pnpm/action-setup@9fd676a19091d4595eefd76e4bd31c97133911f1 # v4.2.0
+        with:
+          version: 9
+
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: build-output
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Authenticate to npm
+        run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: AI-Powered Release
+        id: release
+        run: |
+          # Full AI-powered release: changelog, version, tag, push, GitHub release, npm publish
+          node internal/triage/dist/cli.js release --verbose
+          echo "new_release_published=true" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  # ============================================
+  # DOCS: Deploy documentation to GitHub Pages
+  # ============================================
+  docs:
+    name: Deploy Docs
+    needs: release
+    if: needs.release.outputs.released == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        with:
+          node-version: '22'
+
+      - uses: pnpm/action-setup@9fd676a19091d4595eefd76e4bd31c97133911f1 # v4.2.0
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Generate TypeDoc
+        run: pnpm run docs
+        continue-on-error: true
+
+      - name: Setup Pages
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
+        with:
+          path: docs
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
+
+  # ============================================
+  # AUTO-LABEL: Add triage label to new issues
+  # ============================================
+  auto-label:
+    name: Auto Label
+    permissions:
+      contents: read
+      issues: write
+    needs: build
+    if: github.event_name == 'issues' && github.event.action == 'opened'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        with:
+          node-version: '22'
+
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: build-output
+
+      - name: Auto-label issue
+        run: node internal/triage/dist/cli.js label ${{ github.event.issue.number }}
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+
+  # ============================================
+  # ASSESS: AI triage for labeled issues
+  # ============================================
+  assess:
+    name: AI Assessment
+    needs: build
+    if: >-
+      github.event_name == 'issues' &&
+      github.event.action == 'labeled' &&
+      contains(fromJson('["needs-triage", "bug", "enhancement", "feature"]'), github.event.label.name)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        with:
+          node-version: '22'
+
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: build-output
+
+      - name: Assess issue
+        run: node internal/triage/dist/cli.js assess ${{ github.event.issue.number }} --verbose
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+
+  # ============================================
+  # DEVELOP: AI-powered code generation
+  # ============================================
+  develop:
+    name: AI Development
+    needs: build
+    if: >-
+      github.event_name == 'issues' &&
+      github.event.action == 'labeled' &&
+      github.event.label.name == 'ready-for-aider'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          token: ${{ secrets.CI_GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        with:
+          node-version: '22'
+
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: build-output
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create feature branch
+        id: branch
+        run: |
+          ISSUE_NUMBER="${{ github.event.issue.number }}"
+          BRANCH_NAME="feature/ai-${ISSUE_NUMBER}"
+          git checkout -b "$BRANCH_NAME"
+          echo "name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+
+      - name: Develop changes
+        run: node internal/triage/dist/cli.js develop ${{ github.event.issue.number }} --verbose
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+
+      - name: Push changes
+        run: |
+          git push -u origin ${{ steps.branch.outputs.name }} || echo "No changes to push"
+
+      - name: Create Pull Request
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          github-token: ${{ secrets.CI_GITHUB_TOKEN }}
+          script: |
+            const { repo, owner } = context.repo;
+            const branchName = '${{ steps.branch.outputs.name }}';
+            const issueNumber = ${{ github.event.issue.number }};
+
+            // Check if there are any commits
+            const compare = await github.rest.repos.compareCommits({
+              owner, repo,
+              base: 'main',
+              head: branchName
+            });
+
+            if (compare.data.ahead_by === 0) {
+              console.log('No commits to create PR for');
+              return;
+            }
+
+            // Check for existing PR
+            const pulls = await github.rest.pulls.list({ owner, repo, state: 'open', head: `${owner}:${branchName}` });
+            if (pulls.data.length > 0) {
+              console.log(`PR already exists: ${pulls.data[0].html_url}`);
+              return;
+            }
+
+            // Get issue title
+            const issue = await github.rest.issues.get({ owner, repo, issue_number: issueNumber });
+
+            const { data: pr } = await github.rest.pulls.create({
+              owner, repo,
+              title: `[AI] ${issue.data.title}`,
+              head: branchName,
+              base: 'main',
+              body: `## Summary\n\nAI-generated implementation.\n\nFixes #${issueNumber}\n\n---\n_Generated by @strata/triage_`
+            });
+
+            await github.rest.issues.addLabels({ owner, repo, issue_number: pr.number, labels: ['automated-pr'] });
+            console.log(`Created PR #${pr.number}`);
+
+  # ============================================
+  # REVIEW: AI code review for PRs
+  # ============================================
+  review:
+    name: AI Code Review
+    needs: build
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        with:
+          node-version: '22'
+
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: build-output
+
+      - name: Review PR
+        run: node internal/triage/dist/cli.js review ${{ github.event.pull_request.number }} --verbose
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+
+  # ============================================
+  # PLAN: Create project plan for complex issues
+  # ============================================
+  plan:
+    name: Project Planning
+    needs: build
+    if: >-
+      github.event_name == 'issues' &&
+      github.event.action == 'labeled' &&
+      github.event.label.name == 'needs-planning'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        with:
+          node-version: '22'
+
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: build-output
+
+      - name: Create project plan
+        run: node internal/triage/dist/cli.js plan ${{ github.event.issue.number }} --verbose
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+
+  # ============================================
+  # TEST: Generate tests for issues/PRs
+  # ============================================
+  test-generation:
+    name: Test Generation
+    needs: build
+    if: >-
+      github.event_name == 'issues' &&
+      github.event.action == 'labeled' &&
+      github.event.label.name == 'needs-tests'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          token: ${{ secrets.CI_GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        with:
+          node-version: '22'
+
+      - uses: pnpm/action-setup@9fd676a19091d4595eefd76e4bd31c97133911f1 # v4.2.0
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: build-output
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create test branch
+        id: branch
+        run: |
+          ISSUE_NUMBER="${{ github.event.issue.number }}"
+          BRANCH_NAME="tests/ai-${ISSUE_NUMBER}"
+          git checkout -b "$BRANCH_NAME"
+          echo "name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+
+      - name: Generate tests
+        run: node internal/triage/dist/cli.js test --issue ${{ github.event.issue.number }} --type all --verbose
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+
+      - name: Commit and push tests
+        run: |
+          git add -A
+          git diff --staged --quiet || git commit -m "test: AI-generated tests for #${{ github.event.issue.number }}"
+          git push -u origin ${{ steps.branch.outputs.name }} || echo "No changes to push"
+
+      - name: Create Pull Request
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          github-token: ${{ secrets.CI_GITHUB_TOKEN }}
+          script: |
+            const { repo, owner } = context.repo;
+            const branchName = '${{ steps.branch.outputs.name }}';
+            const issueNumber = ${{ github.event.issue.number }};
+
+            const compare = await github.rest.repos.compareCommits({ owner, repo, base: 'main', head: branchName });
+            if (compare.data.ahead_by === 0) { console.log('No commits'); return; }
+
+            const pulls = await github.rest.pulls.list({ owner, repo, state: 'open', head: `${owner}:${branchName}` });
+            if (pulls.data.length > 0) { console.log(`PR exists: ${pulls.data[0].html_url}`); return; }
+
+            const issue = await github.rest.issues.get({ owner, repo, issue_number: issueNumber });
+            const { data: pr } = await github.rest.pulls.create({
+              owner, repo,
+              title: `[Test] ${issue.data.title}`,
+              head: branchName,
+              base: 'main',
+              body: `## Summary\n\nAI-generated tests.\n\nRelates to #${issueNumber}\n\n---\n_Generated by @strata/triage_`
+            });
+            await github.rest.issues.addLabels({ owner, repo, issue_number: pr.number, labels: ['automated-pr', 'tests'] });
+
+  # ============================================
+  # VERIFY: Verify PRs with tests and browser
+  # ============================================
+  verify:
+    name: PR Verification
+    needs: build
+    if: >-
+      github.event_name == 'pull_request' &&
+      contains(github.event.pull_request.labels.*.name, 'needs-verification')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        with:
+          node-version: '22'
+
+      - uses: pnpm/action-setup@9fd676a19091d4595eefd76e4bd31c97133911f1 # v4.2.0
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: build-output
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Verify PR
+        run: node internal/triage/dist/cli.js verify ${{ github.event.pull_request.number }} --verbose
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+
+  # ============================================
+  # FEEDBACK: Handle PR review feedback
+  # ============================================
+  feedback:
+    name: Handle PR Feedback
+    needs: build
+    if: >-
+      github.event_name == 'pull_request_review' ||
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request &&
+       contains(github.event.comment.body, '@cursor'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        with:
+          node-version: '22'
+
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: build-output
+
+      - name: Get PR number
+        id: pr
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request_review" ]]; then
+            echo "number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+          else
+            # For issue_comment on PR
+            echo "number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Handle feedback
+        run: node internal/triage/dist/cli.js feedback ${{ steps.pr.outputs.number }} --verbose
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+
+  # ============================================
+  # MANUAL: Run triage commands manually
+  # ============================================
+  manual:
+    name: Manual Triage
+    needs: build
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          token: ${{ secrets.CI_GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        with:
+          node-version: '22'
+
+      - uses: pnpm/action-setup@9fd676a19091d4595eefd76e4bd31c97133911f1 # v4.2.0
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: build-output
+
+      - name: Install Playwright browsers
+        if: contains(fromJson('["test", "verify"]'), inputs.command)
+        run: npx playwright install --with-deps chromium
+
+      - name: Configure git (for develop command)
+        if: inputs.command == 'develop'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Run triage command
+        run: |
+          ARGS="${{ inputs.command }}"
+
+          case "${{ inputs.command }}" in
+            assess|review|label|develop|plan|verify)
+              ARGS="$ARGS ${{ inputs.number }}"
+              ;;
+            test)
+              ARGS="$ARGS --issue ${{ inputs.number }} --type ${{ inputs.test_type || 'all' }}"
+              ;;
+            generate)
+              ARGS="$ARGS ${{ inputs.source_file }} --type ${{ inputs.test_type || 'unit' }} --run"
+              ;;
+            diagnose)
+              ARGS="$ARGS --report ${{ inputs.report_file }}"
+              if [[ -n "${{ inputs.number }}" ]]; then
+                ARGS="$ARGS --pr ${{ inputs.number }}"
+              fi
+              if [[ "${{ inputs.create_issues }}" == "true" ]]; then
+                ARGS="$ARGS --create-issues"
+              fi
+              ;;
+            coverage)
+              ARGS="$ARGS --report ${{ inputs.report_file }}"
+              if [[ "${{ inputs.create_issues }}" == "true" ]]; then
+                ARGS="$ARGS --create-issues"
+              fi
+              ;;
+            security)
+              if [[ -n "${{ inputs.number }}" ]]; then
+                ARGS="$ARGS --pr ${{ inputs.number }}"
+              fi
+              ;;
+            automerge)
+              ARGS="$ARGS ${{ inputs.number }} ${{ inputs.automerge_action || 'status' }}"
+              ;;
+            sprint)
+              ARGS="$ARGS --trigger"
+              ;;
+            roadmap)
+              # No special args needed
+              ;;
+            cascade)
+              ARGS="$ARGS --steps plan,develop,test,review,merge"
+              ;;
+            harness)
+              ARGS="$ARGS --list"
+              ;;
+            feedback)
+              ARGS="$ARGS ${{ inputs.number }}"
+              if [[ "${{ inputs.ready_for_review }}" == "true" ]]; then
+                ARGS="$ARGS --ready-for-review"
+              fi
+              ;;
+          esac
+
+          # Handle plan command options
+          if [[ "${{ inputs.command }}" == "plan" && "${{ inputs.create_tasks }}" == "true" ]]; then
+            ARGS="$ARGS --create-tasks"
+          fi
+
+          node internal/triage/dist/cli.js $ARGS --verbose
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+
+  # ============================================
+  # SCHEDULED: Sprint cadence automation
+  # ============================================
+  scheduled:
+    name: Scheduled Automation
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          token: ${{ secrets.CI_GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        with:
+          node-version: '22'
+
+      - uses: pnpm/action-setup@9fd676a19091d4595eefd76e4bd31c97133911f1 # v4.2.0
+        with:
+          version: 9
+
+      - name: Install and build
+        run: |
+          pnpm install
+          pnpm --filter @strata/triage build
+
+      - name: Determine schedule type
+        id: schedule
+        run: |
+          # Check which cron triggered this
+          HOUR=$(date -u +%H)
+          DAY=$(date -u +%d)
+          DOW=$(date -u +%u)  # 1=Monday
+
+          if [[ "$DAY" == "01" && "$HOUR" == "09" ]]; then
+            echo "type=monthly" >> $GITHUB_OUTPUT
+          elif [[ "$DOW" == "1" && "$HOUR" == "09" ]]; then
+            echo "type=weekly" >> $GITHUB_OUTPUT
+          else
+            echo "type=daily" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Daily - Stale issue check
+        if: steps.schedule.outputs.type == 'daily'
+        run: |
+          echo "🔍 Running daily maintenance..."
+          # Check for stale issues, update project boards
+          node internal/triage/dist/cli.js cascade --steps plan --verbose || true
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+
+      - name: Weekly - Sprint planning
+        if: steps.schedule.outputs.type == 'weekly'
+        run: |
+          echo "🗓️ Running weekly sprint planning..."
+          node internal/triage/dist/cli.js sprint --trigger --verbose
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+
+      - name: Monthly - Roadmap review
+        if: steps.schedule.outputs.type == 'monthly'
+        run: |
+          echo "🗺️ Running monthly roadmap review..."
+          node internal/triage/dist/cli.js roadmap --verbose
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+
+  # ============================================
+  # CI CASCADE: React to CI workflow completion
+  # ============================================
+  ci-cascade:
+    name: CI Cascade
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion != 'skipped'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        with:
+          node-version: '22'
+
+      - uses: pnpm/action-setup@9fd676a19091d4595eefd76e4bd31c97133911f1 # v4.2.0
+        with:
+          version: 9
+
+      - name: Install and build
+        run: |
+          pnpm install
+          pnpm --filter @strata/triage build
+
+      - name: Handle CI failure
+        if: github.event.workflow_run.conclusion == 'failure'
+        run: |
+          echo "❌ CI failed - running diagnosis..."
+          node internal/triage/dist/cli.js diagnose --create-issues --verbose || true
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+
+      - name: Handle CI success
+        if: github.event.workflow_run.conclusion == 'success'
+        run: |
+          echo "✅ CI passed - checking for auto-merge candidates..."
+          # Find PRs that are ready to merge
+          node internal/triage/dist/cli.js automerge wait --verbose || true
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+
+  # ============================================
+  # CHECK SUITE: Detailed CI result handling
+  # ============================================
+  check-complete:
+    name: Check Suite Handler
+    if: github.event_name == 'check_suite' && github.event.check_suite.conclusion != null
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        with:
+          node-version: '22'
+
+      - uses: pnpm/action-setup@9fd676a19091d4595eefd76e4bd31c97133911f1 # v4.2.0
+        with:
+          version: 9
+
+      - name: Install and build
+        run: |
+          pnpm install
+          pnpm --filter @strata/triage build
+
+      - name: Get associated PR
+        id: pr
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            const prs = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: `${context.repo.owner}:${context.payload.check_suite.head_branch}`,
+              state: 'open'
+            });
+            if (prs.data.length > 0) {
+              core.setOutput('number', prs.data[0].number);
+              return prs.data[0].number;
+            }
+            return null;
+
+      - name: Handle failure
+        if: github.event.check_suite.conclusion == 'failure' && steps.pr.outputs.number
+        run: |
+          echo "❌ Checks failed for PR #${{ steps.pr.outputs.number }}"
+          node internal/triage/dist/cli.js diagnose --pr ${{ steps.pr.outputs.number }} --verbose || true
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+
+      - name: Handle success - attempt automerge
+        if: github.event.check_suite.conclusion == 'success' && steps.pr.outputs.number
+        run: |
+          echo "✅ Checks passed for PR #${{ steps.pr.outputs.number }}"
+          node internal/triage/dist/cli.js automerge ${{ steps.pr.outputs.number }} wait --verbose || true
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+
+  # ============================================
+  # SECURITY: Handle security alerts
+  # ============================================
+  security-alert:
+    name: Security Alert Handler
+    if: >-
+      github.event_name == 'dependabot_alert' ||
+      github.event_name == 'code_scanning_alert' ||
+      github.event_name == 'secret_scanning_alert'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        with:
+          node-version: '22'
+
+      - uses: pnpm/action-setup@9fd676a19091d4595eefd76e4bd31c97133911f1 # v4.2.0
+        with:
+          version: 9
+
+      - name: Install and build
+        run: |
+          pnpm install
+          pnpm --filter @strata/triage build
+
+      - name: Analyze security alert
+        run: |
+          echo "🔒 Security alert received: ${{ github.event_name }}"
+          node internal/triage/dist/cli.js security --verbose
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+
+  # ============================================
+  # MILESTONE: Sprint lifecycle events
+  # ============================================
+  milestone-handler:
+    name: Milestone Handler
+    if: github.event_name == 'milestone'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        with:
+          node-version: '22'
+
+      - uses: pnpm/action-setup@9fd676a19091d4595eefd76e4bd31c97133911f1 # v4.2.0
+        with:
+          version: 9
+
+      - name: Install and build
+        run: |
+          pnpm install
+          pnpm --filter @strata/triage build
+
+      - name: Sprint opened
+        if: github.event.action == 'opened'
+        run: |
+          echo "🚀 New milestone opened: ${{ github.event.milestone.title }}"
+          # Could trigger sprint kickoff notifications
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+
+      - name: Sprint closed - retrospective
+        if: github.event.action == 'closed'
+        run: |
+          echo "🏁 Milestone closed: ${{ github.event.milestone.title }}"
+          # Generate sprint retrospective, velocity metrics
+          node internal/triage/dist/cli.js roadmap --verbose || true
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
