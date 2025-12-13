@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+Of course! Here is a user-friendly changelog for version 1.1.1 based on the provided commit.
+
+---
+
+# Changelog
+
+All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.1.1] - 2023-10-27
+
+### 🏗️ Internal
+
+* Improved the internal CI/CD workflow to enhance the stability of our release and build process. (contributed by @Jon Bogaty)
+All notable changes to this project will be documented in this file.
+
 # Strata 1.1.0 Release Notes
 
 We're thrilled to announce the release of Strata 1.1.0! This version marks a major milestone, featuring a significant architectural reorganization, the launch of a comprehensive documentation site, and numerous improvements to our developer and CI workflows.
