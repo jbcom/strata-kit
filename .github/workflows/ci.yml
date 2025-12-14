@@ -101,6 +101,9 @@ jobs:
 
       - name: Report Coveralls
         uses: coverallsapp/github-action@v2
+        continue-on-error: true  # Non-blocking until issue #189 is resolved
+        with:
+          file: coverage/lcov.info
 
       - name: Upload test results
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
