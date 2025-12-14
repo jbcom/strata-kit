@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+# Changelog v1.2.0
+
+Strata v1.2.0 is here, bringing your 3D scenes to mobile devices. This release introduces first-class support for building cross-platform mobile apps with your existing web skills.
+
+## Features
+
+### Capacitor Plugin for Mobile Development
+We are excited to announce the release of a new official Strata plugin for Capacitor. This addon provides a bridge to use Strata's procedural 3D graphics within native iOS and Android applications. You can now build and render immersive 3D experiences for mobile app stores directly from your React Three Fiber project.
+
+_This fantastic feature was contributed by @Jon Bogaty! [#173]_
+All notable changes to this project will be documented in this file.
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
