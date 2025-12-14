@@ -73,6 +73,8 @@ export async function releaseCommand(options: ReleaseOptions = {}): Promise<void
     const commits = getCommitsSinceTag(lastTag);
     if (commits.length === 0) {
         console.log(pc.yellow('No commits since last release'));
+        // Machine-readable output for CI workflow detection
+        console.log('\nRELEASE_PUBLISHED=false');
         return;
     }
     console.log(pc.dim(`Commits since last release: ${commits.length}`));
@@ -119,6 +121,9 @@ export async function releaseCommand(options: ReleaseOptions = {}): Promise<void
         if (!options.skipTag) console.log(pc.dim(`  - Push commits and tags`));
         if (!options.skipGithub) console.log(pc.dim(`  - Create GitHub release`));
         if (!options.skipNpm) console.log(pc.dim(`  - Publish to npm${options.npmTag ? ` with tag '${options.npmTag}'` : ''}`));
+        // Machine-readable output for CI workflow detection
+        console.log('\nRELEASE_PUBLISHED=false');
+        console.log(`RELEASE_VERSION=${newVersion}`);
         return;
     }
 
@@ -174,6 +179,10 @@ export async function releaseCommand(options: ReleaseOptions = {}): Promise<void
     }
 
     console.log(pc.green(`\n✅ Released ${newVersion}!`));
+
+    // Machine-readable output for CI workflow detection
+    console.log('\nRELEASE_PUBLISHED=true');
+    console.log(`RELEASE_VERSION=${newVersion}`);
 }
 
 function getLastTag(): string | null {

@@ -59,9 +59,16 @@ jobs:
           # Run triage release - it outputs RELEASE_PUBLISHED=true/false
           pnpm run triage release --verbose | tee release.log
 
-          # Check if a release was actually published
-          if grep -q "Published version" release.log || grep -q "npm publish" release.log; then
+          # Check machine-readable output for release status
+          if grep -q "^RELEASE_PUBLISHED=true$" release.log; then
             echo "new_release_published=true" >> $GITHUB_OUTPUT
+            # Extract version - fail if not found when release is published
+            version=$(grep "^RELEASE_VERSION=" release.log | cut -d= -f2 || echo "")
+            if [ -z "$version" ]; then
+              echo "ERROR: RELEASE_PUBLISHED=true but RELEASE_VERSION not found in release.log" >&2
+              exit 1
+            fi
+            echo "new_release_version=$version" >> $GITHUB_OUTPUT
           else
             echo "new_release_published=false" >> $GITHUB_OUTPUT
           fi
