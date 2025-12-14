@@ -788,7 +788,7 @@ export const DialogBox = forwardRef<DialogBoxRef, DialogBoxProps>(
         const [displayedText, setDisplayedText] = useState('');
         const [isTyping, setIsTyping] = useState(false);
         const [showContinue, setShowContinue] = useState(false);
-        const typewriterRef = useRef<NodeJS.Timeout>(undefined);
+        const typewriterRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
         const line = lines[lineIndex];
 
