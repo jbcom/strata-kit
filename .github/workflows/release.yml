@@ -57,7 +57,7 @@ jobs:
         id: release
         run: |
           # Run triage release - it outputs RELEASE_PUBLISHED=true/false
-          pnpm run triage -- release --verbose | tee release.log
+          pnpm run triage release --verbose | tee release.log
 
           # Check if a release was actually published
           if grep -q "Published version" release.log || grep -q "npm publish" release.log; then

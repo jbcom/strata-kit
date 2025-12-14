@@ -67,6 +67,11 @@ if (typeof document !== 'undefined') {
             compileShader: () => {},
             getShaderParameter: () => true,
             getShaderInfoLog: () => '',
+            getShaderPrecisionFormat: () => ({
+                rangeMin: 127,
+                rangeMax: 127,
+                precision: 23,
+            }),
             deleteShader: () => {},
 
             // Program functions
@@ -146,12 +151,23 @@ if (typeof document !== 'undefined') {
             activeTexture: () => {},
             texImage2D: () => {},
             texSubImage2D: () => {},
+            texImage3D: () => {},
+            texSubImage3D: () => {},
+            copyTexSubImage3D: () => {},
+            compressedTexImage3D: () => {},
+            compressedTexSubImage3D: () => {},
+            texStorage2D: () => {},
+            texStorage3D: () => {},
             texParameteri: () => {},
             texParameterf: () => {},
             generateMipmap: () => {},
             deleteTexture: () => {},
             pixelStorei: () => {},
             compressedTexImage2D: () => {},
+            compressedTexSubImage2D: () => {},
+            copyTexImage2D: () => {},
+            copyTexSubImage2D: () => {},
+            getTexParameter: () => 0,
 
             // Framebuffer functions
             createFramebuffer: () => ({}),
@@ -173,7 +189,15 @@ if (typeof document !== 'undefined') {
             drawElements: () => {},
             drawArraysInstanced: () => {},
             drawElementsInstanced: () => {},
+            drawBuffers: () => {},
+            drawRangeElements: () => {},
             readPixels: () => {},
+            readBuffer: () => {},
+            blitFramebuffer: () => {},
+            invalidateFramebuffer: () => {},
+            invalidateSubFramebuffer: () => {},
+            getBufferSubData: () => {},
+            copyBufferSubData: () => {},
 
             // State functions
             viewport: () => {},

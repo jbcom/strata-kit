@@ -491,7 +491,7 @@ jobs:
 
       - name: Analyze security findings with AI
         run: |
-          pnpm run triage -- security \
+          pnpm run triage security \
             --pr ${{ github.event.pull_request.number || '' }} \
             --sarif strata-security.sarif \
             --verbose
@@ -539,7 +539,7 @@ jobs:
 
       - name: Diagnose failures
         run: |
-          pnpm run triage -- diagnose \
+          pnpm run triage diagnose \
             --report test-results/strata-report.json \
             --pr ${{ github.event.pull_request.number || '' }} \
             --verbose
@@ -602,7 +602,7 @@ jobs:
         id: release
         run: |
           # Full AI-powered release: changelog, version, tag, push, GitHub release, npm publish
-          pnpm run triage -- release --verbose
+          pnpm run triage release --verbose
           echo "new_release_published=true" >> $GITHUB_OUTPUT
         env:
           GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
@@ -682,7 +682,7 @@ jobs:
         run: pnpm install
 
       - name: Auto-label issue
-        run: pnpm run triage -- label ${{ github.event.issue.number }}
+        run: pnpm run triage label ${{ github.event.issue.number }}
         env:
           GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
 
@@ -716,7 +716,7 @@ jobs:
         run: pnpm install
 
       - name: Assess issue
-        run: pnpm run triage -- assess ${{ github.event.issue.number }} --verbose
+        run: pnpm run triage assess ${{ github.event.issue.number }} --verbose
         env:
           GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
@@ -767,7 +767,7 @@ jobs:
           echo "name=$BRANCH_NAME" >> $GITHUB_OUTPUT
 
       - name: Develop changes
-        run: pnpm run triage -- develop ${{ github.event.issue.number }} --verbose
+        run: pnpm run triage develop ${{ github.event.issue.number }} --verbose
         env:
           GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
@@ -845,7 +845,7 @@ jobs:
         run: pnpm install
 
       - name: Review PR
-        run: pnpm run triage -- review ${{ github.event.pull_request.number }} --verbose
+        run: pnpm run triage review ${{ github.event.pull_request.number }} --verbose
         env:
           GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
@@ -880,7 +880,7 @@ jobs:
         run: pnpm install
 
       - name: Create project plan
-        run: pnpm run triage -- plan ${{ github.event.issue.number }} --verbose
+        run: pnpm run triage plan ${{ github.event.issue.number }} --verbose
         env:
           GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
@@ -934,7 +934,7 @@ jobs:
           echo "name=$BRANCH_NAME" >> $GITHUB_OUTPUT
 
       - name: Generate tests
-        run: pnpm run triage -- test --issue ${{ github.event.issue.number }} --type all --verbose
+        run: pnpm run triage test --issue ${{ github.event.issue.number }} --type all --verbose
         env:
           GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
@@ -1002,7 +1002,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Verify PR
-        run: pnpm run triage -- verify ${{ github.event.pull_request.number }} --verbose
+        run: pnpm run triage verify ${{ github.event.pull_request.number }} --verbose
         env:
           GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
@@ -1048,7 +1048,7 @@ jobs:
           fi
 
       - name: Handle feedback
-        run: pnpm run triage -- feedback ${{ steps.pr.outputs.number }} --verbose
+        run: pnpm run triage feedback ${{ steps.pr.outputs.number }} --verbose
         env:
           GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
@@ -1154,7 +1154,7 @@ jobs:
             ARGS="$ARGS --create-tasks"
           fi
 
-          pnpm run triage -- $ARGS --verbose
+          pnpm run triage $ARGS --verbose
         env:
           GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
@@ -1198,7 +1198,7 @@ jobs:
 
       - name: Run sprint planning
         if: steps.check.outputs.should_run == 'true'
-        run: pnpm run triage -- sprint --trigger --verbose
+        run: pnpm run triage sprint --trigger --verbose
         env:
           GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
@@ -1242,7 +1242,7 @@ jobs:
 
       - name: Run roadmap review
         if: steps.check.outputs.should_run == 'true'
-        run: pnpm run triage -- roadmap --verbose
+        run: pnpm run triage roadmap --verbose
         env:
           GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
@@ -1286,7 +1286,7 @@ jobs:
 
       - name: Run backlog grooming
         if: steps.check.outputs.should_run == 'true'
-        run: pnpm run triage -- cascade --steps plan --verbose
+        run: pnpm run triage cascade --steps plan --verbose
         env:
           GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
@@ -1316,7 +1316,7 @@ jobs:
         if: github.event.workflow_run.conclusion == 'failure'
         run: |
           echo "❌ CI failed - running diagnosis..."
-          pnpm run triage -- diagnose --create-issues --verbose || true
+          pnpm run triage diagnose --create-issues --verbose || true
         env:
           GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
@@ -1326,7 +1326,7 @@ jobs:
         run: |
           echo "✅ CI passed - checking for auto-merge candidates..."
           # Find PRs that are ready to merge
-          pnpm run triage -- automerge wait --verbose || true
+          pnpm run triage automerge wait --verbose || true
         env:
           GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
 
@@ -1372,7 +1372,7 @@ jobs:
         if: github.event.check_suite.conclusion == 'failure' && steps.pr.outputs.number
         run: |
           echo "❌ Checks failed for PR #${{ steps.pr.outputs.number }}"
-          pnpm run triage -- diagnose --pr ${{ steps.pr.outputs.number }} --verbose || true
+          pnpm run triage diagnose --pr ${{ steps.pr.outputs.number }} --verbose || true
         env:
           GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
@@ -1381,7 +1381,7 @@ jobs:
         if: github.event.check_suite.conclusion == 'success' && steps.pr.outputs.number
         run: |
           echo "✅ Checks passed for PR #${{ steps.pr.outputs.number }}"
-          pnpm run triage -- automerge ${{ steps.pr.outputs.number }} wait --verbose || true
+          pnpm run triage automerge ${{ steps.pr.outputs.number }} wait --verbose || true
         env:
           GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
 
@@ -1427,7 +1427,7 @@ jobs:
         run: |
           echo "🏁 Milestone closed: ${{ github.event.milestone.title }}"
           # Generate sprint retrospective, velocity metrics
-          pnpm run triage -- roadmap --verbose || true
+          pnpm run triage roadmap --verbose || true
         env:
           GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}

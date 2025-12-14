@@ -10,55 +10,73 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SoundManager, createSoundManager } from '../../../src/core/audio/sound-manager';
 
-// Mock Howler.js
+// Mock Howler.js - use class syntax for vitest 4 compatibility
 vi.mock('howler', () => {
-    const mockHowl = vi.fn().mockImplementation((config: any) => {
-        const instance = {
-            _config: config,
-            _volume: config.volume ?? 1,
-            _muted: config.mute ?? false,
-            _playing: false,
-            _rate: config.rate ?? 1,
-            play: vi.fn().mockImplementation((sprite?: string) => {
-                instance._playing = true;
-                return 1; // Return sound ID
-            }),
-            stop: vi.fn().mockImplementation(() => {
-                instance._playing = false;
-            }),
-            pause: vi.fn().mockImplementation(() => {
-                instance._playing = false;
-            }),
-            volume: vi.fn().mockImplementation((vol?: number, id?: number) => {
-                if (vol !== undefined) {
-                    instance._volume = vol;
-                    return instance;
-                }
-                return instance._volume;
-            }),
-            mute: vi.fn().mockImplementation((muted?: boolean) => {
-                if (muted !== undefined) {
-                    instance._muted = muted;
-                }
-                return instance._muted;
-            }),
-            playing: vi.fn().mockImplementation(() => instance._playing),
-            unload: vi.fn(),
-            rate: vi.fn().mockImplementation((rate?: number) => {
-                if (rate !== undefined) {
-                    instance._rate = rate;
-                }
-                return instance._rate;
-            }),
-        };
+    class MockHowl {
+        static _simulateError = false;
+        static _errorMessage = 'Network error';
 
-        // Simulate async load
-        if (config.onload) {
-            setTimeout(() => config.onload(), 0);
+        _config: any;
+        _volume: number;
+        _muted: boolean;
+        _playing: boolean;
+        _rate: number;
+
+        constructor(config: any) {
+            this._config = config;
+            this._volume = config.volume ?? 1;
+            this._muted = config.mute ?? false;
+            this._playing = false;
+            this._rate = config.rate ?? 1;
+
+            // Simulate async load or error
+            if (MockHowl._simulateError) {
+                MockHowl._simulateError = false; // Reset for next instance
+                setTimeout(() => config.onloaderror?.(1, MockHowl._errorMessage), 0);
+            } else if (config.onload) {
+                setTimeout(() => config.onload(), 0);
+            }
         }
 
-        return instance;
-    });
+        play = vi.fn().mockImplementation((_sprite?: string) => {
+            this._playing = true;
+            return 1; // Return sound ID
+        });
+
+        stop = vi.fn().mockImplementation(() => {
+            this._playing = false;
+        });
+
+        pause = vi.fn().mockImplementation(() => {
+            this._playing = false;
+        });
+
+        volume = vi.fn().mockImplementation((vol?: number, _id?: number) => {
+            if (vol !== undefined) {
+                this._volume = vol;
+                return this;
+            }
+            return this._volume;
+        });
+
+        mute = vi.fn().mockImplementation((muted?: boolean) => {
+            if (muted !== undefined) {
+                this._muted = muted;
+            }
+            return this._muted;
+        });
+
+        playing = vi.fn().mockImplementation(() => this._playing);
+        unload = vi.fn();
+
+        rate = vi.fn().mockImplementation((rate?: number) => {
+            if (rate !== undefined) {
+                this._rate = rate;
+                return this;
+            }
+            return this._rate;
+        });
+    }
 
     const mockHowler = {
         volume: vi.fn(),
@@ -68,7 +86,7 @@ vi.mock('howler', () => {
     };
 
     return {
-        Howl: mockHowl,
+        Howl: MockHowl,
         Howler: mockHowler,
     };
 });
@@ -144,14 +162,8 @@ describe('SoundManager', () => {
 
         it('rejects on load error', async () => {
             const { Howl } = await import('howler');
-            (Howl as any).mockImplementationOnce((config: any) => {
-                setTimeout(() => config.onloaderror?.(1, 'Network error'), 0);
-                return {
-                    play: vi.fn(),
-                    stop: vi.fn(),
-                    unload: vi.fn(),
-                };
-            });
+            // Set the static flag to simulate error on next Howl instance
+            (Howl as any)._simulateError = true;
 
             await expect(manager.load('fail', { src: '/audio/fail.mp3' })).rejects.toThrow(
                 'Failed to load sound fail'
