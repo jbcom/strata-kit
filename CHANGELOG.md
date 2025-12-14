@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+### Changelog
+
+## v1.2.2
+
+This patch release focuses on improving compatibility and modernizing internal dependencies to ensure a stable development environment.
+
+## Bug Fixes
+
+*   Fixed a compatibility issue with the latest Node.js type definitions (`@types/node` v25) that could prevent users from building their projects.
+*   Resolved CI build errors related to outdated dependencies.
+
+    *(Thanks, @Jon Bogaty)*
+
+## Maintenance & Updates
+
+This version includes a number of dependency upgrades to keep the library and its development tooling up-to-date. Key production dependency updates include:
+
+*   **Zod** bumped from v3.25.76 to v4.1.13
+*   **Commander** bumped from v12.1.0 to v14.0.2
+*   **Glob** bumped from v11.1.0 to v13.0.0
+
+Various development and internal tool dependencies were also updated via Dependabot.
+All notable changes to this project will be documented in this file.
+
 ---
 ### Changelog
 
