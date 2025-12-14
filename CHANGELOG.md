@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+---
+### Changelog
+
+All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+---
+
+## [1.2.1] - 2023-10-27
+
+### Internals
+
+*   Consolidated and updated GitHub Actions workflows to improve the stability and efficiency of our CI/CD pipeline. (@Jon Bogaty)
+All notable changes to this project will be documented in this file.
+
 # Changelog v1.2.0
 
 Strata v1.2.0 is here, bringing your 3D scenes to mobile devices. This release introduces first-class support for building cross-platform mobile apps with your existing web skills.
