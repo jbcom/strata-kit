@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.3] - 2023-10-27
+
+### 🐛 Bug Fixes
+
+* Added a machine-readable output for release detection, allowing automated tools and scripts to reliably identify the installed Strata version. This improves integration with developer tooling and build pipelines. (Contributed by @Jon Bogaty)
+All notable changes to this project will be documented in this file.
+
 ### Changelog
 
 ## v1.2.2
