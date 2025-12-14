@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+# Strata Changelog
+
+## v1.3.0
+
+## ✨ Features
+- **Intelligent Triage System:** Introduced a new intelligent workflow to automatically categorize and prioritize scene assets and rendering tasks. This system helps streamline the rendering pipeline and makes it easier to identify potential performance bottlenecks.
+  *(Contributed by @Jon Bogaty)*
+All notable changes to this project will be documented in this file.
+
 ## v1.2.4
 
 ### Internal
