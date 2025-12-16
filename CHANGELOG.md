@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+# Strata 1.3.1 Release Notes
+
+This is a patch release that includes internal configuration updates and a dependency upgrade to improve stability and keep the project up-to-date.
+
+## Dependency Updates
+
+*   Updated `zod` from v4.1.13 to v4.2.0. This dependency is used for internal runtime type validation, and this update includes the latest upstream fixes and improvements. (@dependabot[bot])
+
+## Other
+
+*   Synchronized internal `settings.yml` with the control-center. This is a maintenance change that does not affect the public API or user experience. (@Jon Bogaty)
+All notable changes to this project will be documented in this file.
+
 # Strata Changelog
 
 ## v1.3.0
