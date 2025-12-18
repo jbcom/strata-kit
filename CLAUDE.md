@@ -4,49 +4,86 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > **See also:** `AGENTS.md` for comprehensive agent instructions.
 
+## Project Overview
+
+**@jbcom/strata** - Procedural 3D graphics library for React Three Fiber providing terrain, water, vegetation, sky, volumetrics, and character animation.
+
 ## Quick Start
 
 ```bash
-# Check current context before starting
-cat memory-bank/activeContext.md 2>/dev/null || echo "No active context"
-
-# Check for project-specific instructions
-cat .github/copilot-instructions.md 2>/dev/null
+pnpm install        # Install dependencies
+pnpm run build      # Build the library
+pnpm run test       # Run all tests
+pnpm run lint       # Lint with Biome
+pnpm run typecheck  # Type checking
 ```
 
-## Development Workflow
+## Development Commands
 
-### Before Making Changes
-1. Read the issue/PR description completely
-2. Check `memory-bank/` for project context
-3. Look at recent commits for coding patterns
-4. Run tests to ensure clean starting state
-
-### Making Changes
-1. Create a feature branch if not already on one
-2. Make minimal, focused changes
-3. Write/update tests for new functionality
-4. Ensure all tests pass
-5. Update documentation if needed
-
-### Committing
 ```bash
-# Use conventional commits
-git commit -m "feat(scope): add new feature"
-git commit -m "fix(scope): resolve bug"
-git commit -m "docs: update README"
-git commit -m "test: add missing tests"
-git commit -m "chore: update dependencies"
+# Testing
+pnpm run test              # Run all tests
+pnpm run test:unit         # Unit tests only
+pnpm run test:integration  # Integration tests only
+pnpm run test:e2e          # Playwright E2E tests
+pnpm run test:coverage     # Tests with coverage
+
+# Code Quality
+pnpm run lint              # Biome lint
+pnpm run lint:fix          # Auto-fix lint issues
+pnpm run format            # Biome format
+pnpm run typecheck         # TypeScript type checking
+
+# Documentation
+pnpm run docs              # Generate TypeDoc
+pnpm run demo              # Serve demo files
 ```
 
-## Code Quality Checklist
+## Architecture
 
-Before considering work complete:
-- [ ] All tests pass
-- [ ] Linting passes
-- [ ] No new warnings introduced
+```
+src/
+├── core/           # Pure TypeScript (NO React imports!)
+│   ├── math/       # Math utilities, noise, vectors
+│   ├── state/      # State management
+│   ├── ecs/        # Entity component system
+│   ├── pathfinding/# A* and navigation
+│   ├── audio/      # Audio system
+│   └── debug/      # Debug tools
+├── components/     # React Three Fiber components
+├── shaders/        # GLSL shaders
+├── presets/        # Ready-to-use configurations
+├── hooks/          # React hooks
+└── api/            # High-level API
+```
+
+**Key Rule**: `src/core/` must have NO React imports - pure TypeScript only.
+
+## Code Standards
+
+- **TypeScript**: Strict mode, no `any` types, JSDoc for public APIs
+- **React**: Functional components only, forwardRef when needed
+- **Shaders**: Use `/* glsl */` template literals
+- **Testing**: Vitest for unit/integration, Playwright for E2E
+
+## Commit Messages
+
+```bash
+# Conventional commits format
+git commit -m "feat(terrain): add erosion simulation"   # → minor release
+git commit -m "fix(water): correct reflection angle"    # → patch release
+git commit -m "docs: update API docs"                   # → no release
+git commit -m "test: add pathfinding tests"             # → no release
+```
+
+## Quality Checklist
+
+Before completing work:
+- [ ] All tests pass (`pnpm run test`)
+- [ ] Linting passes (`pnpm run lint`)
+- [ ] Type checking passes (`pnpm run typecheck`)
+- [ ] Conventional commit message format
 - [ ] Documentation updated if needed
-- [ ] Commit messages follow conventional format
 
 ## Project Structure
 
@@ -54,25 +91,20 @@ Before considering work complete:
 .
 ├── src/                 # Source code
 ├── tests/               # Test files
-├── docs/                # Documentation
+├── docs/                # Documentation & TypeDoc output
+├── examples/            # Working example projects
 ├── memory-bank/         # AI context files
-│   ├── activeContext.md # Current focus
-│   └── progress.md      # Session progress
 ├── .github/
-│   ├── copilot-instructions.md  # Copilot context
-│   └── workflows/       # CI/CD
+│   ├── workflows/       # CI/CD (SHA-pinned actions)
+│   └── agents/          # Agent-specific instructions
 ├── CLAUDE.md            # This file
 └── AGENTS.md            # Agent instructions
 ```
 
-## Getting Help
+## Key Documentation
 
-1. Check `AGENTS.md` for detailed instructions
-2. Check `.github/copilot-instructions.md` for dev commands
-3. Check `docs/` for architecture decisions
-4. Look at test files for usage examples
-
-## Repository-Specific Notes
-
-<!-- Add repository-specific context below -->
+- `PUBLIC_API.md` - Stable, versioned API reference
+- `API.md` - Complete API documentation
+- `CONTRACT.md` - Stability guarantees and versioning
+- `AGENTS.md` - Agent-specific instructions
 
