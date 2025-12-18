@@ -75,7 +75,7 @@ export type {
     PositionalAudioProps,
     PositionalAudioRef,
     WeatherAudioProps,
-} from './Audio';
+} from './audio';
 // Audio
 export {
     AmbientAudio,
@@ -87,9 +87,11 @@ export {
     FootstepAudio,
     PositionalAudio,
     useAudioContext,
+    useAudioListener,
     useAudioManager,
+    useSpatialAudio,
     WeatherAudio,
-} from './Audio';
+} from './audio';
 export type {
     CameraShakeProps,
     CameraShakeRef,
