@@ -47,7 +47,7 @@ jobs:
       (github.event_name == 'workflow_dispatch' && github.event.inputs.command == 'assess')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-node@v4
         with:
@@ -74,7 +74,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.command == 'sprint'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-node@v4
         with:
@@ -94,7 +94,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.command == 'roadmap'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-node@v4
         with:
@@ -114,7 +114,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.command == 'security'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-node@v4
         with:
@@ -134,7 +134,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.command == 'cascade'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-node@v4
         with:
