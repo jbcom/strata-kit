@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+```markdown
+## [1.3.2]
+
+### Internal
+*   Updated the `actions/upload-artifact` GitHub Action used in our continuous integration pipeline. This is a maintenance change and has no impact on library functionality.
+```
+All notable changes to this project will be documented in this file.
+
 # Strata 1.3.1 Release Notes
 
 This is a patch release that includes internal configuration updates and a dependency upgrade to improve stability and keep the project up-to-date.
