@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+# Strata v1.4.2 Release Notes
+
+This patch version includes an internal update to improve our development and release process. No user-facing changes are included.
+
+## Maintenance
+
+- Removed broken symlinks from our development workflow. This internal cleanup helps maintain the health of the project and streamlines future releases. (Thanks to [@Jon B](https://github.com/JonB) for the contribution!)
+All notable changes to this project will be documented in this file.
+
 # Strata 1.4.1
 
 A patch release focused on internal improvements to bolster the library's security and documentation reliability.
