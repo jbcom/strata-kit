@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v1.4.3
+
+### 🐛 Bug Fixes
+- Fixed a build error that occurred when using the `Audio` component on case-insensitive file systems (like macOS or Windows). Thanks to **@Jon Bogaty** for the fix! (#34)
+All notable changes to this project will be documented in this file.
+
 # Strata v1.4.2 Release Notes
 
 This patch version includes an internal update to improve our development and release process. No user-facing changes are included.
