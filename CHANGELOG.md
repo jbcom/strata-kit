@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v1.4.4
+
+### Documentation
+*   The `GAPS.md` document has been updated to accurately reflect the current completion status of planned features. (@Jon B)
+All notable changes to this project will be documented in this file.
+
 ## v1.4.3
 
 ### 🐛 Bug Fixes
