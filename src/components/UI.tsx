@@ -567,11 +567,15 @@ export const Inventory = forwardRef<InventoryRef, InventoryProps>(
                     const rarityColor = slot.rarity ? rarityColors[slot.rarity] : undefined;
 
                     return (
-                        <div
+                        <button
+                            type="button"
                             key={slot.id}
+                            aria-label={`${slot.itemName}${slot.quantity && slot.quantity > 1 ? ` (${slot.quantity})` : ''}`}
+                            aria-disabled={slot.locked}
                             style={{
                                 width: slotSize,
                                 height: slotSize,
+                                padding: 0,
                                 backgroundColor: slotBackgroundColor,
                                 border: `2px solid ${isSelected ? selectedSlotBorderColor : rarityColor || slotBorderColor}`,
                                 borderRadius: 4,
@@ -634,6 +638,8 @@ export const Inventory = forwardRef<InventoryRef, InventoryProps>(
                             )}
                             {slot.locked && (
                                 <span
+                                    aria-label="Locked"
+                                    role="img"
                                     style={{
                                         position: 'absolute',
                                         fontSize: 18,
@@ -643,7 +649,7 @@ export const Inventory = forwardRef<InventoryRef, InventoryProps>(
                                     🔒
                                 </span>
                             )}
-                        </div>
+                        </button>
                     );
                 })}
             </div>
@@ -1047,8 +1053,15 @@ export const Notification: React.FC<NotificationProps> = ({
     };
 
     return (
-        <div style={containerStyle} className={className}>
-            <span style={{ fontSize: 20, color: accentColor }}>{icon}</span>
+        <div
+            style={containerStyle}
+            className={className}
+            role={type === 'error' ? 'alert' : 'status'}
+            aria-live="polite"
+        >
+            <span style={{ fontSize: 20, color: accentColor }} aria-hidden="true">
+                {icon}
+            </span>
             <div style={{ flex: 1 }}>
                 {title && (
                     <div style={{ fontWeight: 'bold', marginBottom: 4, color: '#ffffff' }}>
@@ -1059,10 +1072,12 @@ export const Notification: React.FC<NotificationProps> = ({
             </div>
             {dismissible && (
                 <button
+                    type="button"
                     onClick={() => {
                         setIsVisible(false);
                         onDismiss?.();
                     }}
+                    aria-label="Close notification"
                     style={{
                         background: 'none',
                         border: 'none',
@@ -1072,7 +1087,7 @@ export const Notification: React.FC<NotificationProps> = ({
                         fontSize: 18,
                     }}
                 >
-                    ×
+                    <span aria-hidden="true">×</span>
                 </button>
             )}
             {progress && (
