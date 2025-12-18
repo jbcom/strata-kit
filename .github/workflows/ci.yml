@@ -97,11 +97,10 @@ jobs:
           name: build-output
 
       - name: Run tests with coverage
-        run: pnpm run test -- --coverage --reporter=default --reporter=./internal/triage/src/reporters/vitest.ts
+        run: pnpm run test:coverage -- --reporter=default --reporter=./internal/triage/src/reporters/vitest.ts
 
       - name: Report Coveralls
         uses: coverallsapp/github-action@v2
-        continue-on-error: true  # Non-blocking until issue #189 is resolved
         with:
           file: coverage/lcov.info
 

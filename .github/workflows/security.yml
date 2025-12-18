@@ -52,6 +52,9 @@ jobs:
     name: Dependency Review
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    # Non-blocking until Dependency Graph is enabled in repository settings
+    # See: https://github.com/jbcom/nodejs-strata/settings/security_analysis
+    continue-on-error: true
     permissions:
       contents: read
       pull-requests: write
