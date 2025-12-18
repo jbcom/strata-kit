@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file.
 
+# Changelog v1.4.0
+
+## ✨ Features
+
+### **API Documentation & Examples**
+- A new API documentation site is now available, featuring 26 comprehensive, JSDoc-linked examples. This showcase is designed to help you quickly understand Strata's capabilities and get started with your projects. (@Copilot)
+
+### **User Interface Improvements**
+- Enhanced the accessibility of the in-app notifications and inventory UI. These changes ensure a better and more inclusive experience for all users. (@google-labs-jules[bot])
+
+## 🐛 Bug Fixes
+
+- **Math:** Fixed an issue in the `smoothstep` utility function where it would incorrectly return `NaN` (Not a Number) when provided with a zero value range. This ensures predictable and stable behavior in mathematical calculations. (@google-labs-jules[bot])
+
+## ⚡ Performance
+
+- **Core:** Optimized low-level noise functions by reducing memory allocations. This leads to less garbage collection pressure and smoother performance, especially in scenes with heavy procedural generation or particle effects. (@google-labs-jules[bot])
+
+## 💥 Breaking Changes
+
+- **Dependency:** Upgraded `@xstate/react` from v5 to v6. While this is an internal dependency, it may contain breaking changes if you were relying on Strata's internal state management logic in an unconventional way.
+
+## 👻 Internal & Maintenance
+
+This release includes numerous updates to improve the developer experience and project maintainability. These changes include:
+- Upgrading various production and development dependencies (`maath`, `zod`, `@types/node`).
+- Migrating and improving our GitHub Actions CI/CD workflows.
+- Adding code coverage reporting via Coveralls.
+- Syncing repository configuration files.
+
+A special thank you to all contributors, including @dependabot[bot], @Jon Bogaty, and @google-labs-jules[bot], for their work on these foundational improvements.
+All notable changes to this project will be documented in this file.
+
 # Strata 1.3.1 Release Notes
 
 This is a patch release that includes internal configuration updates and a dependency upgrade to improve stability and keep the project up-to-date.
