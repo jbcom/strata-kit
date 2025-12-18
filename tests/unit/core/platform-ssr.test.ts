@@ -8,7 +8,11 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { detectCapabilities, detectPlatform, resetPlatformCache } from '../../../src/core/shared/platform';
+import {
+    detectCapabilities,
+    detectPlatform,
+    resetPlatformCache,
+} from '../../../src/core/shared/platform';
 
 describe('Platform Detection - SSR Environment', () => {
     beforeEach(() => {

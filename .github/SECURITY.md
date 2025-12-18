@@ -19,9 +19,10 @@ Please **do not** open a public GitHub issue for security vulnerabilities, as th
 
 ### 2. Report Privately
 
-Send details to: **jon@jonbogaty.com**
+Send details to: **<jon@jonbogaty.com>**
 
 Include:
+
 - Description of the vulnerability
 - Steps to reproduce
 - Potential impact
@@ -30,6 +31,7 @@ Include:
 ### 3. Response Timeline
 
 You can expect:
+
 - **Initial Response**: Within 48 hours
 - **Status Update**: Within 7 days
 - **Fix Timeline**: Depends on severity
@@ -59,6 +61,7 @@ Strata employs multiple layers of security:
 ### 2. Custom Security Scanner
 
 Our custom `@strata/triage` security scanner checks for:
+
 - Division by zero vulnerabilities
 - Array out-of-bounds access
 - Null/undefined dereferences
@@ -70,6 +73,7 @@ Our custom `@strata/triage` security scanner checks for:
 ### 3. Continuous Integration
 
 All PRs automatically run:
+
 - Unit tests
 - Integration tests
 - E2E tests
@@ -140,7 +144,7 @@ const value = obj.prop.nested;
 useEffect(() => {
   const geometry = new THREE.BufferGeometry();
   const material = new THREE.Material();
-  
+
   return () => {
     geometry.dispose();
     material.dispose();
@@ -175,6 +179,7 @@ setTimeout(() => {
 ### Three.js Resources
 
 Three.js requires manual disposal of:
+
 - Geometries
 - Materials
 - Textures
@@ -193,16 +198,18 @@ Extremely high values for resolution, particle count, etc. can cause browser fre
 ## Security Updates
 
 Security patches are released as needed. Monitor:
-- [GitHub Security Advisories](https://github.com/jbdevprimary/strata/security/advisories)
-- [Releases](https://github.com/jbdevprimary/strata/releases)
+
+- [GitHub Security Advisories](https://github.com/jbcom/nodejs-strata/security/advisories)
+- [Releases](https://github.com/jbcom/nodejs-strata/releases)
 - [CHANGELOG.md](../CHANGELOG.md)
 
 ## Questions?
 
 For non-security issues:
-- Open a [bug report](https://github.com/jbdevprimary/strata/issues/new?template=bug_report.md)
-- Start a [discussion](https://github.com/jbdevprimary/strata/discussions)
 
-For security issues: **jon@jonbogaty.com**
+- Open a [bug report](https://github.com/jbcom/nodejs-strata/issues/new?template=bug_report.md)
+- Start a [discussion](https://github.com/jbcom/nodejs-strata/discussions)
+
+For security issues: **<jon@jonbogaty.com>**
 
 Thank you for helping keep Strata secure! 🔒

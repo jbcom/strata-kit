@@ -36,6 +36,7 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "clean": "rimraf dist",
+    "demo": "npx serve docs/demos",
     "docs:dev": "npx serve docs",
     "docs:build": "echo 'Static docs ready in docs/'",
     "docs:typedoc": "typedoc",
@@ -93,11 +94,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jbdevprimary/strata"
+    "url": "https://github.com/jbcom/nodejs-strata"
   },
-  "homepage": "https://github.com/jbdevprimary/strata#readme",
+  "homepage": "https://github.com/jbcom/nodejs-strata#readme",
   "bugs": {
-    "url": "https://github.com/jbdevprimary/strata/issues"
+    "url": "https://github.com/jbcom/nodejs-strata/issues"
   },
   "peerDependencies": {
     "@react-three/drei": ">=9.0.0",

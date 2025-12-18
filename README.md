@@ -1,8 +1,39 @@
 # @jbcom/strata
 
-**The complete solution for foreground, midground, and background layer 3D gaming in Node.js**
+> The complete solution for foreground, midground, and background layer 3D gaming in Node.js
 
 Strata provides everything you need to build high-quality 3D games and experiences, from terrain generation to character animation, all optimized for performance across mobile, web, and desktop.
+
+[![CI](https://github.com/jbcom/nodejs-strata/actions/workflows/ci.yml/badge.svg)](https://github.com/jbcom/nodejs-strata/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/@jbcom/strata.svg)](https://www.npmjs.com/package/@jbcom/strata)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+---
+
+## 🎨 Visual Showcase
+
+> **See Strata in action!** Run `pnpm demo` to serve interactive demos locally.
+
+| Feature | Description |
+|---------|-------------|
+| **Procedural Terrain** | SDF-based terrain generation with marching cubes |
+| **Advanced Water** | Realistic water with reflections, caustics, and foam |
+| **GPU Instancing** | Thousands of vegetation instances with seeded placement |
+| **Volumetric Effects** | Fog, god rays, and atmospheric scattering |
+| **Procedural Sky** | Dynamic day/night cycle with weather effects |
+| **Character Animation** | IK chains, procedural walk, and ragdoll physics |
+
+### Live Demos
+
+```bash
+# Serve interactive HTML demos
+pnpm demo
+
+# Run the basic-terrain React example
+cd examples/basic-terrain && pnpm install && pnpm dev
+```
+
+---
 
 ## 🎮 What is Strata?
 
@@ -43,13 +74,13 @@ function Game() {
       {/* Background Layer */}
       <Sky timeOfDay={{ sunAngle: 60 }} />
       <Terrain biomes={biomes} />
-      
+
       {/* Midground Layer */}
       <Water size={100} />
       <Vegetation count={8000} />
-      
+
       {/* Foreground Layer */}
-      <Character 
+      <Character
         position={[0, 0, 0]}
         onAnimate={(time) => animateCharacter(character, time)}
       />
@@ -63,17 +94,20 @@ function Game() {
 Strata organizes features into **presets** - ready-to-use game development primitives:
 
 ### Background Layer
+
 - `Sky` - Procedural sky with time-of-day and weather
 - `Volumetrics` - Volumetric fog and underwater effects
 - `Terrain` - SDF-based terrain generation
 - `MarchingCubes` - Mesh generation from SDFs
 
 ### Midground Layer
+
 - `Water` - Advanced water rendering
 - `Vegetation` - GPU-instanced grass, trees, rocks
 - `Raymarching` - GPU-accelerated SDF rendering
 
 ### Foreground Layer
+
 - `Character` - Articulated character system
 - `Fur` - Shell-based fur rendering
 - `Molecular` - Molecular structure visualization
@@ -120,6 +154,7 @@ Strata is built with a clear separation of concerns:
 - **Shaders** (`src/shaders/`) - GLSL shader code
 
 This architecture ensures:
+
 - ✅ Framework-agnostic core
 - ✅ Easy to test
 - ✅ Reusable in any JavaScript/TypeScript environment
@@ -127,7 +162,7 @@ This architecture ensures:
 
 ## 📦 Package Structure
 
-```
+```text
 @jbcom/strata
 ├── core/          # Pure TypeScript algorithms
 ├── presets/        # Organized game primitives
@@ -158,18 +193,21 @@ import { Water, createFurSystem, Character } from '@jbcom/strata';
 ## 🎨 Features
 
 ### GPU-Accelerated Everything
+
 - Instanced rendering for thousands of objects
 - GPU-driven wind and LOD calculations
 - Ray marching for complex SDFs
 - Shell-based fur rendering
 
 ### Production-Ready
+
 - Input validation on all APIs
 - Comprehensive error handling
 - Seeded random for deterministic generation
 - Performance optimized for mobile
 
 ### Developer Experience
+
 - Full TypeScript support
 - Comprehensive test coverage
 - Visual regression testing
@@ -178,6 +216,7 @@ import { Water, createFurSystem, Character } from '@jbcom/strata';
 ## 📋 Public API Contract
 
 The public API is defined in [PUBLIC_API.md](./PUBLIC_API.md). All APIs listed there are:
+
 - **Stable** - Follow semantic versioning
 - **Tested** - Covered by automated tests
 - **Documented** - Clear examples and types
@@ -195,11 +234,13 @@ MIT
 ## 🙏 Acknowledgments
 
 Built on top of:
+
 - [Three.js](https://threejs.org/)
 - [React Three Fiber](https://docs.pmnd.rs/react-three-fiber)
 - [Drei](https://github.com/pmndrs/drei)
 
 Inspired by techniques from:
+
 - Inigo Quilez's SDF articles
 - Marching.js by Charlie Roberts
 - Various procedural generation research

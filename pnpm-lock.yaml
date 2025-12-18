@@ -152,10 +152,10 @@ importers:
         version: 0.0.52
       ai:
         specifier: ^5.0.0
-        version: 5.0.115(zod@4.2.1)
+        version: 5.0.113(zod@4.2.1)
       ai-sdk-ollama:
         specifier: ^2.0.1
-        version: 2.0.1(ai@5.0.115(zod@4.2.1))(zod@4.2.1)
+        version: 2.0.1(ai@5.0.113(zod@4.2.1))(zod@4.2.1)
       commander:
         specifier: ^14.0.2
         version: 14.0.2
@@ -230,8 +230,8 @@ packages:
   '@actions/io@2.0.0':
     resolution: {integrity: sha512-Jv33IN09XLO+0HS79aaODsvIRyduiF7NY/F6LYeK5oeUmrsz7aFdRphQjFoESF4jS7lMauDOttKALcpapVDIAg==}
 
-  '@ai-sdk/gateway@2.0.22':
-    resolution: {integrity: sha512-6fHjDfCbjfj4vyMExuLei7ir2///E5sNwNZaobdJsJIxJjDSsjzSLGO/aUI7p9eOnB8XctDrDSF5ilwDGpi6eg==}
+  '@ai-sdk/gateway@2.0.21':
+    resolution: {integrity: sha512-BwV7DU/lAm3Xn6iyyvZdWgVxgLu3SNXzl5y57gMvkW4nGhAOV5269IrJzQwGt03bb107sa6H6uJwWxc77zXoGA==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -1622,8 +1622,8 @@ packages:
     peerDependencies:
       ai: ^5.0.113
 
-  ai@5.0.115:
-    resolution: {integrity: sha512-aVuHx0orGxXvhyL7oXUyW8TnWQE6Al8f3Bl6VZjz0WHMV+WaACHPkSyvQ3wje2QCUGzdl5DBF5d+OaXyghPQyg==}
+  ai@5.0.113:
+    resolution: {integrity: sha512-26vivpSO/mzZj0k1Si2IpsFspp26ttQICHRySQiMrtWcRd5mnJMX2a8sG28vmZ38C+JUn1cWmfZrsLMxkSMw9g==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -4062,7 +4062,7 @@ snapshots:
 
   '@actions/io@2.0.0': {}
 
-  '@ai-sdk/gateway@2.0.22(zod@4.2.1)':
+  '@ai-sdk/gateway@2.0.21(zod@4.2.1)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
       '@ai-sdk/provider-utils': 3.0.19(zod@4.2.1)
@@ -4079,7 +4079,7 @@ snapshots:
   '@ai-sdk/provider-utils@3.0.19(zod@4.2.1)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
-      '@standard-schema/spec': 1.1.0
+      '@standard-schema/spec': 1.0.0
       eventsource-parser: 3.0.6
       zod: 4.2.1
 
@@ -5368,18 +5368,18 @@ snapshots:
       clean-stack: 5.3.0
       indent-string: 5.0.0
 
-  ai-sdk-ollama@2.0.1(ai@5.0.115(zod@4.2.1))(zod@4.2.1):
+  ai-sdk-ollama@2.0.1(ai@5.0.113(zod@4.2.1))(zod@4.2.1):
     dependencies:
       '@ai-sdk/provider': 2.0.0
       '@ai-sdk/provider-utils': 3.0.19(zod@4.2.1)
-      ai: 5.0.115(zod@4.2.1)
+      ai: 5.0.113(zod@4.2.1)
       ollama: 0.6.3
     transitivePeerDependencies:
       - zod
 
-  ai@5.0.115(zod@4.2.1):
+  ai@5.0.113(zod@4.2.1):
     dependencies:
-      '@ai-sdk/gateway': 2.0.22(zod@4.2.1)
+      '@ai-sdk/gateway': 2.0.21(zod@4.2.1)
       '@ai-sdk/provider': 2.0.0
       '@ai-sdk/provider-utils': 3.0.19(zod@4.2.1)
       '@opentelemetry/api': 1.9.0

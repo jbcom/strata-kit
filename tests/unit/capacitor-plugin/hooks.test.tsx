@@ -5,14 +5,17 @@
  * Verifies proper mounting/unmounting behavior and race condition fixes.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
-import { DeviceProvider, useDevice } from '../../../packages/capacitor-plugin/src/react/useDevice';
-import { InputProvider, useInput } from '../../../packages/capacitor-plugin/src/react/useInput';
-import { useHaptics } from '../../../packages/capacitor-plugin/src/react/useHaptics';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import type React from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type {
+    DeviceProfile,
+    InputSnapshot,
+} from '../../../packages/capacitor-plugin/src/definitions';
 import { useControlHints } from '../../../packages/capacitor-plugin/src/react/useControlHints';
-import type { DeviceProfile, InputSnapshot } from '../../../packages/capacitor-plugin/src/definitions';
-import React from 'react';
+import { DeviceProvider, useDevice } from '../../../packages/capacitor-plugin/src/react/useDevice';
+import { useHaptics } from '../../../packages/capacitor-plugin/src/react/useHaptics';
+import { InputProvider, useInput } from '../../../packages/capacitor-plugin/src/react/useInput';
 
 // Mock the Strata plugin
 vi.mock('../../../packages/capacitor-plugin/src/index', () => ({
@@ -48,9 +51,7 @@ vi.mock('../../../packages/capacitor-plugin/src/index', () => ({
             touches: [],
         } as InputSnapshot),
         triggerHaptics: vi.fn().mockResolvedValue(undefined),
-        addListener: vi.fn().mockImplementation(() =>
-            Promise.resolve({ remove: vi.fn() })
-        ),
+        addListener: vi.fn().mockImplementation(() => Promise.resolve({ remove: vi.fn() })),
     },
 }));
 
@@ -153,10 +154,7 @@ describe('React Hooks', () => {
 
             // Simulate slow listener registration
             vi.mocked(Strata.addListener).mockImplementation(
-                () =>
-                    new Promise((resolve) =>
-                        setTimeout(() => resolve({ remove: vi.fn() }), 100)
-                    )
+                () => new Promise((resolve) => setTimeout(() => resolve({ remove: vi.fn() }), 100))
             );
 
             const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -287,7 +285,7 @@ describe('Mounted flag pattern (Race condition fix #39)', () => {
         if (listenerCallback) {
             // This should be ignored due to mounted flag
             act(() => {
-                listenerCallback!({
+                listenerCallback?.({
                     timestamp: 1000,
                     leftStick: { x: 1, y: 1 },
                     rightStick: { x: 0, y: 0 },

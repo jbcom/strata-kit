@@ -9,17 +9,14 @@
  */
 
 import * as THREE from 'three';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
-    type AIContext,
-    type State,
-    type StateMachineConfig,
-    type TransitionCondition,
-    StateMachine,
     createDefaultAIContext,
     createState,
     createStateMachine,
     createTransition,
+    StateMachine,
+    type StateMachineConfig,
 } from '../../../src/core/stateMachine';
 
 // Test context type
@@ -674,9 +671,7 @@ describe('StateMachine', () => {
                     { name: 'b', callbacks: {} },
                     { name: 'c', callbacks: {} },
                 ],
-                transitions: [
-                    { from: 'idle', to: 'a', condition: () => true, priority: 5 },
-                ],
+                transitions: [{ from: 'idle', to: 'a', condition: () => true, priority: 5 }],
             };
             const context = createTestContext();
             const sm = new StateMachine(config, context);
@@ -1272,7 +1267,7 @@ describe('Edge Cases and Complex Scenarios', () => {
                     {
                         name: 'idle',
                         callbacks: {
-                            onUpdate: (ctx, dt) => updates.push(dt),
+                            onUpdate: (_ctx, dt) => updates.push(dt),
                         },
                     },
                 ],

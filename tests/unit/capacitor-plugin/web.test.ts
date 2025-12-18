@@ -5,7 +5,7 @@
  * device profiling, input handling, and haptics for web browsers.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { StrataWeb } from '../../../packages/capacitor-plugin/src/web';
 
 describe('StrataWeb', () => {
@@ -13,10 +13,13 @@ describe('StrataWeb', () => {
 
     beforeEach(() => {
         // Mock window APIs - use vi.fn() that actually calls the callback
-        vi.stubGlobal('requestAnimationFrame', vi.fn((cb) => {
-            // Return an ID but don't actually run the callback to avoid infinite loops
-            return 1;
-        }));
+        vi.stubGlobal(
+            'requestAnimationFrame',
+            vi.fn((_cb) => {
+                // Return an ID but don't actually run the callback to avoid infinite loops
+                return 1;
+            })
+        );
         vi.stubGlobal('cancelAnimationFrame', vi.fn());
 
         // Mock window dimensions
@@ -25,17 +28,23 @@ describe('StrataWeb', () => {
         vi.stubGlobal('devicePixelRatio', 1);
 
         // Mock getComputedStyle for safe area insets
-        vi.stubGlobal('getComputedStyle', vi.fn().mockReturnValue({
-            getPropertyValue: vi.fn().mockReturnValue('0'),
-        }));
+        vi.stubGlobal(
+            'getComputedStyle',
+            vi.fn().mockReturnValue({
+                getPropertyValue: vi.fn().mockReturnValue('0'),
+            })
+        );
 
         // Mock matchMedia
-        vi.stubGlobal('matchMedia', vi.fn().mockImplementation((query: string) => ({
-            matches: query.includes('portrait') ? false : query.includes('fine'),
-            media: query,
-            addEventListener: vi.fn(),
-            removeEventListener: vi.fn(),
-        })));
+        vi.stubGlobal(
+            'matchMedia',
+            vi.fn().mockImplementation((query: string) => ({
+                matches: query.includes('portrait') ? false : query.includes('fine'),
+                media: query,
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+            }))
+        );
 
         // Mock navigator with proper getGamepads array
         const mockGamepads: (Gamepad | null)[] = [null, null, null, null];
@@ -151,9 +160,9 @@ describe('StrataWeb', () => {
         it('has default false for standard buttons', async () => {
             const snapshot = await strata.getInputSnapshot();
 
-            expect(snapshot.buttons['jump']).toBe(false);
-            expect(snapshot.buttons['action']).toBe(false);
-            expect(snapshot.buttons['cancel']).toBe(false);
+            expect(snapshot.buttons.jump).toBe(false);
+            expect(snapshot.buttons.action).toBe(false);
+            expect(snapshot.buttons.cancel).toBe(false);
         });
 
         it('returns empty touches array by default', async () => {
@@ -181,7 +190,7 @@ describe('StrataWeb', () => {
             const snapshot = await freshStrata.getInputSnapshot();
 
             // Should be false, not undefined
-            expect(snapshot.buttons['jump']).toBe(false);
+            expect(snapshot.buttons.jump).toBe(false);
             freshStrata.destroy();
         });
     });

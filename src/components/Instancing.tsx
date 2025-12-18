@@ -63,15 +63,34 @@ import { fbm, getBiomeAt, noise3D } from '../core/sdf';
 // =============================================================================
 
 interface GPUInstancedMeshProps {
+    /** The geometry to use for each instance */
     geometry: THREE.BufferGeometry;
+    /** The material to use for each instance */
     material: THREE.Material;
+    /** Maximum number of instances to render */
     count: number;
+    /** Array of instance data (position, rotation, scale) */
     instances: InstanceData[];
+    /**
+     * Enable wind animation effect
+     * @remarks Currently not implemented - reserved for future GPU shader integration
+     */
     enableWind?: boolean;
+    /**
+     * Strength of wind animation (0-1)
+     * @remarks Currently not implemented - reserved for future GPU shader integration
+     */
     windStrength?: number;
+    /**
+     * Distance at which LOD transitions occur
+     * @remarks Currently not implemented - reserved for future GPU shader integration
+     */
     lodDistance?: number;
+    /** Enable frustum culling */
     frustumCulled?: boolean;
+    /** Enable shadow casting */
     castShadow?: boolean;
+    /** Enable shadow receiving */
     receiveShadow?: boolean;
 }
 

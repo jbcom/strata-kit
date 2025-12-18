@@ -13,7 +13,7 @@ Thank you for your interest in contributing to Strata! This guide will help you 
 
 ```bash
 # Clone the repository
-git clone https://github.com/jbdevprimary/strata.git
+git clone https://github.com/jbcom/nodejs-strata.git
 cd strata
 
 # Install dependencies
@@ -196,7 +196,7 @@ export const Terrain = React.forwardRef<THREE.Mesh, TerrainProps>(
         // Cleanup
       };
     }, []);
-    
+
     return <mesh ref={ref}>{/* ... */}</mesh>;
   }
 );
@@ -212,7 +212,7 @@ export const Terrain = React.forwardRef<THREE.Mesh, TerrainProps>(
 export const waterVertexShader = /* glsl */ `
   uniform float time;
   varying vec2 vUv;
-  
+
   void main() {
     vUv = uv;
     vec3 pos = position;
@@ -242,7 +242,7 @@ describe('generateTerrain', () => {
     expect(geometry).toBeDefined();
     expect(geometry.attributes.position).toBeDefined();
   });
-  
+
   it('should handle invalid input', () => {
     expect(() => generateTerrain({ size: -1, resolution: 64 })).toThrow();
   });
@@ -344,9 +344,9 @@ Be respectful and inclusive. See [CODE_OF_CONDUCT.md](../CODE_OF_CONDUCT.md) for
 
 ## Questions?
 
-- 📚 Check the [documentation](https://github.com/jbdevprimary/strata/tree/main/docs)
-- 💬 Start a [discussion](https://github.com/jbdevprimary/strata/discussions)
-- 🐛 Report a [bug](https://github.com/jbdevprimary/strata/issues/new?template=bug_report.md)
-- ✨ Request a [feature](https://github.com/jbdevprimary/strata/issues/new?template=feature_request.md)
+- 📚 Check the [documentation](https://github.com/jbcom/nodejs-strata/tree/main/docs)
+- 💬 Start a [discussion](https://github.com/jbcom/nodejs-strata/discussions)
+- 🐛 Report a [bug](https://github.com/jbcom/nodejs-strata/issues/new?template=bug_report.md)
+- ✨ Request a [feature](https://github.com/jbcom/nodejs-strata/issues/new?template=feature_request.md)
 
 Thank you for contributing to Strata! 🎮✨

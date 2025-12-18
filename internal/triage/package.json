@@ -50,12 +50,12 @@
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/jbdevprimary/strata.git",
+        "url": "git+https://github.com/jbcom/nodejs-strata.git",
         "directory": "internal/triage"
     },
-    "homepage": "https://github.com/jbdevprimary/strata/tree/main/internal/triage#readme",
+    "homepage": "https://github.com/jbcom/nodejs-strata/tree/main/internal/triage#readme",
     "bugs": {
-        "url": "https://github.com/jbdevprimary/strata/issues"
+        "url": "https://github.com/jbcom/nodejs-strata/issues"
     },
     "dependencies": {
         "@ai-sdk/mcp": "^1.0.0-beta.37",

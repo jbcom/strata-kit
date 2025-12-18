@@ -28,8 +28,8 @@
         "*"
     ],
     "navigationLinks": {
-        "GitHub": "https://github.com/jbcom/strata",
-        "Examples": "/examples/showcase/"
+        "GitHub": "https://github.com/jbcom/nodejs-strata",
+        "Examples": "/examples/"
     },
     "validation": {
         "notExported": true,
