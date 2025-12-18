@@ -49,18 +49,25 @@
 
 ### 8. API.md Missing Components
 
-- Sky component not documented
-- VolumetricEffects not fully documented
-- Raymarching component missing from API.md
+**Status**: ✅ COMPLETE - All components documented:
+
+- Sky: `ProceduralSky` component and `createSkyMaterial` core function
+- VolumetricEffects: `VolumetricEffects`, `VolumetricFogMesh`, `UnderwaterOverlay`, `EnhancedFog`
+- Raymarching: `<Raymarching>` component documented
 
 ### 9. Missing Examples
 
-- No example for core-only usage (no React)
-- No example for shader-only usage
-- No example for combining SDF + marching cubes + instancing
+**Status**: ✅ MOSTLY COMPLETE
+
+- ✅ Core-only usage: `examples/basic-terrain/src/core-usage.ts` and `examples/README.md` Core-Only section
+- ✅ Shader-only usage: `examples/api-showcase` with 26+ JSDoc-linked examples
+- ⚠️ Combined SDF + marching cubes + instancing example: Not yet implemented (low priority)
 
 ### 10. Missing Integration Tests
 
+**Status**: ⚠️ PARTIAL - Unit tests exist (1033 tests) but no end-to-end integration tests
+
+- Unit tests cover individual functions well
 - No tests showing core + components working together
 - No tests for shader material creation
 - No tests for end-to-end workflows
@@ -95,7 +102,8 @@
 1. ~~**HIGH**: Implement or remove GPU wind/LOD props~~ ✅ DOCUMENTED
 2. ~~**HIGH**: Add seeded random to generateInstanceData~~ ✅ FIXED
 3. ~~**MEDIUM**: Add input validation and error handling~~ ✅ FIXED
-4. **MEDIUM**: Complete API.md documentation
-5. **MEDIUM**: Add integration tests
-6. **LOW**: Add performance optimization examples
-7. **LOW**: Document chunking strategies
+4. ~~**MEDIUM**: Complete API.md documentation~~ ✅ COMPLETE
+5. **MEDIUM**: Add integration tests (end-to-end workflows)
+6. **LOW**: Add combined SDF + marching cubes + instancing example
+7. **LOW**: Add performance optimization examples
+8. **LOW**: Document chunking strategies
