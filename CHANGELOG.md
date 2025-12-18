@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+# Strata 1.4.1
+
+A patch release focused on internal improvements to bolster the library's security and documentation reliability.
+
+---
+
+## Internal
+
+-   Our continuous integration (CI) process has been hardened. All GitHub Actions are now pinned to exact commit SHAs to prevent unauthorized changes and enhance build security. This update also resolves an issue with the documentation generation workflow. (Thanks, @Jon B)
+All notable changes to this project will be documented in this file.
+
 # Changelog v1.4.0
 
 ## ✨ Features
