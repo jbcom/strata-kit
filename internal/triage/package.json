@@ -58,10 +58,10 @@
         "url": "https://github.com/jbdevprimary/strata/issues"
     },
     "dependencies": {
-        "@ai-sdk/mcp": "^1.0.0-beta.33",
+        "@ai-sdk/mcp": "^1.0.0-beta.37",
         "@playwright/mcp": "latest",
         "ai": "^5.0.0",
-        "ai-sdk-ollama": "^1.1.0",
+        "ai-sdk-ollama": "^2.0.1",
         "commander": "^14.0.2",
         "glob": "^13.0.0",
         "octokit": "^5.0.5",
