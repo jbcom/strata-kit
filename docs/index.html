@@ -320,7 +320,10 @@
         </section>
         
         <section>
-            <h2 style="text-align: center; margin-bottom: 2rem;">Interactive Demos</h2>
+            <h2 style="text-align: center; margin-bottom: 1rem;">Interactive Demos</h2>
+            <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">
+                Explore feature demonstrations with visual previews
+            </p>
             <div class="demo-grid">
                 <a href="demos/terrain.html" class="demo-card">
                     <div class="demo-preview">🏔️</div>
@@ -369,6 +372,69 @@
                         <p>Articulated characters with shell-based fur and procedural animation.</p>
                     </div>
                 </a>
+            </div>
+        </section>
+
+        <section style="margin-top: 4rem;">
+            <h2 style="text-align: center; margin-bottom: 1rem;">Comprehensive Examples</h2>
+            <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">
+                Full React Three Fiber examples with interactive controls and copy-paste ready code
+            </p>
+            <div class="demo-grid">
+                <div class="demo-card" style="border-color: var(--primary);">
+                    <div class="demo-preview" style="background: linear-gradient(135deg, #2a4a1a 0%, #3a5a2a 100%);">🌳</div>
+                    <div class="demo-info">
+                        <h4>Vegetation Showcase</h4>
+                        <p>Interactive demo with up to 20,000 GPU-instanced vegetation. Includes grass, trees, rocks, biome-based placement, and real-time controls.</p>
+                        <p style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--primary);">
+                            <strong>📁 examples/vegetation-showcase/</strong>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="demo-card" style="border-color: var(--primary);">
+                    <div class="demo-preview" style="background: linear-gradient(135deg, #0a2342 0%, #87ceeb 100%);">🌅</div>
+                    <div class="demo-info">
+                        <h4>Sky & Volumetrics</h4>
+                        <p>Dynamic day/night cycle with procedural sky, stars, fog effects, and weather presets. Control sun angle, lighting, and atmosphere in real-time.</p>
+                        <p style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--primary);">
+                            <strong>📁 examples/sky-volumetrics/</strong>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="demo-card" style="border-color: var(--primary);">
+                    <div class="demo-preview" style="background: linear-gradient(135deg, #2a4a2a 0%, #4a7c23 100%);">⛰️</div>
+                    <div class="demo-info">
+                        <h4>Basic Terrain</h4>
+                        <p>Simple terrain generation example showing heightmap-based procedural terrain with water plane and sky backdrop.</p>
+                        <p style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--primary);">
+                            <strong>📁 examples/basic-terrain/</strong>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="demo-card" style="border-color: var(--primary);">
+                    <div class="demo-preview" style="background: linear-gradient(135deg, #006994 0%, #1a5f7a 100%);">💧</div>
+                    <div class="demo-info">
+                        <h4>Water Scene</h4>
+                        <p>Advanced water rendering with animated waves, fresnel effects, caustics, and floating objects with simulated buoyancy.</p>
+                        <p style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--primary);">
+                            <strong>📁 examples/water-scene/</strong>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 2rem; padding: 1.5rem; background: var(--bg-card); border-radius: 0.5rem;">
+                <p style="margin-bottom: 1rem; color: var(--text-muted);">Clone the repository and run examples locally:</p>
+                <div class="code-example" style="text-align: left; max-width: 600px; margin: 0 auto;">
+<pre>git clone https://github.com/jbcom/nodejs-strata.git
+cd nodejs-strata
+
+<span class="comment"># Run specific example</span>
+cd examples/vegetation-showcase
+pnpm install && pnpm dev</pre>
+                </div>
             </div>
         </section>
         

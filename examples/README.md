@@ -48,6 +48,91 @@ pnpm install
 pnpm dev
 ```
 
+### [vegetation-showcase](./vegetation-showcase/)
+
+Comprehensive demonstration of GPU-instanced vegetation rendering.
+
+**Features demonstrated:**
+
+- GPU instancing for thousands of grass, trees, and rocks
+- Biome-based placement with varying densities
+- Seeded random generation for reproducibility
+- Height-based positioning on procedural terrain
+- Interactive controls with Leva for real-time adjustments
+- Wind animation for organic movement
+
+**Run it:**
+
+```bash
+cd examples/vegetation-showcase
+pnpm install
+pnpm dev
+```
+
+### [sky-volumetrics](./sky-volumetrics/)
+
+Interactive showcase of procedural sky and atmospheric effects.
+
+**Features demonstrated:**
+
+- Dynamic day/night cycle simulation
+- Procedural sky with sun positioning
+- Star visibility that changes with time of day
+- Atmospheric fog with adjustable density
+- Weather effects system
+- Time-of-day presets (dawn, noon, sunset, night, stormy)
+
+**Run it:**
+
+```bash
+cd examples/sky-volumetrics
+pnpm install
+pnpm dev
+```
+
+### [api-showcase](./api-showcase/) ⭐ **NEW**
+
+**The most comprehensive example**: JSDoc-linked examples for EVERY Strata API.
+
+**What makes this special:**
+
+- 🔗 **JSDoc-Linked**: Every example directly references API source code
+- 📚 **Complete Coverage**: 26+ examples covering 18+ API methods
+- 📖 **Documentation**: Each example includes detailed explanations
+- 🎯 **Searchable**: Find examples by API, category, or feature
+- 📋 **Copy-Paste Ready**: Production-quality code snippets
+- 🎓 **Progressive**: Basic → Advanced → Complete examples
+- 🔍 **Source-Linked**: Direct GitHub URLs to implementation
+
+**Systems covered:**
+
+- **Vegetation** (8 examples): `createGrassInstances`, `createTreeInstances`, `createRockInstances`, `createVegetationMesh`, `generateInstanceData`
+- **Water** (8 examples): `Water`, `AdvancedWater`, caustics, reflections, presets
+- **Sky & Volumetrics** (10 examples): `ProceduralSky`, day/night cycles, weather, fog, underwater effects
+
+**Example structure:**
+
+```typescript
+/**
+ * @example Copy-paste ready code
+ * @see Direct link to API source
+ * @apiExample API method name
+ * @category Basic|Advanced|Complete
+ */
+export function Example_FeatureName() {
+    // Returns metadata + working implementation
+}
+```
+
+**Run it:**
+
+```bash
+cd examples/api-showcase
+pnpm install
+pnpm dev       # Interactive showcase
+pnpm docs      # Generate documentation
+```
+
 ## HTML Demos
 
 The `docs/demos/` directory contains standalone HTML demos for quick visual testing:
