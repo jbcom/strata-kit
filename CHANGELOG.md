@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+# Changelog
+
+## [1.4.7] - 2023-10-27
+
+### Other
+This release contains internal repository maintenance. We have synchronized configuration files for development tooling (like GitHub Copilot and Cursor) and our CI/CD workflows. These changes ensure consistency in our development process and do not affect the public API or functionality of the Strata library.
+All notable changes to this project will be documented in this file.
+
 # Strata v1.4.6
 
 ## Maintenance
