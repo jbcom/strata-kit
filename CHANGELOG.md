@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+# Strata v1.4.6
+
+## Maintenance
+- Simplified our internal development workflow to automate dependency updates, helping us keep the library stable and secure. (Thanks to @Jon Bogaty)
+All notable changes to this project will be documented in this file.
+
 # Strata v1.4.5 Changelog
 
 ## Maintenance
