@@ -1,18 +1,12 @@
 # Default code owners for all files
-* @jbcom
+* @jbdevprimary
 
 # GitHub Actions and CI/CD
-/.github/ @jbcom
+/.github/ @jbdevprimary
 
 # Cursor rules and agent configuration
-/.cursor/ @jbcom
-
-# Core algorithms
-/src/core/ @jbcom
-
-# Triage automation
-/internal/triage/ @jbcom
+/.cursor/ @jbdevprimary
 
 # Documentation
-/docs/ @jbcom
-*.md @jbcom
+/docs/ @jbdevprimary
+*.md @jbdevprimary
