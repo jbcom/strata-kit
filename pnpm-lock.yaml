@@ -155,7 +155,7 @@ importers:
         version: 5.0.113(zod@4.2.1)
       ai-sdk-ollama:
         specifier: ^2.0.1
-        version: 2.0.1(ai@5.0.113(zod@4.2.1))(zod@4.2.1)
+        version: 2.1.0(ai@5.0.113(zod@4.2.1))(zod@4.2.1)
       commander:
         specifier: ^14.0.2
         version: 14.0.2
@@ -1616,11 +1616,11 @@ packages:
     resolution: {integrity: sha512-gOsf2YwSlleG6IjRYG2A7k0HmBMEo6qVNk9Bp/EaLgAJT5ngH6PXbqa4ItvnEwCm/velL5jAnQgsHsWnjhGmvw==}
     engines: {node: '>=18'}
 
-  ai-sdk-ollama@2.0.1:
-    resolution: {integrity: sha512-LsyjIt3OTIp5u3Sc7yfjyVAh07WfYOb4vRiiFLK9ae4/Usmr0MVk2VbKhgumghEDtV3uSmZtEwUdmXV9LTxc7Q==}
+  ai-sdk-ollama@2.1.0:
+    resolution: {integrity: sha512-VRTT34zt6GG09IxdiO0aqOM6wBMgKj+oUQH2E+28XtPrHL2AV+L87UhU1VnGFfo+eXLMcZKJre5NWM9HMA5L5A==}
     engines: {node: '>=22'}
     peerDependencies:
-      ai: ^5.0.113
+      ai: ^5.0.115
 
   ai@5.0.113:
     resolution: {integrity: sha512-26vivpSO/mzZj0k1Si2IpsFspp26ttQICHRySQiMrtWcRd5mnJMX2a8sG28vmZ38C+JUn1cWmfZrsLMxkSMw9g==}
@@ -5368,7 +5368,7 @@ snapshots:
       clean-stack: 5.3.0
       indent-string: 5.0.0
 
-  ai-sdk-ollama@2.0.1(ai@5.0.113(zod@4.2.1))(zod@4.2.1):
+  ai-sdk-ollama@2.1.0(ai@5.0.113(zod@4.2.1))(zod@4.2.1):
     dependencies:
       '@ai-sdk/provider': 2.0.0
       '@ai-sdk/provider-utils': 3.0.19(zod@4.2.1)
