@@ -146,7 +146,7 @@ importers:
     dependencies:
       '@ai-sdk/mcp':
         specifier: ^1.0.0-beta.37
-        version: 1.0.0-beta.39(zod@4.2.1)
+        version: 1.0.0-beta.40(zod@4.2.1)
       '@playwright/mcp':
         specifier: latest
         version: 0.0.52
@@ -236,8 +236,8 @@ packages:
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
-  '@ai-sdk/mcp@1.0.0-beta.39':
-    resolution: {integrity: sha512-CiIKLyAUtAiYIn+YKX1JG/FFcneSip2sIdYNZh1AEshRxcShvP0HKI60XriNntfDXvZ1cKk6DEJMvDvZlQ/V8A==}
+  '@ai-sdk/mcp@1.0.0-beta.40':
+    resolution: {integrity: sha512-1WUT3KpBIDEWASTeWx628d1xG1i9KnuuLAL5QqKALrnU+eNZ7JPQgzVJhHjookv/q6oU3RIfjRWXORvYWQ7Qxg==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -4069,7 +4069,7 @@ snapshots:
       '@vercel/oidc': 3.0.5
       zod: 4.2.1
 
-  '@ai-sdk/mcp@1.0.0-beta.39(zod@4.2.1)':
+  '@ai-sdk/mcp@1.0.0-beta.40(zod@4.2.1)':
     dependencies:
       '@ai-sdk/provider': 3.0.0-beta.27
       '@ai-sdk/provider-utils': 4.0.0-beta.53(zod@4.2.1)
