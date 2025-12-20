@@ -112,8 +112,8 @@ function fbm2DInternal(
  * const value = fbm2D(noise, 1.0, 2.0, { octaves: 6 });
  * ```
  */
-export function fbm2D(noise: Noise2D, x: number, y: number, config: FBMConfig = {}): number {
-    const octaves = config.octaves ?? DEFAULT_FBM_CONFIG.octaves;
+export function fbm2D(noise: Noise2D, x: number, y: number, config?: FBMConfig): number {
+    const octaves = config?.octaves ?? DEFAULT_FBM_CONFIG.octaves;
 
     if (octaves < 1) {
         throw new Error('fbm2D: octaves must be at least 1');
@@ -124,9 +124,9 @@ export function fbm2D(noise: Noise2D, x: number, y: number, config: FBMConfig = 
         x,
         y,
         octaves,
-        config.frequency ?? DEFAULT_FBM_CONFIG.frequency,
-        config.persistence ?? DEFAULT_FBM_CONFIG.persistence,
-        config.lacunarity ?? DEFAULT_FBM_CONFIG.lacunarity
+        config?.frequency ?? DEFAULT_FBM_CONFIG.frequency,
+        config?.persistence ?? DEFAULT_FBM_CONFIG.persistence,
+        config?.lacunarity ?? DEFAULT_FBM_CONFIG.lacunarity
     );
 }
 
@@ -183,9 +183,9 @@ export function fbm3D(
     x: number,
     y: number,
     z: number,
-    config: FBMConfig = {}
+    config?: FBMConfig
 ): number {
-    const octaves = config.octaves ?? DEFAULT_FBM_CONFIG.octaves;
+    const octaves = config?.octaves ?? DEFAULT_FBM_CONFIG.octaves;
 
     if (octaves < 1) {
         throw new Error('fbm3D: octaves must be at least 1');
@@ -197,9 +197,9 @@ export function fbm3D(
         y,
         z,
         octaves,
-        config.frequency ?? DEFAULT_FBM_CONFIG.frequency,
-        config.persistence ?? DEFAULT_FBM_CONFIG.persistence,
-        config.lacunarity ?? DEFAULT_FBM_CONFIG.lacunarity
+        config?.frequency ?? DEFAULT_FBM_CONFIG.frequency,
+        config?.persistence ?? DEFAULT_FBM_CONFIG.persistence,
+        config?.lacunarity ?? DEFAULT_FBM_CONFIG.lacunarity
     );
 }
 
@@ -224,11 +224,16 @@ export function warpedNoise2D(
     x: number,
     y: number,
     strength: number = 0.5,
-    config: FBMConfig = {}
+    config?: FBMConfig
 ): number {
-    const frequency = config.frequency ?? DEFAULT_FBM_CONFIG.frequency;
-    const persistence = config.persistence ?? DEFAULT_FBM_CONFIG.persistence;
-    const lacunarity = config.lacunarity ?? DEFAULT_FBM_CONFIG.lacunarity;
+    const frequency = config?.frequency ?? DEFAULT_FBM_CONFIG.frequency;
+    const persistence = config?.persistence ?? DEFAULT_FBM_CONFIG.persistence;
+    const lacunarity = config?.lacunarity ?? DEFAULT_FBM_CONFIG.lacunarity;
+    const octaves = config?.octaves ?? DEFAULT_FBM_CONFIG.octaves;
+
+    if (octaves < 1) {
+        throw new Error('warpedNoise2D: octaves must be at least 1');
+    }
 
     const wx =
         x +
@@ -236,7 +241,17 @@ export function warpedNoise2D(
     const wy =
         y +
         fbm2DInternal(noise, x + 5.2, y + 1.3, 2, frequency, persistence, lacunarity) * strength;
-    return fbm2D(noise, wx, wy, config);
+
+    // Optimized: Direct call to avoid re-validating config and default resolution
+    return fbm2DInternal(
+        noise,
+        wx,
+        wy,
+        octaves,
+        frequency,
+        persistence,
+        lacunarity
+    );
 }
 
 /**
@@ -256,11 +271,16 @@ export function warpedNoise3D(
     y: number,
     z: number,
     strength: number = 0.5,
-    config: FBMConfig = {}
+    config?: FBMConfig
 ): number {
-    const frequency = config.frequency ?? DEFAULT_FBM_CONFIG.frequency;
-    const persistence = config.persistence ?? DEFAULT_FBM_CONFIG.persistence;
-    const lacunarity = config.lacunarity ?? DEFAULT_FBM_CONFIG.lacunarity;
+    const frequency = config?.frequency ?? DEFAULT_FBM_CONFIG.frequency;
+    const persistence = config?.persistence ?? DEFAULT_FBM_CONFIG.persistence;
+    const lacunarity = config?.lacunarity ?? DEFAULT_FBM_CONFIG.lacunarity;
+    const octaves = config?.octaves ?? DEFAULT_FBM_CONFIG.octaves;
+
+    if (octaves < 1) {
+        throw new Error('warpedNoise3D: octaves must be at least 1');
+    }
 
     const wx =
         x +
@@ -301,7 +321,18 @@ export function warpedNoise3D(
             lacunarity
         ) *
             strength;
-    return fbm3D(noise, wx, wy, wz, config);
+
+    // Optimized: Direct call to avoid re-validating config and default resolution
+    return fbm3DInternal(
+        noise,
+        wx,
+        wy,
+        wz,
+        octaves,
+        frequency,
+        persistence,
+        lacunarity
+    );
 }
 
 /**
@@ -417,7 +448,7 @@ export function ridgedNoise2D(
     noise: Noise2D,
     x: number,
     y: number,
-    config: FBMConfig = {}
+    config?: FBMConfig
 ): number {
     const value = fbm2D(noise, x, y, config);
     return 1 - Math.abs(value);
