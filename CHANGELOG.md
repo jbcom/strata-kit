@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+# Strata v1.4.10
+
+## Internal Maintenance
+
+This version contains updates to the development environment setup files. These changes do not affect the public API or library functionality and are purely for internal development processes.
+
+- No breaking changes.
+- No new features or bug fixes.
+All notable changes to this project will be documented in this file.
+
 # 1.4.9
 
 ## Chore
