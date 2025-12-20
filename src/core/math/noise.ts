@@ -284,42 +284,15 @@ export function warpedNoise3D(
 
     const wx =
         x +
-        fbm3DInternal(
-            noise,
-            x + 0.0,
-            y + 0.0,
-            z + 0.0,
-            2,
-            frequency,
-            persistence,
-            lacunarity
-        ) *
+        fbm3DInternal(noise, x + 0.0, y + 0.0, z + 0.0, 2, frequency, persistence, lacunarity) *
             strength;
     const wy =
         y +
-        fbm3DInternal(
-            noise,
-            x + 5.2,
-            y + 1.3,
-            z + 2.8,
-            2,
-            frequency,
-            persistence,
-            lacunarity
-        ) *
+        fbm3DInternal(noise, x + 5.2, y + 1.3, z + 2.8, 2, frequency, persistence, lacunarity) *
             strength;
     const wz =
         z +
-        fbm3DInternal(
-            noise,
-            x + 9.1,
-            y + 4.7,
-            z + 3.4,
-            2,
-            frequency,
-            persistence,
-            lacunarity
-        ) *
+        fbm3DInternal(noise, x + 9.1, y + 4.7, z + 3.4, 2, frequency, persistence, lacunarity) *
             strength;
 
     // Optimized: Direct call to avoid re-validating config and default resolution

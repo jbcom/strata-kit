@@ -394,18 +394,23 @@ export function marchingCubes(
     const normals: number[] = [];
     const vertexMap = new Map<string, number>();
 
+    // Optimization: Reuse tempVec for normal calculation to avoid 6 allocations per vertex
+    const tempVec = new THREE.Vector3();
+    const eps = step.x * 0.1;
+
     const interpolate = (
         v1: THREE.Vector3,
         val1: number,
         v2: THREE.Vector3,
-        val2: number
+        val2: number,
+        target: THREE.Vector3
     ): THREE.Vector3 => {
-        if (Math.abs(isoLevel - val1) < 0.00001) return v1.clone();
-        if (Math.abs(isoLevel - val2) < 0.00001) return v2.clone();
-        if (Math.abs(val1 - val2) < 0.00001) return v1.clone();
+        if (Math.abs(isoLevel - val1) < 0.00001) return target.copy(v1);
+        if (Math.abs(isoLevel - val2) < 0.00001) return target.copy(v2);
+        if (Math.abs(val1 - val2) < 0.00001) return target.copy(v1);
 
         const t = (isoLevel - val1) / (val2 - val1);
-        return new THREE.Vector3().lerpVectors(v1, v2, t);
+        return target.lerpVectors(v1, v2, t);
     };
 
     const addVertex = (pos: THREE.Vector3): number => {
@@ -420,16 +425,27 @@ export function marchingCubes(
         vertices.push(pos.x, pos.y, pos.z);
 
         // Calculate normal using gradient of SDF
-        const eps = step.x * 0.1;
-        const nx =
-            sdf(new THREE.Vector3(pos.x + eps, pos.y, pos.z)) -
-            sdf(new THREE.Vector3(pos.x - eps, pos.y, pos.z));
-        const ny =
-            sdf(new THREE.Vector3(pos.x, pos.y + eps, pos.z)) -
-            sdf(new THREE.Vector3(pos.x, pos.y - eps, pos.z));
-        const nz =
-            sdf(new THREE.Vector3(pos.x, pos.y, pos.z + eps)) -
-            sdf(new THREE.Vector3(pos.x, pos.y, pos.z - eps));
+        // Optimized to reuse tempVec
+        tempVec.copy(pos);
+        tempVec.x += eps;
+        const nx1 = sdf(tempVec);
+        tempVec.x = pos.x - eps; // simpler than copy again? yes.
+        const nx2 = sdf(tempVec);
+        const nx = nx1 - nx2;
+
+        tempVec.copy(pos);
+        tempVec.y += eps;
+        const ny1 = sdf(tempVec);
+        tempVec.y = pos.y - eps;
+        const ny2 = sdf(tempVec);
+        const ny = ny1 - ny2;
+
+        tempVec.copy(pos);
+        tempVec.z += eps;
+        const nz1 = sdf(tempVec);
+        tempVec.z = pos.z - eps;
+        const nz2 = sdf(tempVec);
+        const nz = nz1 - nz2;
 
         const len = Math.sqrt(nx * nx + ny * ny + nz * nz);
         if (len > 0.000001) {
@@ -446,6 +462,9 @@ export function marchingCubes(
     const indices: number[] = [];
     const cubeVerts = new Array(8).fill(null).map(() => new THREE.Vector3());
     const cubeVals = new Float32Array(8);
+
+    // Optimization: Pre-allocate edge vertices to avoid allocation in loop
+    const edgeVertices = new Array(12).fill(null).map(() => new THREE.Vector3());
 
     // Process each cube
     for (let z = 0; z < resolution; z++) {
@@ -474,16 +493,16 @@ export function marchingCubes(
                 if (EDGE_TABLE[cubeIndex] === 0) continue;
 
                 // Calculate intersection points on edges
-                const edgeVertices: THREE.Vector3[] = new Array(12);
-
+                // Optimized: reuse edgeVertices
                 for (let i = 0; i < 12; i++) {
                     if (EDGE_TABLE[cubeIndex] & (1 << i)) {
                         const [v1, v2] = EDGE_VERTICES[i];
-                        edgeVertices[i] = interpolate(
+                        interpolate(
                             cubeVerts[v1],
                             cubeVals[v1],
                             cubeVerts[v2],
-                            cubeVals[v2]
+                            cubeVals[v2],
+                            edgeVertices[i]
                         );
                     }
                 }
