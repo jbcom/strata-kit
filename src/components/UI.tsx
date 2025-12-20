@@ -818,6 +818,14 @@ export const DialogBox = forwardRef<DialogBoxRef, DialogBoxProps>(
             }
         }, [isTyping, skipEnabled, line, lineIndex, lines.length, onDialogComplete]);
 
+        const handleKeyDown = (e: React.KeyboardEvent) => {
+            if (e.target !== e.currentTarget) return;
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                advance();
+            }
+        };
+
         useEffect(() => {
             if (!line || !visible) return;
 
@@ -888,8 +896,28 @@ export const DialogBox = forwardRef<DialogBoxRef, DialogBoxProps>(
             ...style,
         };
 
+        const srOnlyStyle: CSSProperties = {
+            position: 'absolute',
+            width: 1,
+            height: 1,
+            padding: 0,
+            margin: -1,
+            overflow: 'hidden',
+            clip: 'rect(0, 0, 0, 0)',
+            whiteSpace: 'nowrap',
+            borderWidth: 0,
+        };
+
         return (
-            <div style={containerStyle} onClick={advance} className={className}>
+            <section
+                style={containerStyle}
+                onClick={advance}
+                className={className}
+                // biome-ignore lint/a11y/noNoninteractiveTabindex: Interactive container for dialogue advancement
+                tabIndex={0}
+                aria-label="Dialogue"
+                onKeyDown={handleKeyDown}
+            >
                 <div
                     style={{
                         display: 'flex',
@@ -917,7 +945,11 @@ export const DialogBox = forwardRef<DialogBoxRef, DialogBoxProps>(
                                 {line.speaker}
                             </div>
                         )}
-                        <div style={{ lineHeight: 1.6, minHeight: 48 }}>
+                        <div style={srOnlyStyle} aria-live="polite">
+                            {line.speaker ? `${line.speaker}: ` : ''}
+                            {line.text}
+                        </div>
+                        <div style={{ lineHeight: 1.6, minHeight: 48 }} aria-hidden="true">
                             {displayedText}
                             {isTyping && (
                                 <span style={{ animation: 'blink 0.5s infinite' }}>|</span>
@@ -934,6 +966,7 @@ export const DialogBox = forwardRef<DialogBoxRef, DialogBoxProps>(
                             >
                                 {line.choices.map((choice) => (
                                     <button
+                                        type="button"
                                         key={choice.id}
                                         onClick={(e) => {
                                             e.stopPropagation();
@@ -985,7 +1018,7 @@ export const DialogBox = forwardRef<DialogBoxRef, DialogBoxProps>(
                     to { transform: translateY(4px); }
                 }
             `}</style>
-            </div>
+            </section>
         );
     }
 );

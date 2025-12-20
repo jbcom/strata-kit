@@ -12,7 +12,11 @@ export default defineConfig({
     test: {
         globals: true,
         environment: 'jsdom',
-        include: ['tests/unit/**/*.test.ts', 'src/**/__tests__/**/*.test.ts'],
+        include: [
+            'tests/unit/**/*.test.ts',
+            'src/**/__tests__/**/*.test.ts',
+            'src/**/__tests__/**/*.test.tsx',
+        ],
         exclude: ['node_modules', 'dist', 'tests/integration', 'tests/e2e'],
         setupFiles: [resolve(__dirname, 'tests/unit/setup.ts')],
         // Suppress unhandled errors in teardown phase (Vitest jsdom bug workaround)
