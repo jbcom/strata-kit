@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+# Changelog
+
+## [1.5.0]
+
+### 🚀 Features
+*   **State Integrity:** Game state loading now includes checksum verification. This prevents errors and crashes from loading corrupted or tampered save files, ensuring more reliable application state management. (Thanks to @google-labs-jules[bot])
+
+### ⚡ Performance
+*   **Noise Generation:** The core noise functions have been optimized to significantly reduce memory allocations. This leads to smoother frame rates and reduced stuttering, especially in scenes with heavy procedural generation. (Thanks to @google-labs-jules[bot])
+
+### 🔧 Dependencies
+*   Updated underlying dependencies for the latest bug fixes and security patches:
+    *   `@biomejs/biome` from 2.3.9 to 2.3.10
+    *   `ai-sdk-ollama` from 2.0.1 to 2.1.0
+    *   `@ai-sdk/mcp` from 1.0.0-beta.39 to 1.0.0-beta.40
+    *   `@types/node` from 25.0.2 to 25.0.3
+    (Thanks to @dependabot[bot])
+All notable changes to this project will be documented in this file.
+
 # Strata v1.4.10
 
 ## Internal Maintenance
