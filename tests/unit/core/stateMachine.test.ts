@@ -479,11 +479,12 @@ describe('StateMachine', () => {
             const context = createTestContext();
             const sm = new StateMachine(config, context);
 
-            // Wait a small amount
-            await new Promise((resolve) => setTimeout(resolve, 10));
+            // Wait a small amount (use longer delay for CI reliability)
+            await new Promise((resolve) => setTimeout(resolve, 25));
 
             const time = sm.getStateTime();
-            expect(time).toBeGreaterThanOrEqual(10);
+            // Use tolerance to account for timing variations in CI
+            expect(time).toBeGreaterThanOrEqual(20);
         });
 
         it('state time resets after transition', async () => {
