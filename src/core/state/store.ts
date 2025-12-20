@@ -19,7 +19,7 @@ import type {
     SaveData,
     StoreConfig,
 } from './types';
-import { calculateChecksum } from './types';
+import { calculateChecksum, verifyChecksum } from './types';
 
 const DEFAULT_CONFIG = {
     version: 1,
@@ -231,6 +231,18 @@ export function createGameStore<T extends object>(
                     const saveData = await persistence.load<T>(key);
 
                     if (saveData) {
+                        // Verify checksum if present
+                        if (
+                            saveData.checksum &&
+                            !verifyChecksum(saveData.state, saveData.checksum)
+                        ) {
+                            console.error(
+                                `[Security] Checksum mismatch for save slot "${slot}". Data may be corrupted or tampered with.`
+                            );
+                            mergedConfig.onLoad?.(null);
+                            return false;
+                        }
+
                         set((state) => {
                             (state as GameStoreState<T>).data = saveData.state;
                             state._version = saveData.version;
