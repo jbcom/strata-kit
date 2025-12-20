@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+# Strata v1.4.11
+
+This patch release includes no new features or bug fixes. It contains only internal updates to development tooling and configuration, which have no impact on the public API or runtime performance.
+
+## Other
+This version includes automated synchronization of development environment files (`.cursor/` and `.github/copilot-instructions.md`) to ensure consistency for project maintainers. These changes were automatically applied by the GitHub Actions bot.
+All notable changes to this project will be documented in this file.
+
 # Strata v1.4.10
 
 ## Internal Maintenance
