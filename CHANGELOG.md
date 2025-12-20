@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 # Changelog
 
+## v1.4.8
+
+### Internal
+- Initialized the project repository with base configuration files to improve the developer experience and set up a containerized environment. (@github-actions[bot])
+All notable changes to this project will be documented in this file.
+
+# Changelog
+
 ## [1.4.7] - 2023-10-27
 
 ### Other
