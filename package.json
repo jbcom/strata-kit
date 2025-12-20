@@ -1,6 +1,6 @@
 {
   "name": "@jbcom/strata",
-  "version": "1.4.8",
+  "version": "1.4.9",
   "description": "Procedural 3D graphics library for React Three Fiber - terrain, water, vegetation, sky, volumetrics, and characters",
   "type": "module",
   "main": "./dist/index.js",

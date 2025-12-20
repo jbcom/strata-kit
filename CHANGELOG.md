@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+# 1.4.9
+
+## Chore
+This release is composed entirely of internal maintenance updates to synchronize development configuration files. There are no user-facing changes, bug fixes, or new features.
+All notable changes to this project will be documented in this file.
+
 # Changelog
 
 ## v1.4.8
