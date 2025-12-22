@@ -15,14 +15,17 @@ let ambientInstanceCount = 0;
 /**
  * Non-positional ambient audio for background music and atmosphere.
  *
+ * Provides a managed way to play non-spatialized audio tracks, featuring
+ * cross-fade support and automated lifecycle management via the SoundManager.
+ *
+ * @category Player Experience
  * @example
  * ```tsx
  * <AmbientAudio
- *   url="/music/ambient.mp3"
- *   volume={0.5}
- *   loop={true}
- *   autoplay={true}
- *   fadeTime={2}
+ *   url="/music/forest_theme.mp3"
+ *   volume={0.4}
+ *   autoplay
+ *   fadeTime={3}
  * />
  * ```
  */

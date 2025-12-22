@@ -1,11 +1,11 @@
 /**
- * Performance Statistics Monitoring
+ * Performance Statistics Monitoring.
  *
- * Utilities for monitoring FPS, memory usage, and WebGL statistics.
- * Provides formatted output for debug displays.
+ * Provides utilities for monitoring FPS, memory usage, and WebGL statistics.
  *
+ * @packageDocumentation
  * @module core/debug/stats
- * @public
+ * @category Game Systems
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -21,27 +21,9 @@ const DEFAULT_CONFIG: Required<StatsConfig> = {
  * Hook for monitoring performance statistics.
  * Tracks FPS, frame time, memory usage, and optionally WebGL stats.
  *
- * @param config - Stats configuration options
- * @returns Current performance statistics
- *
- * @example
- * ```typescript
- * import { useStats } from '@jbcom/strata/core/debug';
- *
- * function DebugPanel() {
- *   const stats = useStats({ updateInterval: 100 });
- *
- *   return (
- *     <div className="stats">
- *       <p>FPS: {stats.fps.toFixed(1)}</p>
- *       <p>Frame Time: {stats.frameTime.toFixed(2)}ms</p>
- *       {stats.memory && (
- *         <p>Memory: {(stats.memory.usedJSHeapSize / 1024 / 1024).toFixed(1)} MB</p>
- *       )}
- *     </div>
- *   );
- * }
- * ```
+ * @category Game Systems
+ * @param config - Stats configuration options.
+ * @returns Current performance statistics.
  */
 export function useStats(config: StatsConfig = {}): PerformanceStats {
     const mergedConfig = { ...DEFAULT_CONFIG, ...config };
@@ -136,23 +118,10 @@ export function useStats(config: StatsConfig = {}): PerformanceStats {
 /**
  * Formats performance statistics for display.
  *
- * @param stats - Performance statistics to format
- * @param options - Formatting options
- * @returns Formatted statistics object
- *
- * @example
- * ```typescript
- * import { useStats, formatStats } from '@jbcom/strata/core/debug';
- *
- * function StatsDisplay() {
- *   const stats = useStats();
- *   const formatted = formatStats(stats);
- *
- *   return (
- *     <pre>{JSON.stringify(formatted, null, 2)}</pre>
- *   );
- * }
- * ```
+ * @category Game Systems
+ * @param stats - Performance statistics to format.
+ * @param options - Formatting options.
+ * @returns Formatted statistics object.
  */
 export function formatStats(
     stats: PerformanceStats,
@@ -192,20 +161,18 @@ export function formatStats(
 
 /**
  * Options for formatting statistics.
- *
- * @public
+ * @category Game Systems
  */
 export interface FormatStatsOptions {
-    /** Decimal precision for numbers */
+    /** Decimal precision for numbers. */
     precision?: number;
-    /** Whether to include units in output */
+    /** Whether to include units in output strings. */
     includeUnits?: boolean;
 }
 
 /**
  * Formatted statistics ready for display.
- *
- * @public
+ * @category Game Systems
  */
 export interface FormattedStats {
     fps: string;
@@ -225,10 +192,6 @@ export interface FormattedStats {
 
 /**
  * Formats triangle count with K/M suffix.
- *
- * @param count - Triangle count
- * @param precision - Decimal precision
- * @returns Formatted string
  */
 function formatTriangles(count: number, precision: number): string {
     if (count >= 1_000_000) {
@@ -243,24 +206,9 @@ function formatTriangles(count: number, precision: number): string {
 /**
  * Creates a stats snapshot for logging or debugging.
  *
- * @param stats - Performance statistics
- * @returns Plain object snapshot
- *
- * @example
- * ```typescript
- * import { useStats, createStatsSnapshot } from '@jbcom/strata/core/debug';
- *
- * function DebugLogger() {
- *   const stats = useStats();
- *
- *   const logStats = () => {
- *     const snapshot = createStatsSnapshot(stats);
- *     console.log('[Performance]', snapshot);
- *   };
- *
- *   return <button onClick={logStats}>Log Stats</button>;
- * }
- * ```
+ * @category Game Systems
+ * @param stats - Performance statistics.
+ * @returns Plain object snapshot.
  */
 export function createStatsSnapshot(stats: PerformanceStats): StatsSnapshot {
     return {
@@ -276,9 +224,8 @@ export function createStatsSnapshot(stats: PerformanceStats): StatsSnapshot {
 }
 
 /**
- * Stats snapshot for logging.
- *
- * @public
+ * Stats snapshot for logging or state capture.
+ * @category Game Systems
  */
 export interface StatsSnapshot {
     fps: number;
@@ -292,17 +239,9 @@ export interface StatsSnapshot {
 /**
  * Calculates average stats over a set of samples.
  *
- * @param samples - Array of performance stats samples
- * @returns Averaged statistics
- *
- * @example
- * ```typescript
- * import { calculateAverageStats } from '@jbcom/strata/core/debug';
- *
- * const samples = [stats1, stats2, stats3];
- * const average = calculateAverageStats(samples);
- * console.log(`Average FPS: ${average.fps}`);
- * ```
+ * @category Game Systems
+ * @param samples - Array of performance stats samples.
+ * @returns Averaged statistics.
  */
 export function calculateAverageStats(samples: PerformanceStats[]): PerformanceStats {
     if (samples.length === 0) {

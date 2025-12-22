@@ -25,20 +25,13 @@ export const GameStateContext = createContext<GameStateContextValue<any> | null>
  *
  * Accepts either a pre-created store or creates one from initialState.
  *
- * @public
- * @param props - Provider configuration
- * @returns React context provider
+ * @category Game Systems
+ * @param props - Provider configuration.
+ * @returns React context provider.
  *
  * @example
  * ```tsx
- * // Option 1: Create store inline
  * <GameStateProvider initialState={{ health: 100 }}>
- *   <App />
- * </GameStateProvider>
- *
- * // Option 2: Pass pre-created store
- * const store = createGameStore({ health: 100 });
- * <GameStateProvider store={store}>
  *   <App />
  * </GameStateProvider>
  * ```
@@ -96,14 +89,8 @@ export function GameStateProvider<T extends object>({
 /**
  * Access the game state store from context.
  *
- * @public
- * @returns The game store API
- *
- * @example
- * ```tsx
- * const { store } = useGameStateContext();
- * const data = store.getState().data;
- * ```
+ * @category Game Systems
+ * @returns The game store API.
  */
 export function useGameStateContext<T extends object>(): GameStateContextValue<T> {
     const context = useContext(GameStateContext);
@@ -116,18 +103,9 @@ export function useGameStateContext<T extends object>(): GameStateContextValue<T
 /**
  * Subscribe to game state with an optional selector.
  *
- * @public
- * @param selector - Optional function to select a slice of state
- * @returns Selected state value or full store state
- *
- * @example
- * ```tsx
- * // Select specific data
- * const health = useGameState(s => s.data.health);
- *
- * // Get full store state (use sparingly)
- * const fullState = useGameState();
- * ```
+ * @category Game Systems
+ * @param selector - Optional function to select a slice of state.
+ * @returns Selected state value or full store state.
  */
 export function useGameState<T extends object, U = GameStore<T>>(
     selector?: (state: GameStore<T>) => U
@@ -142,20 +120,8 @@ export function useGameState<T extends object, U = GameStore<T>>(
 /**
  * Hook for undo/redo functionality.
  *
- * @public
- * @returns Undo/redo functions and state
- *
- * @example
- * ```tsx
- * const { undo, redo, canUndo, canRedo } = useUndo();
- *
- * return (
- *   <>
- *     <button onClick={undo} disabled={!canUndo}>Undo</button>
- *     <button onClick={redo} disabled={!canRedo}>Redo</button>
- *   </>
- * );
- * ```
+ * @category Game Systems
+ * @returns Undo/redo functions and state.
  */
 export function useUndo<T extends object>() {
     const { store } = useGameStateContext<T>();
@@ -171,18 +137,9 @@ export function useUndo<T extends object>() {
 /**
  * Gate component that waits for state hydration before rendering children.
  *
- * @public
- * @param props - Gate configuration
- * @returns Loading indicator or children after hydration
- *
- * @example
- * ```tsx
- * <GameStateProvider initialState={defaultState}>
- *   <PersistGate loading={<Spinner />} storageKey="save1">
- *     <Game />
- *   </PersistGate>
- * </GameStateProvider>
- * ```
+ * @category Game Systems
+ * @param props - Gate configuration.
+ * @returns Loading indicator or children after hydration.
  */
 export function PersistGate({
     loading,
@@ -224,17 +181,9 @@ export function PersistGate({
 /**
  * Debug panel for inspecting current game state.
  *
- * @public
- * @param props - Debugger configuration
- * @returns Debug overlay component
- *
- * @example
- * ```tsx
- * <GameStateProvider initialState={state}>
- *   <App />
- *   {process.env.NODE_ENV === 'development' && <StateDebugger />}
- * </GameStateProvider>
- * ```
+ * @category Game Systems
+ * @param props - Debugger configuration.
+ * @returns Debug overlay component.
  */
 export function StateDebugger({
     position = 'bottom-right',

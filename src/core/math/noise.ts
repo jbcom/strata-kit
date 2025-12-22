@@ -1,11 +1,8 @@
 /**
- * Noise utilities wrapping simplex-noise library
- *
- * Provides thin wrappers around simplex-noise with Strata-specific
- * utilities like FBM and terrain noise presets.
- *
+ * Advanced Noise and Procedural Generation Utilities.
+ * @packageDocumentation
  * @module core/math/noise
- * @public
+ * @category World Building
  */
 
 import {
@@ -17,51 +14,30 @@ import type { FBMConfig, Noise2D, Noise3D, Noise4D, RandomFn, TerrainNoisePreset
 import { DEFAULT_FBM_CONFIG } from './types';
 
 /**
- * Creates a 2D simplex noise function
- *
- * @param random - Optional random number generator for seeding
- * @returns A 2D noise function returning values in [-1, 1]
- *
- * @example
- * ```typescript
- * const noise = createNoise2D();
- * const value = noise(1.5, 2.3); // Returns value in [-1, 1]
- *
- * // With custom seed
- * const seededNoise = createNoise2D(() => 0.5);
- * ```
+ * Creates a 2D simplex noise function.
+ * @category World Building
+ * @param random - Optional random number generator for seeding.
+ * @returns A 2D noise function returning values in [-1, 1].
  */
 export function createNoise2D(random?: RandomFn): Noise2D {
     return simplexNoise2D(random);
 }
 
 /**
- * Creates a 3D simplex noise function
- *
- * @param random - Optional random number generator for seeding
- * @returns A 3D noise function returning values in [-1, 1]
- *
- * @example
- * ```typescript
- * const noise = createNoise3D();
- * const value = noise(1.0, 2.0, 3.0);
- * ```
+ * Creates a 3D simplex noise function.
+ * @category World Building
+ * @param random - Optional random number generator for seeding.
+ * @returns A 3D noise function returning values in [-1, 1].
  */
 export function createNoise3D(random?: RandomFn): Noise3D {
     return simplexNoise3D(random);
 }
 
 /**
- * Creates a 4D simplex noise function
- *
- * @param random - Optional random number generator for seeding
- * @returns A 4D noise function returning values in [-1, 1]
- *
- * @example
- * ```typescript
- * const noise = createNoise4D();
- * const value = noise(1.0, 2.0, 3.0, time);
- * ```
+ * Creates a 4D simplex noise function.
+ * @category World Building
+ * @param random - Optional random number generator for seeding.
+ * @returns A 4D noise function returning values in [-1, 1].
  */
 export function createNoise4D(random?: RandomFn): Noise4D {
     return simplexNoise4D(random);
@@ -93,24 +69,13 @@ function fbm2DInternal(
 }
 
 /**
- * Computes Fractal Brownian Motion (FBM) using 2D noise
- *
- * FBM layers multiple octaves of noise at different frequencies
- * to create natural-looking patterns.
- *
- * @param noise - The base 2D noise function
- * @param x - X coordinate
- * @param y - Y coordinate
- * @param config - FBM configuration
- * @returns Normalized noise value in approximately [-1, 1]
- *
- * @throws {Error} When octaves is less than 1
- *
- * @example
- * ```typescript
- * const noise = createNoise2D();
- * const value = fbm2D(noise, 1.0, 2.0, { octaves: 6 });
- * ```
+ * Computes Fractal Brownian Motion (FBM) using 2D noise.
+ * @category World Building
+ * @param noise - The base 2D noise function.
+ * @param x - X coordinate.
+ * @param y - Y coordinate.
+ * @param config - FBM configuration.
+ * @returns Normalized noise value in approximately [-1, 1].
  */
 export function fbm2D(noise: Noise2D, x: number, y: number, config?: FBMConfig): number {
     const octaves = config?.octaves ?? DEFAULT_FBM_CONFIG.octaves;
@@ -157,26 +122,14 @@ function fbm3DInternal(
 }
 
 /**
- * Computes Fractal Brownian Motion (FBM) using 3D noise
- *
- * @param noise - The base 3D noise function
- * @param x - X coordinate
- * @param y - Y coordinate
- * @param z - Z coordinate
- * @param config - FBM configuration
- * @returns Normalized noise value in approximately [-1, 1]
- *
- * @throws {Error} When octaves is less than 1
- *
- * @example
- * ```typescript
- * const noise = createNoise3D();
- * const value = fbm3D(noise, 1.0, 2.0, 3.0, {
- *   octaves: 4,
- *   persistence: 0.5,
- *   lacunarity: 2.0
- * });
- * ```
+ * Computes Fractal Brownian Motion (FBM) using 3D noise.
+ * @category World Building
+ * @param noise - The base 3D noise function.
+ * @param x - X coordinate.
+ * @param y - Y coordinate.
+ * @param z - Z coordinate.
+ * @param config - FBM configuration.
+ * @returns Normalized noise value in approximately [-1, 1].
  */
 export function fbm3D(
     noise: Noise3D,
@@ -204,20 +157,14 @@ export function fbm3D(
 }
 
 /**
- * Applies domain warping to create more organic noise patterns
- *
- * @param noise - The base 2D noise function
- * @param x - X coordinate
- * @param y - Y coordinate
- * @param strength - Warp strength (default: 0.5)
- * @param config - FBM configuration for final output
- * @returns Warped noise value
- *
- * @example
- * ```typescript
- * const noise = createNoise2D();
- * const organic = warpedNoise2D(noise, x, y, 0.8);
- * ```
+ * Applies domain warping to create more organic noise patterns.
+ * @category World Building
+ * @param noise - The base 2D noise function.
+ * @param x - X coordinate.
+ * @param y - Y coordinate.
+ * @param strength - Warp strength (default: 0.5).
+ * @param config - FBM configuration for final output.
+ * @returns Warped noise value.
  */
 export function warpedNoise2D(
     noise: Noise2D,
@@ -255,15 +202,15 @@ export function warpedNoise2D(
 }
 
 /**
- * Applies domain warping to 3D noise
- *
- * @param noise - The base 3D noise function
- * @param x - X coordinate
- * @param y - Y coordinate
- * @param z - Z coordinate
- * @param strength - Warp strength (default: 0.5)
- * @param config - FBM configuration for final output
- * @returns Warped noise value
+ * Applies domain warping to 3D noise.
+ * @category World Building
+ * @param noise - The base 3D noise function.
+ * @param x - X coordinate.
+ * @param y - Y coordinate.
+ * @param z - Z coordinate.
+ * @param strength - Warp strength (default: 0.5).
+ * @param config - FBM configuration for final output.
+ * @returns Warped noise value.
  */
 export function warpedNoise3D(
     noise: Noise3D,
@@ -354,28 +301,11 @@ export const TERRAIN_PRESETS: Record<string, TerrainNoisePreset> = {
 };
 
 /**
- * Creates a terrain height function from a preset
- *
- * @param preset - Terrain preset name or custom preset configuration
- * @param random - Optional random function for seeding
- * @returns A function that returns terrain height at (x, z) coordinates
- *
- * @throws {Error} When preset name is not found
- *
- * @example
- * ```typescript
- * const getHeight = createTerrainNoise('mountains');
- * const height = getHeight(100, 200);
- *
- * // With custom preset
- * const customHeight = createTerrainNoise({
- *   name: 'custom',
- *   fbm: { octaves: 5, frequency: 0.02, persistence: 0.5, lacunarity: 2 },
- *   amplitude: 20,
- *   warp: true,
- *   warpStrength: 0.3
- * });
- * ```
+ * Creates a terrain height function from a preset.
+ * @category World Building
+ * @param preset - Terrain preset name or custom preset configuration.
+ * @param random - Optional random function for seeding.
+ * @returns A function that returns terrain height at (x, z) coordinates.
  */
 export function createTerrainNoise(
     preset: string | TerrainNoisePreset,
@@ -403,19 +333,13 @@ export function createTerrainNoise(
 }
 
 /**
- * Creates ridged noise useful for mountain ridges
- *
- * @param noise - Base noise function
- * @param x - X coordinate
- * @param y - Y coordinate
- * @param config - FBM configuration
- * @returns Ridged noise value in [0, 1]
- *
- * @example
- * ```typescript
- * const noise = createNoise2D();
- * const ridge = ridgedNoise2D(noise, x, y, { octaves: 4 });
- * ```
+ * Creates ridged noise useful for mountain ridges.
+ * @category World Building
+ * @param noise - Base noise function.
+ * @param x - X coordinate.
+ * @param y - Y coordinate.
+ * @param config - FBM configuration.
+ * @returns Ridged noise value in [0, 1].
  */
 export function ridgedNoise2D(
     noise: Noise2D,

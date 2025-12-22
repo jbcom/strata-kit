@@ -1,24 +1,35 @@
 /**
- * Billboard Preset - Always-face-camera sprites
- *
- * Provides billboard rendering for trees, grass, UI elements,
- * and other objects that should always face the camera.
+ * Billboard Presets - Camera-facing sprite systems.
+ * @packageDocumentation
+ * @module presets/billboards
  */
 
 import * as THREE from 'three';
 
+/**
+ * Configuration options for creating a billboard.
+ * @category World Building
+ */
 export interface BillboardOptions {
+    /** The texture to display on the billboard. */
     texture: THREE.Texture;
+    /** Dimensions of the billboard. */
     size?: number | { width: number; height: number };
+    /** Base color multiplier. */
     color?: THREE.Color;
+    /** Whether to enable transparency. Default: true. */
     transparent?: boolean;
+    /** Opacity level (0-1). Default: 1.0. */
     opacity?: number;
+    /** Alpha test threshold. Default: 0.1. */
     alphaTest?: number;
+    /** Which side of the plane to render. Default: DoubleSide. */
     side?: THREE.Side;
 }
 
 /**
- * Create a billboard mesh that always faces the camera
+ * Create a billboard mesh that always faces the camera.
+ * @category World Building
  */
 export function createBillboard(options: BillboardOptions): THREE.Mesh {
     const {
@@ -77,7 +88,8 @@ export function createBillboard(options: BillboardOptions): THREE.Mesh {
 }
 
 /**
- * Create instanced billboards for performance
+ * Create instanced billboards for high-performance rendering.
+ * @category World Building
  */
 export function createBillboardInstances(
     count: number,
@@ -127,7 +139,8 @@ export function createBillboardInstances(
 }
 
 /**
- * Create sprite sheet animation billboard
+ * Create a sprite sheet animated billboard.
+ * @category World Building
  */
 export function createAnimatedBillboard(
     texture: THREE.Texture,

@@ -1,48 +1,49 @@
 /**
- * Debug Module Type Definitions
+ * Debug Module Type Definitions.
  *
- * Type definitions for leva debug panels and tunnel-rat portals.
- * Framework-agnostic types for cross-platform debug utilities.
+ * Framework-agnostic interfaces for debug panels, performance monitoring,
+ * and portal-based debug overlays.
  *
+ * @packageDocumentation
  * @module core/debug/types
+ * @category Game Systems
  */
 
 import type * as React from 'react';
 
 /**
  * Configuration for creating a debug panel.
- *
- * @public
+ * @category Game Systems
  */
 export interface DebugPanelConfig {
-    /** Unique store name for the panel */
+    /** Unique store name for the panel. */
     name?: string;
-    /** Whether the panel is collapsed by default */
+    /** Whether the panel is collapsed by default. */
     collapsed?: boolean;
-    /** Whether the panel is hidden by default */
+    /** Whether the panel is hidden by default. */
     hidden?: boolean;
-    /** Custom theme overrides */
+    /** Custom theme overrides for visual appearance. */
     theme?: Partial<DebugPanelTheme>;
-    /** Position of the panel on screen */
+    /** Fixed position of the panel on screen. */
     position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
-    /** Whether to show the title bar */
+    /** Configuration for the interactive title bar. */
     titleBar?: boolean | { drag?: boolean; title?: string; filter?: boolean };
-    /** Fill mode for the panel */
+    /** Whether the panel should fill its container. */
     fill?: boolean;
-    /** Flat mode - no nested folders */
+    /** Whether to disable nested folders. */
     flat?: boolean;
-    /** One-line mode for compact display */
+    /** Whether to show labels on the same line as inputs. */
     oneLineLabels?: boolean;
-    /** Debounce delay in ms for control updates */
+    /** Debounce delay in milliseconds for control updates. */
     debounce?: number;
 }
 
 /**
  * Theme configuration for debug panels.
- *
- * @public
+ * @category Game Systems
  */
 export interface DebugPanelTheme {
+    /** Color palette overrides. */
     colors?: {
         elevation1?: string;
         elevation2?: string;
@@ -59,25 +60,30 @@ export interface DebugPanelTheme {
         toolTipBackground?: string;
         toolTipText?: string;
     };
+    /** Corner radius overrides. */
     radii?: {
         xs?: string;
         sm?: string;
         lg?: string;
     };
+    /** Layout spacing overrides. */
     space?: {
         sm?: string;
         md?: string;
         rowGap?: string;
         colGap?: string;
     };
+    /** Font family overrides. */
     fonts?: {
         mono?: string;
         sans?: string;
     };
+    /** Font size overrides. */
     fontSizes?: {
         root?: string;
         toolTip?: string;
     };
+    /** Dimensions for various UI elements. */
     sizes?: {
         rootWidth?: string;
         controlWidth?: string;
@@ -96,6 +102,7 @@ export interface DebugPanelTheme {
         monitorHeight?: string;
         titleBarHeight?: string;
     };
+    /** Line and border width overrides. */
     borderWidths?: {
         root?: string;
         input?: string;
@@ -104,6 +111,7 @@ export interface DebugPanelTheme {
         active?: string;
         folder?: string;
     };
+    /** Typographic weight overrides. */
     fontWeights?: {
         label?: string;
         folder?: string;
@@ -112,9 +120,8 @@ export interface DebugPanelTheme {
 }
 
 /**
- * Debug value types that can be controlled via leva.
- *
- * @public
+ * Supported data types for debug controls.
+ * @category Game Systems
  */
 export type DebugValue =
     | number
@@ -127,124 +134,116 @@ export type DebugValue =
     | string[];
 
 /**
- * Schema for debug controls.
- * Mirrors leva's Schema type for control definitions.
- *
- * @public
+ * Interactive control schema definition.
+ * @category Game Systems
  */
 export type DebugSchema = Record<string, unknown>;
 
 /**
- * Store type for debug panels.
- * Represents a leva store instance.
- *
- * @public
+ * Interface for a managed debug store.
+ * @category Game Systems
  */
 export interface DebugStore {
+    /** Get all current data in the store. */
     getData: () => Record<string, unknown>;
+    /** Update a specific value in the store. */
     setValueAtPath: (path: string, value: unknown, fromPanel: boolean) => void;
+    /** Retrieve a specific value from the store. */
     getValueAtPath: (path: string) => unknown;
+    /** Hook for subscribing to a specific store path. */
     useStore: <T>(path: string) => T;
 }
 
 /**
- * Input types available in debug panels.
- *
- * @public
+ * Generic map of debug input definitions.
+ * @category Game Systems
  */
 export type DebugInputs = Record<string, unknown>;
 
 /**
- * Configuration for creating a tunnel (React portal).
- *
- * @public
+ * Configuration for a debug portal tunnel.
+ * @category Game Systems
  */
 export interface TunnelConfig {
-    /** Unique identifier for the tunnel */
+    /** Unique identifier for the tunnel. */
     id?: string;
-    /** Description for debugging purposes */
+    /** Human-readable description. */
     description?: string;
 }
 
 /**
- * Tunnel instance with In and Out components.
- *
- * @public
+ * Portal tunnel instance.
+ * @category Game Systems
  */
 export interface Tunnel {
-    /** Component to place content into the tunnel */
+    /** React component to push content into the tunnel. */
     In: React.FC<{ children: React.ReactNode }>;
-    /** Component that renders tunnel content */
+    /** React component to render the tunnel's content. */
     Out: React.FC;
 }
 
 /**
  * Common debug tunnel identifiers.
- *
- * @public
+ * @category Game Systems
  */
 export type DebugTunnelId = 'debug-overlay' | 'fps-counter' | 'stats-panel' | 'custom';
 
 /**
- * Performance statistics data structure.
- *
- * @public
+ * Performance metrics data snapshot.
+ * @category Game Systems
  */
 export interface PerformanceStats {
-    /** Frames per second */
+    /** Average frames per second. */
     fps: number;
-    /** Frame time in milliseconds */
+    /** Average time per frame in milliseconds. */
     frameTime: number;
-    /** Memory usage in MB (if available) */
+    /** Browser memory consumption (if supported). */
     memory?: {
         usedJSHeapSize: number;
         totalJSHeapSize: number;
         jsHeapSizeLimit: number;
     };
-    /** WebGL draw calls (if tracked) */
+    /** Current number of WebGL draw calls. */
     drawCalls?: number;
-    /** Triangle count (if tracked) */
+    /** Current number of triangles being rendered. */
     triangles?: number;
-    /** Texture count (if tracked) */
+    /** Total number of textures in memory. */
     textures?: number;
-    /** Geometry count (if tracked) */
+    /** Total number of unique geometries in memory. */
     geometries?: number;
-    /** Timestamp of measurement */
+    /** Unix timestamp of the measurement. */
     timestamp: number;
 }
 
 /**
- * Configuration for stats monitoring.
- *
- * @public
+ * Configuration for the performance monitor.
+ * @category Game Systems
  */
 export interface StatsConfig {
-    /** Update interval in milliseconds */
+    /** Frequency of updates in milliseconds. Default: 100. */
     updateInterval?: number;
-    /** Whether to track memory usage (Chromium-based browsers only) */
+    /** Whether to track heap memory usage. Default: true. */
     trackMemory?: boolean;
-    /** Maximum samples for averaging */
+    /** Number of samples to use for rolling averages. Default: 60. */
     maxSamples?: number;
 }
 
 /**
- * Preset configurations for common game debug scenarios.
- *
- * @public
+ * Reusable debug configuration preset.
+ * @category Game Systems
  */
 export interface DebugPreset {
-    /** Unique preset name */
+    /** Unique name for the preset. */
     name: string;
-    /** Schema definition for the preset */
+    /** Schema definition for the preset's controls. */
     schema: DebugSchema;
-    /** Default values */
+    /** Initial/default values for the controls. */
     defaults?: Record<string, DebugValue>;
 }
 
 /**
- * Camera debug preset values.
- *
- * @public
+ * Standard camera debug settings.
+ * @category Game Systems
  */
 export interface CameraDebugValues {
     fov: number;
@@ -256,9 +255,8 @@ export interface CameraDebugValues {
 }
 
 /**
- * Physics debug preset values.
- *
- * @public
+ * Standard physics engine debug settings.
+ * @category Game Systems
  */
 export interface PhysicsDebugValues {
     gravity: { x: number; y: number; z: number };
@@ -269,9 +267,8 @@ export interface PhysicsDebugValues {
 }
 
 /**
- * Lighting debug preset values.
- *
- * @public
+ * Standard scene lighting debug settings.
+ * @category Game Systems
  */
 export interface LightingDebugValues {
     ambientIntensity: number;
@@ -284,9 +281,8 @@ export interface LightingDebugValues {
 }
 
 /**
- * Post-processing debug preset values.
- *
- * @public
+ * Standard post-processing debug settings.
+ * @category Game Systems
  */
 export interface PostProcessingDebugValues {
     bloomEnabled: boolean;

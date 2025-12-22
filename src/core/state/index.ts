@@ -4,8 +4,8 @@
  * Zustand-based state management with Immer for immutable updates,
  * zundo for undo/redo, and cross-platform persistence adapters.
  *
+ * @category Game Systems
  * @module core/state
- * @public
  *
  * @example
  * ```typescript

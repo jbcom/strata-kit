@@ -1,29 +1,43 @@
 /**
- * Core Physics Utilities
+ * Core Physics Utilities.
  *
- * Pure TypeScript physics helper functions and type definitions
- * for use with @react-three/rapier.
+ * Provides pure TypeScript helper functions, mathematical calculations, and
+ * configuration types for character controllers, vehicle physics, and rigid body dynamics.
+ * Designed for use with `@react-three/rapier`.
+ *
+ * @packageDocumentation
  * @module core/physics
+ * @category Entities & Simulation
  */
 
 import * as THREE from 'three';
 
 /**
- * Core physics configuration options
+ * Core physics simulation configuration.
+ * @category Entities & Simulation
  */
 export interface PhysicsConfig {
+    /** Global gravity vector. Default: [0, -9.81, 0]. */
     gravity: [number, number, number];
+    /** Simulation time step in seconds. Default: 1/60. */
     timeStep: number;
+    /** Iterations for stabilization constraints. */
     maxStabilizationIterations: number;
+    /** Iterations for velocity resolution. */
     maxVelocityIterations: number;
+    /** Iterations for velocity friction resolution. */
     maxVelocityFrictionIterations: number;
+    /** Error reduction parameter. */
     erp: number;
+    /** Allowed linear error before correction. */
     allowedLinearError: number;
+    /** Distance for contact prediction. */
     predictionDistance: number;
 }
 
 /**
- * Collision layer bitmask definitions
+ * Collision layer bitmask definitions.
+ * @category Entities & Simulation
  */
 export enum CollisionLayer {
     Default = 0x0001,
@@ -39,13 +53,20 @@ export enum CollisionLayer {
 }
 
 /**
- * Collision filter presets
+ * Collision filter configuration.
+ * @category Entities & Simulation
  */
 export interface CollisionFilter {
+    /** The layer(s) this object belongs to. */
     memberships: number;
+    /** The layer(s) this object should interact with. */
     filter: number;
 }
 
+/**
+ * Predefined collision filter presets for common object types.
+ * @category Entities & Simulation
+ */
 export const collisionFilters: Record<string, CollisionFilter> = {
     default: {
         memberships: CollisionLayer.Default,
@@ -94,83 +115,141 @@ export const collisionFilters: Record<string, CollisionFilter> = {
 };
 
 /**
- * Character controller configuration
+ * Advanced character controller configuration.
+ * @category Entities & Simulation
  */
 export interface CharacterControllerConfig {
+    /** Horizontal radius of the capsule. */
     capsuleRadius: number;
+    /** Total height of the capsule. */
     capsuleHeight: number;
+    /** Mass of the character in kg. */
     mass: number;
+    /** Maximum walking speed. */
     maxSpeed: number;
+    /** Rate of acceleration. */
     acceleration: number;
+    /** Rate of deceleration. */
     deceleration: number;
+    /** Impulse applied on jump. */
     jumpForce: number;
+    /** Maximum number of multi-jumps. */
     maxJumps: number;
+    /** Raycast distance for ground detection. */
     groundCheckDistance: number;
+    /** Maximum angle in radians the character can walk up. */
     slopeLimit: number;
+    /** Maximum height of a step the character can climb. */
     stepHeight: number;
+    /** Time in seconds after leaving ground that a jump is still allowed. */
     coyoteTime: number;
+    /** Time in seconds to buffer a jump input before landing. */
     jumpBufferTime: number;
+    /** Multiplier for movement control while in the air. */
     airControl: number;
+    /** Local gravity multiplier for the character. */
     gravityScale: number;
+    /** Distance to snap the character to the ground. */
     snapToGroundDistance: number;
+    /** Inset distance for collision detection. */
     skinWidth: number;
+    /** Whether to automatically climb steps. */
     autoStepEnabled: boolean;
+    /** Whether to slide down steep slopes. */
     slideEnabled: boolean;
 }
 
 /**
- * Vehicle physics configuration
+ * Vehicle physics configuration.
+ * @category Entities & Simulation
  */
 export interface VehicleConfig {
+    /** Mass of the vehicle body. */
     chassisMass: number;
+    /** Dimensions of the chassis [width, height, length]. */
     chassisSize: [number, number, number];
+    /** Radius of the wheels. */
     wheelRadius: number;
+    /** Width of the wheels. */
     wheelWidth: number;
+    /** Local positions of each wheel. */
     wheelPositions: [number, number, number][];
+    /** Target length of the suspension springs. */
     suspensionRestLength: number;
+    /** Stiffness multiplier for suspension. */
     suspensionStiffness: number;
+    /** Damping multiplier for suspension. */
     suspensionDamping: number;
+    /** Maximum travel distance for suspension. */
     suspensionTravel: number;
+    /** Maximum steering angle in radians. */
     maxSteerAngle: number;
+    /** Which wheels receive motor force. */
     driveWheels: 'front' | 'rear' | 'all';
+    /** Strength of the motor impulse. */
     motorForce: number;
+    /** Strength of the braking force. */
     brakeForce: number;
+    /** Friction coefficient for tire grip. */
     frictionSlip: number;
+    /** Impact of lateral forces on roll. */
     rollInfluence: number;
+    /** Stabilizer bar strength. */
     antiRoll: number;
+    /** Vertical offset for the physical center of mass. */
     centerOfMassOffset: [number, number, number];
 }
 
 /**
- * Wheel configuration for vehicles
+ * Configuration for an individual vehicle wheel.
+ * @category Entities & Simulation
  */
 export interface WheelConfig {
+    /** Local position relative to chassis. */
     position: [number, number, number];
+    /** Wheel radius. */
     radius: number;
+    /** Spring rest length. */
     suspensionRestLength: number;
+    /** Spring stiffness. */
     suspensionStiffness: number;
+    /** Spring damping. */
     suspensionDamping: number;
+    /** Force limit for the suspension. */
     maxSuspensionForce: number;
+    /** Grip friction. */
     frictionSlip: number;
+    /** Whether this wheel turns with steering. */
     isSteering: boolean;
+    /** Whether this wheel receives motor torque. */
     isDriving: boolean;
+    /** Whether this wheel provides braking force. */
     isBraking: boolean;
 }
 
 /**
- * Ragdoll joint configuration
+ * Ragdoll joint connection configuration.
+ * @category Entities & Simulation
  */
 export interface RagdollJointConfig {
+    /** Name of the parent body part. */
     parent: string;
+    /** Name of the child body part. */
     child: string;
+    /** Type of physical constraint. */
     type: 'spherical' | 'revolute' | 'prismatic' | 'fixed';
+    /** Pivot point relative to parent. */
     anchor1: [number, number, number];
+    /** Pivot point relative to child. */
     anchor2: [number, number, number];
+    /** Rotation axis for revolute/prismatic joints. */
     axis?: [number, number, number];
+    /** Angular or linear limits. */
     limits?: {
         min: number;
         max: number;
     };
+    /** Optional secondary twist limits for spherical joints. */
     twistLimits?: {
         min: number;
         max: number;
@@ -178,65 +257,103 @@ export interface RagdollJointConfig {
 }
 
 /**
- * Ragdoll body part configuration
+ * Configuration for a single ragdoll body segment.
+ * @category Entities & Simulation
  */
 export interface RagdollBodyPart {
+    /** Unique part name (e.g., 'head', 'torso'). */
     name: string;
+    /** Geometric primitive type. */
     type: 'capsule' | 'box' | 'sphere';
+    /** Dimensions based on type. */
     size: [number, number, number] | [number, number] | [number];
+    /** Local position relative to ragdoll root. */
     position: [number, number, number];
+    /** Local rotation in radians. */
     rotation?: [number, number, number];
+    /** Mass of this specific part. */
     mass: number;
 }
 
 /**
- * Complete ragdoll configuration
+ * Complete ragdoll system configuration.
+ * @category Entities & Simulation
  */
 export interface RagdollConfig {
+    /** List of body segments. */
     bodyParts: RagdollBodyPart[];
+    /** List of joint constraints. */
     joints: RagdollJointConfig[];
+    /** Global linear resistance. */
     linearDamping: number;
+    /** Global angular resistance. */
     angularDamping: number;
+    /** Whether parts can collide with each other. */
     enableSelfCollision: boolean;
+    /** Energy threshold for physics sleeping. */
     sleepThreshold: number;
 }
 
 /**
- * Physics material properties
+ * Physical surface material properties.
+ * @category Entities & Simulation
  */
 export interface PhysicsMaterial {
+    /** Sliding resistance (0-1). */
     friction: number;
+    /** Bounciness (0-1). */
     restitution: number;
+    /** Algorithm for combining friction with other surfaces. */
     frictionCombine?: 'average' | 'min' | 'max' | 'multiply';
+    /** Algorithm for combining restitution with other surfaces. */
     restitutionCombine?: 'average' | 'min' | 'max' | 'multiply';
+    /** Mass per unit volume. */
     density?: number;
 }
 
 /**
- * Destructible object configuration
+ * Destructible object behavior configuration.
+ * @category Entities & Simulation
  */
 export interface DestructibleConfig {
+    /** Initial health points. */
     health: number;
+    /** Threshold force required to trigger break. */
     breakForce: number;
+    /** Number of debris shards to spawn. */
     shardCount: number;
+    /** Scale multiplier for debris shards. */
     shardScale: [number, number, number];
+    /** Impulse force applied to shards on break. */
     explosionForce: number;
+    /** Radius of the break impulse effect. */
     explosionRadius: number;
+    /** Time in seconds before shards are removed. */
     shardLifetime: number;
+    /** Mass of an individual shard. */
     shardMass: number;
+    /** Initial spin given to shards. */
     shardAngularVelocity: [number, number, number];
 }
 
 /**
- * Buoyancy configuration for floating objects
+ * Buoyancy simulation configuration.
+ * @category Entities & Simulation
  */
 export interface BuoyancyConfig {
+    /** World Y-coordinate of the water surface. */
     waterLevel: number;
+    /** Upward force multiplier per submerged unit. */
     buoyancyForce: number;
+    /** Linear resistance from water. */
     waterDrag: number;
+    /** Angular resistance from water. */
     waterAngularDrag: number;
+    /** Resolution for physical volume sampling. */
     voxelResolution: number;
+    /** Number of points to sample for force application. */
     samplePointCount: number;
+    /** Whether the water level is dynamic. */
     dynamicWater: boolean;
 }
 

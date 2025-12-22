@@ -1,10 +1,12 @@
 /**
- * Core LOD (Level of Detail) System
+ * Core Level of Detail (LOD) System.
  *
- * Provides distance-based level of detail management for 3D objects.
- * Includes mesh simplification helpers and billboard/impostor generation.
+ * Provides pure TypeScript utilities for distance-based rendering optimization,
+ * including mesh simplification, billboard generation, and automated LOD level switching.
  *
- * Pure TypeScript, no React dependencies.
+ * @packageDocumentation
+ * @module core/lod
+ * @category Rendering Pipeline
  */
 
 import * as THREE from 'three';

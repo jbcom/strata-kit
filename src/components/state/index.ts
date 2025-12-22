@@ -1,27 +1,17 @@
 /**
- * State Management React Components
+ * React Integration for Strata State Management.
  *
- * React integration for Zustand-based game state management.
+ * Provides React context providers and hooks for Zustand-based game state management,
+ * featuring automatic persistence, undo/redo, and cross-component synchronization.
  *
+ * @packageDocumentation
  * @module components/state
- * @public
+ * @category Game Systems
  *
  * @example
  * ```tsx
- * import { GameStateProvider, useGameState, useSaveLoad } from './state';
- *
- * function App() {
- *   return (
- *     <GameStateProvider initialState={{ health: 100, score: 0 }}>
- *       <Game />
- *     </GameStateProvider>
- *   );
- * }
- *
- * function Game() {
- *   const health = useGameState(s => s.data.health);
- *   const { save, load } = useSaveLoad();
- *
+ * function PlayerHealth() {
+ *   const health = useGameState(state => state.player.health);
  *   return <div>Health: {health}</div>;
  * }
  * ```

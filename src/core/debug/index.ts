@@ -1,48 +1,8 @@
 /**
- * Debug Module
- *
- * Debug utilities integrating leva for control panels and tunnel-rat for
- * React portals. Provides game development debugging tools with minimal overhead.
- *
+ * Professional Debug and Profiling Tools.
+ * @packageDocumentation
  * @module core/debug
- * @public
- *
- * @example
- * ```typescript
- * import {
- *   useControls,
- *   useDebugControls,
- *   useCameraDebug,
- *   useStats,
- *   DebugOverlayTunnel,
- *   Leva
- * } from '@jbcom/strata/core/debug';
- *
- * function Game() {
- *   const camera = useCameraDebug();
- *   const stats = useStats();
- *
- *   const { wireframe, showGrid } = useDebugControls({
- *     wireframe: false,
- *     showGrid: true,
- *   });
- *
- *   return (
- *     <>
- *       <Leva collapsed />
- *       <Canvas>
- *         <PerspectiveCamera fov={camera.fov} />
- *         {showGrid && <Grid />}
- *         <Scene wireframe={wireframe} />
- *         <DebugOverlayTunnel.In>
- *           <div className="fps">FPS: {stats.fps.toFixed(0)}</div>
- *         </DebugOverlayTunnel.In>
- *       </Canvas>
- *       <DebugOverlayTunnel.Out />
- *     </>
- *   );
- * }
- * ```
+ * @category Game Systems
  */
 
 export {

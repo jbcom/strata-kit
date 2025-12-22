@@ -11,17 +11,18 @@ import { useSpatialAudio } from './context';
 import type { PositionalAudioProps, PositionalAudioRef } from './types';
 
 /**
- * 3D positional audio source with distance-based attenuation.
+ * 3D Positional Audio Source.
  *
+ * Provides a high-fidelity 3D audio source with distance-based attenuation,
+ * volume falloff, and playback rate control. Built on the Web Audio API.
+ *
+ * @category Player Experience
  * @example
  * ```tsx
  * <PositionalAudio
- *   url="/sounds/waterfall.mp3"
- *   position={[10, 0, 5]}
- *   loop={true}
- *   autoplay={true}
- *   refDistance={5}
- *   maxDistance={50}
+ *   url="/sounds/explosion.wav"
+ *   volume={1.0}
+ *   refDistance={10}
  * />
  * ```
  */

@@ -13,18 +13,19 @@ import { useAudioListener } from './context';
 import type { AmbientAudioRef, AudioZoneProps, AudioZoneRef } from './types';
 
 /**
- * Spatial audio zone that triggers audio when listener enters.
+ * Reactive Spatial Audio Zone.
  *
+ * Defines a 3D volume (box or sphere) that triggers background ambience or
+ * environmental effects when the listener enters. Features smooth cross-fades.
+ *
+ * @category Player Experience
  * @example
  * ```tsx
  * <AudioZone
- *   position={[0, 0, -20]}
  *   geometry="sphere"
- *   radius={15}
- *   audioUrl="/sounds/cave-ambience.mp3"
- *   fadeTime={1}
- *   onEnter={() => setEnvironment('cave')}
- *   onExit={() => setEnvironment('outdoor')}
+ *   radius={10}
+ *   audioUrl="/music/interior_theme.mp3"
+ *   fadeTime={2.0}
  * />
  * ```
  */

@@ -1,8 +1,7 @@
 /**
- * Vegetation Preset - GPU-instanced vegetation system
- *
- * Provides optimized vegetation rendering using GPU instancing
- * for grass, trees, rocks, and other natural elements.
+ * Vegetation Generation Presets - GPU-instanced nature systems.
+ * @packageDocumentation
+ * @module presets/vegetation
  */
 
 import * as THREE from 'three';

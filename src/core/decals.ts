@@ -1,53 +1,100 @@
 /**
- * Core Decal System
+ * Core Decal and Billboard System.
  *
- * Provides DecalProjector class for projecting textures onto surfaces,
- * billboard utilities for always-face-camera sprites, and sprite sheet
- * animation helpers.
+ * Provides utilities for projecting textures onto geometry, creating camera-facing
+ * billboards, and managing animated sprite sheets.
  *
- * Pure TypeScript, no React dependencies.
+ * @packageDocumentation
+ * @module core/decals
+ * @category World Building
  */
 
 import * as THREE from 'three';
 
+/**
+ * Configuration for the decal projector.
+ * @category World Building
+ */
 export interface DecalProjectorConfig {
+    /** Target size of the projected decal cube. */
     size: THREE.Vector3;
+    /** Projection depth along the normal axis. Default: 1.0. */
     depth?: number;
+    /** Time in seconds before decals are automatically removed. Default: 5.0. */
     fadeTime?: number;
+    /** Maximum number of active decals allowed. Default: 100. */
     maxDecals?: number;
 }
 
+/**
+ * Data representing an active decal instance.
+ * @category World Building
+ */
 export interface DecalInstance {
+    /** Unique identifier. */
     id: string;
+    /** World position. */
     position: THREE.Vector3;
+    /** Surface-aligned rotation. */
     rotation: THREE.Euler;
+    /** Physical scale. */
     scale: THREE.Vector3;
+    /** Current visibility (0-1). */
     opacity: number;
+    /** Unix timestamp of creation. */
     createdAt: number;
+    /** Duration of the visibility fade in ms. */
     fadeTime: number;
+    /** Optional reference to the physical Mesh. */
     mesh?: THREE.Mesh;
 }
 
+/**
+ * Configuration for billboard behavior.
+ * @category World Building
+ */
 export interface BillboardConfig {
+    /** Whether to restrict rotation to the Y-axis (cylindrical). */
     lockY?: boolean;
+    /** Local position offset. */
     offset?: THREE.Vector3;
+    /** Relative scale multiplier. */
     scaleFactor?: number;
 }
 
+/**
+ * Configuration for sprite sheet animation.
+ * @category World Building
+ */
 export interface SpriteSheetConfig {
+    /** Number of horizontal frames. */
     columns: number;
+    /** Number of vertical frames. */
     rows: number;
+    /** Total number of animation frames. */
     frameCount?: number;
+    /** Playback speed in frames per second. */
     frameRate: number;
+    /** Whether to loop the animation. */
     loop?: boolean;
+    /** Play forward then backward. */
     pingPong?: boolean;
+    /** Frame index to start playback. */
     startFrame?: number;
 }
 
+/**
+ * Runtime state of a sprite animation.
+ * @category World Building
+ */
 export interface SpriteAnimationState {
+    /** Current active frame index. */
     currentFrame: number;
+    /** Accumulated playback time. */
     elapsedTime: number;
+    /** Whether animation is currently playing. */
     isPlaying: boolean;
+    /** Current playback direction (1 for forward, -1 for backward). */
     direction: 1 | -1;
 }
 

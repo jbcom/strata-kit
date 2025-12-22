@@ -1,32 +1,20 @@
 /**
- * Strata ECS module - Entity Component System powered by Miniplex.
+ * High-Performance Entity Component System (ECS).
  *
+ * Powered by Miniplex, this module provides a reactive ECS architecture
+ * optimized for managing complex game state and large numbers of entities.
+ *
+ * @packageDocumentation
  * @module core/ecs
- * @public
+ * @category Game Systems
  *
  * @example
  * ```typescript
- * import { createWorld, createSystemScheduler, World, useSystem } from '@jbcom/strata/core/ecs';
- *
- * interface GameEntity extends BaseEntity {
- *   position: { x: number; y: number; z: number };
- *   velocity?: { x: number; y: number; z: number };
- * }
- *
- * const world = createWorld<GameEntity>();
- * const player = world.spawn({ position: { x: 0, y: 0, z: 0 } });
- *
- * // In a React component:
- * function GameSystem() {
- *   const movementSystem = createSystem<GameEntity>(
- *     ['position', 'velocity'],
- *     (entity, delta) => {
- *       entity.position.x += entity.velocity!.x * delta;
- *     }
- *   );
- *   useSystem(world, movementSystem);
- *   return null;
- * }
+ * const world = createWorld<MyEntity>();
+ * const player = world.spawn({
+ *   position: { x: 0, y: 0, z: 0 },
+ *   health: 100
+ * });
  * ```
  */
 

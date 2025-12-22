@@ -1,11 +1,12 @@
 /**
- * Debug Panel Integration
+ * Debug Panel Integration.
  *
- * Thin wrapper around leva for game development debug panels.
- * Provides presets for common game debugging scenarios.
+ * Provides a managed interface for `leva` debug panels with presets for common
+ * game development scenarios including camera, physics, and lighting.
  *
+ * @packageDocumentation
  * @module core/debug/panel
- * @public
+ * @category Game Systems
  */
 
 import { button, folder, Leva, LevaPanel, useControls, useCreateStore } from 'leva';
@@ -20,13 +21,14 @@ import type {
 /**
  * Debug panel configuration with store.
  * Use with LevaPanel to apply the configuration.
+ * @category Game Systems
  */
 export interface DebugPanelInstance {
-    /** The leva store instance */
+    /** The leva store instance. */
     store: ReturnType<typeof useCreateStore>;
-    /** The original configuration */
+    /** The original configuration. */
     config: DebugPanelConfig;
-    /** Props to spread on LevaPanel/Leva component */
+    /** Props to spread on LevaPanel/Leva component. */
     levaProps: {
         titleBar: { title?: string };
         collapsed?: boolean;
@@ -38,23 +40,9 @@ export interface DebugPanelInstance {
  * Creates a debug panel configuration with store and pre-computed Leva props.
  * Returns the store, config, and levaProps to spread on the Leva component.
  *
- * @param config - Panel configuration options
- * @returns Debug panel instance with store, config, and levaProps
- *
- * @example
- * ```tsx
- * import { createDebugPanel, Leva } from '@jbcom/strata/core/debug';
- *
- * function DebugControls() {
- *   const panel = createDebugPanel({
- *     name: 'Game Debug',
- *     collapsed: false,
- *     position: 'top-right',
- *   });
- *
- *   return <Leva store={panel.store} {...panel.levaProps} />;
- * }
- * ```
+ * @category Game Systems
+ * @param config - Panel configuration options.
+ * @returns Debug panel instance with store, config, and levaProps.
  */
 export function createDebugPanel(config: DebugPanelConfig = {}): DebugPanelInstance {
     const store = useCreateStore();
@@ -72,29 +60,10 @@ export function createDebugPanel(config: DebugPanelConfig = {}): DebugPanelInsta
  * Hook for adding debug controls to a panel.
  * Wraps leva's useControls with preset support.
  *
- * @param schema - Control schema definition
- * @param deps - Dependencies array for re-evaluation
- * @returns Control values object
- *
- * @example
- * ```typescript
- * import { useDebugControls } from '@jbcom/strata/core/debug';
- *
- * function GameScene() {
- *   const { showGrid, gridSize, wireframe } = useDebugControls({
- *     showGrid: true,
- *     gridSize: { value: 10, min: 1, max: 100, step: 1 },
- *     wireframe: false,
- *   });
- *
- *   return (
- *     <>
- *       {showGrid && <Grid size={gridSize} />}
- *       <Mesh wireframe={wireframe} />
- *     </>
- *   );
- * }
- * ```
+ * @category Game Systems
+ * @param schema - Control schema definition.
+ * @param deps - Dependencies array for re-evaluation.
+ * @returns Control values object.
  */
 export function useDebugControls(
     schema: Record<string, unknown>,
@@ -109,25 +78,11 @@ export function useDebugControls(
 /**
  * Hook for adding debug controls with a folder name.
  *
- * @param folderName - Name of the folder in the debug panel
- * @param schema - Control schema definition
- * @param collapsed - Whether the folder is collapsed by default
- * @returns Control values object
- *
- * @example
- * ```typescript
- * import { useDebugFolder } from '@jbcom/strata/core/debug';
- *
- * function PlayerDebug() {
- *   const values = useDebugFolder('Player', {
- *     health: { value: 100, min: 0, max: 100 },
- *     speed: { value: 5, min: 0, max: 20 },
- *     invincible: false,
- *   });
- *
- *   return null; // Debug controls appear in panel
- * }
- * ```
+ * @category Game Systems
+ * @param folderName - Name of the folder in the debug panel.
+ * @param schema - Control schema definition.
+ * @param collapsed - Whether the folder is collapsed by default.
+ * @returns Control values object.
  */
 export function useDebugFolder(
     folderName: string,
@@ -141,26 +96,8 @@ export function useDebugFolder(
 
 /**
  * Camera debug preset schema.
- *
- * @returns Schema for camera debugging controls
- *
- * @example
- * ```typescript
- * import { useCameraDebug } from '@jbcom/strata/core/debug';
- *
- * function CameraController() {
- *   const { fov, near, far, position } = useCameraDebug();
- *
- *   return (
- *     <PerspectiveCamera
- *       fov={fov}
- *       near={near}
- *       far={far}
- *       position={[position.x, position.y, position.z]}
- *     />
- *   );
- * }
- * ```
+ * @category Game Systems
+ * @returns Schema for camera debugging controls.
  */
 export function useCameraDebug(defaults: Partial<CameraDebugValues> = {}): CameraDebugValues {
     return useControls('Camera', {
@@ -179,24 +116,8 @@ export function useCameraDebug(defaults: Partial<CameraDebugValues> = {}): Camer
 
 /**
  * Physics debug preset schema.
- *
- * @returns Schema for physics debugging controls
- *
- * @example
- * ```typescript
- * import { usePhysicsDebug } from '@jbcom/strata/core/debug';
- *
- * function PhysicsWorld() {
- *   const { gravity, timeScale, showColliders } = usePhysicsDebug();
- *
- *   return (
- *     <Physics gravity={[gravity.x, gravity.y, gravity.z]} timeScale={timeScale}>
- *       {showColliders && <Debug />}
- *       <Scene />
- *     </Physics>
- *   );
- * }
- * ```
+ * @category Game Systems
+ * @returns Schema for physics debugging controls.
  */
 export function usePhysicsDebug(defaults: Partial<PhysicsDebugValues> = {}): PhysicsDebugValues {
     return useControls('Physics', {
@@ -212,27 +133,8 @@ export function usePhysicsDebug(defaults: Partial<PhysicsDebugValues> = {}): Phy
 
 /**
  * Lighting debug preset schema.
- *
- * @returns Schema for lighting debugging controls
- *
- * @example
- * ```typescript
- * import { useLightingDebug } from '@jbcom/strata/core/debug';
- *
- * function Lighting() {
- *   const { ambientIntensity, sunIntensity, sunPosition } = useLightingDebug();
- *
- *   return (
- *     <>
- *       <ambientLight intensity={ambientIntensity} />
- *       <directionalLight
- *         intensity={sunIntensity}
- *         position={[sunPosition.x, sunPosition.y, sunPosition.z]}
- *       />
- *     </>
- *   );
- * }
- * ```
+ * @category Game Systems
+ * @returns Schema for lighting debugging controls.
  */
 export function useLightingDebug(defaults: Partial<LightingDebugValues> = {}): LightingDebugValues {
     return useControls('Lighting', {
@@ -263,23 +165,8 @@ export function useLightingDebug(defaults: Partial<LightingDebugValues> = {}): L
 
 /**
  * Post-processing debug preset schema.
- *
- * @returns Schema for post-processing debugging controls
- *
- * @example
- * ```typescript
- * import { usePostProcessingDebug } from '@jbcom/strata/core/debug';
- *
- * function PostProcessing() {
- *   const { bloomEnabled, bloomIntensity } = usePostProcessingDebug();
- *
- *   return (
- *     <EffectComposer>
- *       {bloomEnabled && <Bloom intensity={bloomIntensity} />}
- *     </EffectComposer>
- *   );
- * }
- * ```
+ * @category Game Systems
+ * @returns Schema for post-processing debugging controls.
  */
 export function usePostProcessingDebug(
     defaults: Partial<PostProcessingDebugValues> = {}
@@ -318,24 +205,9 @@ export function usePostProcessingDebug(
 /**
  * Creates a debug action button.
  *
- * @param onClick - Click handler
- * @returns Button schema for use in useControls
- *
- * @example
- * ```typescript
- * import { useDebugControls, createDebugButton } from '@jbcom/strata/core/debug';
- *
- * function DebugActions() {
- *   useDebugControls({
- *     'Reset Position': createDebugButton(() => {
- *       player.position.set(0, 0, 0);
- *     }),
- *     'Spawn Enemy': createDebugButton(spawnEnemy),
- *   });
- *
- *   return null;
- * }
- * ```
+ * @category Game Systems
+ * @param onClick - Click handler.
+ * @returns Button schema for use in useControls.
  */
 export function createDebugButton(onClick: () => void): ReturnType<typeof button> {
     return button(onClick);

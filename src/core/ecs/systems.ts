@@ -1,7 +1,8 @@
 /**
  * System registration and execution utilities for Strata ECS.
+ * @packageDocumentation
  * @module core/ecs/systems
- * @public
+ * @category Game Systems
  */
 
 import { useFrame } from '@react-three/fiber';
@@ -10,7 +11,7 @@ import type { BaseEntity, StrataWorld, SystemConfig, SystemFn } from './types';
 
 /**
  * System scheduler for managing and executing ECS systems.
- * @public
+ * @category Game Systems
  * @example
  * ```typescript
  * const scheduler = createSystemScheduler<GameEntity>();
@@ -19,13 +20,21 @@ import type { BaseEntity, StrataWorld, SystemConfig, SystemFn } from './types';
  * ```
  */
 export interface SystemScheduler<T extends BaseEntity> {
+    /** Register a new system with the scheduler. */
     register: (config: SystemConfig<T>) => void;
+    /** Remove a system by name. */
     unregister: (name: string) => boolean;
+    /** Execute all enabled systems in priority order. */
     run: (world: StrataWorld<T>, deltaTime: number) => void;
+    /** Enable a system by name. */
     enable: (name: string) => void;
+    /** Disable a system by name. */
     disable: (name: string) => void;
+    /** Get names of all registered systems. */
     getSystemNames: () => string[];
+    /** Check if a specific system is enabled. */
     isEnabled: (name: string) => boolean;
+    /** Remove all systems and reset the scheduler. */
     clear: () => void;
 }
 
@@ -33,13 +42,9 @@ export interface SystemScheduler<T extends BaseEntity> {
  * Creates a new system scheduler for managing ECS systems.
  * Uses a dirty flag pattern to cache sorted systems and avoid
  * re-sorting on every frame (performance optimization for 60fps loops).
- * @returns A SystemScheduler instance
- * @example
- * ```typescript
- * const scheduler = createSystemScheduler<GameEntity>();
- * scheduler.register({ name: 'physics', fn: physicsSystem, priority: 0 });
- * scheduler.run(world, 1/60);
- * ```
+ *
+ * @category Game Systems
+ * @returns A SystemScheduler instance.
  */
 export function createSystemScheduler<T extends BaseEntity>(): SystemScheduler<T> {
     const systems = new Map<string, SystemConfig<T>>();
@@ -109,15 +114,11 @@ export function createSystemScheduler<T extends BaseEntity>(): SystemScheduler<T
 
 /**
  * Creates a simple system function from a query and update function.
- * @param components - Component keys to query for
- * @param update - Function to call for each matching entity
- * @returns A SystemFn that can be registered with the scheduler
- * @example
- * ```typescript
- * const movementSystem = createSystem<GameEntity>(['position', 'velocity'], (entity, delta) => {
- *   entity.position.x += entity.velocity!.x * delta;
- * });
- * ```
+ *
+ * @category Game Systems
+ * @param components - Component keys to query for.
+ * @param update - Function to call for each matching entity.
+ * @returns A SystemFn that can be registered with the scheduler.
  */
 export function createSystem<T extends BaseEntity>(
     components: (keyof T)[],
@@ -193,28 +194,11 @@ export interface UseSystemOptions {
  * React hook for running an ECS system within React Three Fiber's render loop.
  * Automatically executes the system on each frame using useFrame.
  *
- * @param world - The Strata ECS world to operate on
- * @param system - The system function to execute each frame
- * @param options - Optional configuration (enabled, priority)
- * @returns Object with control methods to enable/disable the system
- *
- * @example
- * ```typescript
- * function MovementSystem() {
- *   const world = useContext(ECSContext);
- *
- *   const movementSystem = createSystem<GameEntity>(
- *     ['position', 'velocity'],
- *     (entity, delta) => {
- *       entity.position.x += entity.velocity!.x * delta;
- *     }
- *   );
- *
- *   const { setEnabled } = useSystem(world, movementSystem, { priority: 0 });
- *
- *   return null;
- * }
- * ```
+ * @category Game Systems
+ * @param world - The Strata ECS world to operate on.
+ * @param system - The system function to execute each frame.
+ * @param options - Optional configuration (enabled, priority).
+ * @returns Object with control methods to enable/disable the system.
  */
 export function useSystem<T extends BaseEntity>(
     world: StrataWorld<T>,
@@ -259,27 +243,10 @@ export function useSystem<T extends BaseEntity>(
  * React hook for running a system scheduler within React Three Fiber's render loop.
  * Executes all registered systems in priority order on each frame.
  *
- * @param scheduler - The system scheduler to run
- * @param world - The Strata ECS world to operate on
- * @param priority - Optional useFrame priority (default: 0)
- *
- * @example
- * ```typescript
- * function GameLoop() {
- *   const world = useContext(ECSContext);
- *   const scheduler = useMemo(() => createSystemScheduler<GameEntity>(), []);
- *
- *   useEffect(() => {
- *     scheduler.register({ name: 'movement', fn: movementSystem });
- *     scheduler.register({ name: 'physics', fn: physicsSystem, priority: 10 });
- *     return () => scheduler.clear();
- *   }, [scheduler]);
- *
- *   useScheduler(scheduler, world);
- *
- *   return null;
- * }
- * ```
+ * @category Game Systems
+ * @param scheduler - The system scheduler to run.
+ * @param world - The Strata ECS world to operate on.
+ * @param priority - Optional useFrame priority (default: 0).
  */
 export function useScheduler<T extends BaseEntity>(
     scheduler: SystemScheduler<T>,

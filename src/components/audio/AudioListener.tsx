@@ -10,14 +10,15 @@ import { useAudioListener } from './context';
 import type { AudioListenerProps } from './types';
 
 /**
- * Audio listener that syncs with the camera for 3D spatial audio.
- * The listener is automatically attached to the camera in AudioProvider.
+ * Three.js Audio Listener.
  *
+ * Syncs the virtual microphone with the active scene camera. Required for
+ * 3D spatial audio calculations. Automatically managed by `AudioProvider`.
+ *
+ * @category Player Experience
  * @example
  * ```tsx
- * <AudioListener />
- *
- * <AudioListener camera={customCameraRef.current} />
+ * <AudioListener camera={customCamera} />
  * ```
  */
 export function AudioListener({ camera: propCamera }: AudioListenerProps) {

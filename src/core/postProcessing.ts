@@ -1,14 +1,18 @@
 /**
- * Post-Processing Core Utilities
+ * Post-Processing Core Utilities.
  *
- * Provides types, interfaces, and helper functions for post-processing effects.
- * Designed to work with @react-three/postprocessing.
+ * Provides types, interfaces, and mathematical helper functions for advanced
+ * visual effects. Designed for integration with `@react-three/postprocessing`.
+ *
+ * @packageDocumentation
+ * @module core/postProcessing
  */
 
 import * as THREE from 'three';
 
 /**
- * Mood/style presets for post-processing
+ * Valid post-processing visual styles.
+ * @category Rendering Pipeline
  */
 export type PostProcessingMood =
     | 'cinematic'
@@ -21,7 +25,8 @@ export type PostProcessingMood =
     | 'sci-fi';
 
 /**
- * Bloom effect settings
+ * Bloom effect settings.
+ * @category Rendering Pipeline
  */
 export interface BloomSettings {
     /** Bloom intensity (0-3, default 1) */
@@ -39,7 +44,8 @@ export interface BloomSettings {
 }
 
 /**
- * Depth of Field effect settings
+ * Depth of Field effect settings.
+ * @category Rendering Pipeline
  */
 export interface DOFSettings {
     /** Focus distance from camera (in world units) */
@@ -55,7 +61,8 @@ export interface DOFSettings {
 }
 
 /**
- * Vignette effect settings
+ * Vignette effect settings.
+ * @category Rendering Pipeline
  */
 export interface VignetteSettings {
     /** Darkness of vignette (0-1, default 0.5) */
@@ -67,7 +74,8 @@ export interface VignetteSettings {
 }
 
 /**
- * Chromatic Aberration effect settings
+ * Chromatic Aberration effect settings.
+ * @category Rendering Pipeline
  */
 export interface ChromaticAberrationSettings {
     /** Offset vector for chromatic shift */
@@ -79,7 +87,8 @@ export interface ChromaticAberrationSettings {
 }
 
 /**
- * Film Grain effect settings
+ * Film Grain effect settings.
+ * @category Rendering Pipeline
  */
 export interface FilmGrainSettings {
     /** Grain intensity (0-1, default 0.1) */
@@ -89,7 +98,8 @@ export interface FilmGrainSettings {
 }
 
 /**
- * Color Grading / HueSaturation settings
+ * Color Grading and Hue/Saturation settings.
+ * @category Rendering Pipeline
  */
 export interface ColorGradingSettings {
     /** Hue shift in radians (-π to π) */
@@ -101,7 +111,8 @@ export interface ColorGradingSettings {
 }
 
 /**
- * SSAO (Screen Space Ambient Occlusion) settings
+ * Screen Space Ambient Occlusion (SSAO) settings.
+ * @category Rendering Pipeline
  */
 export interface SSAOSettings {
     /** Blend mode */
@@ -127,7 +138,8 @@ export interface SSAOSettings {
 }
 
 /**
- * Tone Mapping settings
+ * Tone Mapping settings.
+ * @category Rendering Pipeline
  */
 export interface ToneMappingSettings {
     /** Tone mapping mode (0-5) */
@@ -139,7 +151,8 @@ export interface ToneMappingSettings {
 }
 
 /**
- * Noise effect settings
+ * Noise effect settings.
+ * @category Rendering Pipeline
  */
 export interface NoiseSettings {
     /** Premultiply noise (default false) */
@@ -149,7 +162,8 @@ export interface NoiseSettings {
 }
 
 /**
- * Brightness/Contrast settings
+ * Brightness and Contrast settings.
+ * @category Rendering Pipeline
  */
 export interface BrightnessContrastSettings {
     /** Brightness adjustment (-1 to 1, 0 is neutral) */
@@ -159,7 +173,8 @@ export interface BrightnessContrastSettings {
 }
 
 /**
- * Sepia effect settings
+ * Sepia effect settings.
+ * @category Rendering Pipeline
  */
 export interface SepiaSettings {
     /** Intensity (0-1, default 1) */
@@ -167,7 +182,8 @@ export interface SepiaSettings {
 }
 
 /**
- * Complete post-processing preset configuration
+ * Complete post-processing preset configuration.
+ * @category Rendering Pipeline
  */
 export interface PostProcessingPreset {
     /** Preset name */
@@ -201,7 +217,8 @@ export interface PostProcessingPreset {
 }
 
 /**
- * LUT (Look-Up Table) configuration for color grading
+ * LUT (Look-Up Table) configuration for color grading.
+ * @category Rendering Pipeline
  */
 export interface LUTConfig {
     /** LUT texture URL or data */

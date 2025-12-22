@@ -1,10 +1,24 @@
 /**
- * Marching Cubes implementation for generating meshes from SDFs
+ * High-Performance Marching Cubes Implementation.
  *
- * Marching Cubes is an algorithm for extracting a polygonal mesh of an
- * isosurface from a 3D scalar field (like an SDF).
+ * Extracts optimized polygonal meshes from mathematical isosurfaces (SDFs),
+ * enabling dynamic terrain generation and organic object extraction.
  *
- * Lifted from Otterfall procedural terrain system.
+ * @packageDocumentation
+ * @module core/marching-cubes
+ * @category World Building
+ *
+ * ## Interactive Demos
+ * - 🎮 [Live Terrain Demo](http://jonbogaty.com/nodejs-strata/demos/terrain.html)
+ *
+ * @example
+ * ```typescript
+ * const result = marchingCubes(mySDF, {
+ *   resolution: 64,
+ *   bounds: { min: new THREE.Vector3(-10, -10, -10), max: new THREE.Vector3(10, 10, 10) }
+ * });
+ * const geometry = createGeometryFromMarchingCubes(result);
+ * ```
  */
 
 import * as THREE from 'three';
@@ -328,17 +342,31 @@ export interface MarchingCubesResult {
     indices: Uint32Array;
 }
 
+/**
+ * Options for the marching cubes algorithm.
+ * @category World Building
+ */
 export interface MarchingCubesOptions {
-    resolution: number; // Grid resolution
+    /** Grid resolution (number of cells per axis). Max: 256. */
+    resolution: number;
+    /** World-space boundaries for the extraction volume. */
     bounds: {
+        /** Minimum corner of the bounding box. */
         min: THREE.Vector3;
+        /** Maximum corner of the bounding box. */
         max: THREE.Vector3;
     };
-    isoLevel?: number; // Surface level (default 0 for SDFs)
+    /** Target distance value for the isosurface. Default: 0. */
+    isoLevel?: number;
 }
 
 /**
- * Generate a mesh from an SDF using the Marching Cubes algorithm
+ * Generate a mesh from an SDF using the Marching Cubes algorithm.
+ *
+ * @category World Building
+ * @param sdf - The input Signed Distance Function.
+ * @param options - Extraction configuration.
+ * @returns Raw vertex and index data for geometry creation.
  */
 export function marchingCubes(
     sdf: (p: THREE.Vector3) => number,
@@ -527,7 +555,11 @@ export function marchingCubes(
 }
 
 /**
- * Create a Three.js BufferGeometry from marching cubes result
+ * Create a Three.js BufferGeometry from marching cubes raw data.
+ *
+ * @category World Building
+ * @param result - The raw data from marchingCubes.
+ * @returns A renderable Three.js BufferGeometry.
  */
 export function createGeometryFromMarchingCubes(result: MarchingCubesResult): THREE.BufferGeometry {
     if (!result) {
@@ -562,14 +594,28 @@ export function createGeometryFromMarchingCubes(result: MarchingCubesResult): TH
 }
 
 /**
- * Chunk-based terrain generation for large worlds
+ * Chunk-based terrain generation for large worlds.
+ * @category World Building
  */
 export interface TerrainChunk {
+    /** The extracted geometry for the chunk. */
     geometry: THREE.BufferGeometry;
+    /** World-space bounding box of the chunk. */
     boundingBox: THREE.Box3;
+    /** Central world position of the chunk. */
     position: THREE.Vector3;
 }
 
+/**
+ * Generate a single terrain chunk using marching cubes.
+ *
+ * @category World Building
+ * @param sdf - The Signed Distance Function representing the terrain.
+ * @param chunkPosition - Center position of the chunk.
+ * @param chunkSize - Physical size of the chunk side.
+ * @param resolution - Grid resolution for extraction.
+ * @returns A populated TerrainChunk object.
+ */
 export function generateTerrainChunk(
     sdf: (p: THREE.Vector3) => number,
     chunkPosition: THREE.Vector3,

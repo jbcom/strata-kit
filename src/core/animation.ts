@@ -1,84 +1,170 @@
 /**
- * Core animation algorithms
+ * Core Animation and Kinematics System.
  *
- * Pure TypeScript animation utilities including IK solvers, spring dynamics,
- * and procedural locomotion for skeletal and object-based animation.
+ * Provides high-performance, pure TypeScript utilities for procedural animation,
+ * including CCD and FABRIK IK solvers, spring dynamics, and complex locomotion logic.
+ *
+ * @packageDocumentation
  * @module core/animation
+ * @category Entities & Simulation
  */
 
 import * as THREE from 'three';
 
+/**
+ * Data representing a chain of connected bones.
+ * @category Entities & Simulation
+ */
 export interface BoneChain {
+    /** Array of Three.js objects acting as bones. */
     bones: THREE.Object3D[];
+    /** Pre-calculated distance between each bone and its successor. */
     lengths: number[];
+    /** Total combined length of the bone chain. */
     totalLength: number;
+    /** Optional angular or linear constraints per bone. */
     constraints?: BoneConstraint[];
 }
 
+/**
+ * Physical constraint applied to a specific bone in a chain.
+ * @category Entities & Simulation
+ */
 export interface BoneConstraint {
+    /** Index of the bone in the BoneChain. */
     boneIndex: number;
+    /** Minimum allowed rotation angle in radians. */
     minAngle?: number;
+    /** Maximum allowed rotation angle in radians. */
     maxAngle?: number;
+    /** Primary axis for hinge or twist constraints. */
     axis?: THREE.Vector3;
+    /** Algorithm used for limiting movement. */
     limitType?: 'hinge' | 'ball' | 'twist';
+    /** Minimum twist angle. */
     twistMin?: number;
+    /** Maximum twist angle. */
     twistMax?: number;
+    /** Maximum allowed swing angle for ball joints. */
     swingLimit?: number;
 }
 
+/**
+ * Result of an IK solver execution.
+ * @category Entities & Simulation
+ */
 export interface IKSolverResult {
+    /** Array of computed world positions for each bone. */
     positions: THREE.Vector3[];
+    /** Array of computed local rotations for each bone. */
     rotations: THREE.Quaternion[];
+    /** Whether the target was successfully reached within tolerance. */
     reached: boolean;
+    /** Total iterations performed by the solver. */
     iterations: number;
+    /** Final distance from end effector to target. */
     error: number;
 }
 
+/**
+ * Configuration for a physical spring system.
+ * @category Entities & Simulation
+ */
 export interface SpringConfig {
+    /** Resistance to displacement. Higher = snappier. */
     stiffness: number;
+    /** Resistance to movement. Higher = less oscillation. */
     damping: number;
+    /** Weight of the object. Higher = more momentum. */
     mass: number;
+    /** Neutral length of the spring. */
     restLength?: number;
 }
 
+/**
+ * Runtime state of a physical spring.
+ * @category Entities & Simulation
+ */
 export interface SpringState {
+    /** Current world position. */
     position: THREE.Vector3;
+    /** Current velocity vector. */
     velocity: THREE.Vector3;
 }
 
+/**
+ * Configuration for procedural character gait.
+ * @category Entities & Simulation
+ */
 export interface GaitConfig {
+    /** Distance covered by a single full step. */
     stepLength: number;
+    /** Vertical lift height of each step. */
     stepHeight: number;
+    /** Time in seconds taken for a single step. */
     stepDuration: number;
+    /** Vertical body oscillation magnitude. */
     bodyBob: number;
+    /** Horizontal body oscillation magnitude. */
     bodySwayAmplitude: number;
+    /** Maximum hip rotation angle during walking. */
     hipRotation: number;
+    /** Phase difference between left and right legs (0-1). */
     phaseOffset: number;
+    /** Distance the foot lands past the target position. */
     footOvershoot: number;
 }
 
+/**
+ * Current state of a procedural locomotion cycle.
+ * @category Entities & Simulation
+ */
 export interface GaitState {
+    /** Current normalized phase of the cycle (0-1). */
     phase: number;
+    /** Target world position for the left foot. */
     leftFootTarget: THREE.Vector3;
+    /** Target world position for the right foot. */
     rightFootTarget: THREE.Vector3;
+    /** Whether the left foot is currently in flight. */
     leftFootLifted: boolean;
+    /** Whether the right foot is currently in flight. */
     rightFootLifted: boolean;
+    /** Computed body offset from root. */
     bodyOffset: THREE.Vector3;
+    /** Computed body rotation. */
     bodyRotation: THREE.Euler;
 }
 
+/**
+ * Configuration for a procedural look-at behavior.
+ * @category Entities & Simulation
+ */
 export interface LookAtConfig {
+    /** Maximum allowed rotation angle from neutral. */
     maxAngle: number;
+    /** Tracking speed multiplier. */
     speed: number;
+    /** Radius of center deadzone where no rotation occurs. */
     deadzone: number;
+    /** Smoothing factor for movement (0-1). */
     smoothing: number;
+    /** Up axis for the tracking object. Default: [0, 1, 0]. */
     upVector?: THREE.Vector3;
+    /** Forward axis for the tracking object. Default: [0, 0, 1]. */
     forwardVector?: THREE.Vector3;
 }
 
+/**
+ * Runtime state of a look-at controller.
+ * @category Entities & Simulation
+ */
 export interface LookAtState {
+    /** Current world-space rotation. */
     currentRotation: THREE.Quaternion;
+    /** Target world-space rotation. */
     targetRotation: THREE.Quaternion;
+    /** Current angular velocity. */
     velocity: THREE.Vector3;
 }
 

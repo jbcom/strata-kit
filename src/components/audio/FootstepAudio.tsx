@@ -16,27 +16,21 @@ interface SoundPool {
 }
 
 /**
- * Footstep audio system with multiple surface types and sound pooling.
+ * Surface-Aware Footstep Audio System.
  *
+ * Automatically plays appropriate footstep sounds based on detected surface materials.
+ * Includes built-in sound pooling for high polyphony and rate throttling.
+ *
+ * @category Player Experience
  * @example
  * ```tsx
- * const footstepRef = useRef<FootstepAudioRef>(null);
- *
  * <FootstepAudio
- *   ref={footstepRef}
  *   surfaces={{
- *     grass: '/sounds/footstep-grass.mp3',
- *     stone: '/sounds/footstep-stone.mp3',
- *     wood: '/sounds/footstep-wood.mp3',
+ *     grass: '/sounds/step_grass.mp3',
+ *     water: '/sounds/step_water.mp3'
  *   }}
- *   defaultSurface="stone"
- *   volume={0.7}
+ *   volume={0.6}
  * />
- *
- * const onStep = () => {
- *   const surface = detectGroundMaterial();
- *   footstepRef.current?.playFootstep(surface);
- * };
  * ```
  */
 export const FootstepAudio = forwardRef<FootstepAudioRef, FootstepAudioProps>(

@@ -1,6 +1,8 @@
 /**
  * Core shader utilities for Strata
- * Provides reusable GLSL snippets, noise functions, and shader composition helpers
+ * Provides reusable GLSL snippets, noise functions, and shader composition helpers.
+ * @category Rendering Pipeline
+ * @module core/shaders
  */
 
 export const ShaderChunks = {
@@ -416,38 +418,74 @@ vec4 dissolveWithEdge(vec3 baseColor, vec3 edgeColor, float noise, float progres
     },
 };
 
+/**
+ * Represents a single uniform value.
+ * @category Rendering Pipeline
+ */
 export interface ShaderUniform {
     value: number | number[] | Float32Array;
 }
 
+/**
+ * Collection of shader uniforms.
+ * @category Rendering Pipeline
+ */
 export interface ShaderUniforms {
     [key: string]: ShaderUniform;
 }
 
+/**
+ * Create a time uniform.
+ * @category Rendering Pipeline
+ */
 export function createTimeUniform(): ShaderUniform {
     return { value: 0 };
 }
 
+/**
+ * Create a progress uniform.
+ * @category Rendering Pipeline
+ */
 export function createProgressUniform(initial: number = 0): ShaderUniform {
     return { value: Math.max(0, Math.min(1, initial)) };
 }
 
+/**
+ * Create a color uniform.
+ * @category Rendering Pipeline
+ */
 export function createColorUniform(r: number, g: number, b: number): ShaderUniform {
     return { value: [r, g, b] };
 }
 
+/**
+ * Create a Vector2 uniform.
+ * @category Rendering Pipeline
+ */
 export function createVector2Uniform(x: number, y: number): ShaderUniform {
     return { value: [x, y] };
 }
 
+/**
+ * Create a Vector3 uniform.
+ * @category Rendering Pipeline
+ */
 export function createVector3Uniform(x: number, y: number, z: number): ShaderUniform {
     return { value: [x, y, z] };
 }
 
+/**
+ * Compose multiple shader chunks into a single string.
+ * @category Rendering Pipeline
+ */
 export function composeShaderChunks(...chunks: string[]): string {
     return chunks.join('\n\n');
 }
 
+/**
+ * Build a complete vertex shader.
+ * @category Rendering Pipeline
+ */
 export function buildVertexShader(options: {
     attributes?: string;
     uniforms?: string;
@@ -466,6 +504,10 @@ void main() {
 }`;
 }
 
+/**
+ * Build a complete fragment shader.
+ * @category Rendering Pipeline
+ */
 export function buildFragmentShader(options: {
     precision?: string;
     uniforms?: string;

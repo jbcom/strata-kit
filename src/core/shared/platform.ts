@@ -1,10 +1,12 @@
 /**
- * Platform Detection & Adapter Management
+ * Platform Detection & Adapter Management.
  *
- * Provides utilities for detecting the current platform and managing
- * platform-specific adapters for cross-platform compatibility.
+ * Provides utilities for detecting the current execution environment (Web,
+ * Capacitor, or React Native) and selecting appropriate platform-specific adapters.
  *
+ * @packageDocumentation
  * @module core/shared/platform
+ * @category World Building
  */
 
 // Type definitions for better type safety
@@ -37,6 +39,11 @@ export interface PlatformCapabilities {
 let cachedPlatform: Platform | null = null;
 let cachedCapabilities: PlatformCapabilities | null = null;
 
+/**
+ * Detect the current execution platform.
+ * @category World Building
+ * @returns The detected platform string ('web', 'capacitor', or 'native').
+ */
 export function detectPlatform(): Platform {
     if (cachedPlatform) return cachedPlatform;
 
@@ -101,6 +108,11 @@ function checkLocalStorage(): boolean {
     }
 }
 
+/**
+ * Detect available hardware and software capabilities.
+ * @category World Building
+ * @returns Object containing booleans for each detected capability.
+ */
 export function detectCapabilities(): PlatformCapabilities {
     if (cachedCapabilities) return cachedCapabilities;
 
@@ -169,6 +181,14 @@ export interface AdapterMap<T> {
     native?: T;
 }
 
+/**
+ * Select the appropriate adapter for the current platform.
+ *
+ * @category World Building
+ * @param adapters - Map of platform-specific adapter implementations.
+ * @param platform - Optional explicit platform override.
+ * @returns The selected adapter implementation.
+ */
 export function selectAdapter<T>(adapters: AdapterMap<T>, platform?: Platform): T {
     const currentPlatform = platform ?? detectPlatform();
 

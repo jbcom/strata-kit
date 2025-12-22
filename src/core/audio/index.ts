@@ -1,11 +1,18 @@
 /**
- * Audio Module
+ * Immersive 3D Spatial Audio Engine.
  *
- * Re-exports Howler.js for 2D audio and Strata wrappers for
- * managed audio playback with spatial 3D audio support.
+ * Provides a managed system for audio playback, combining the reliability of
+ * Howler.js with advanced spatial 3D audio features and environmental reverb.
  *
+ * @packageDocumentation
  * @module core/audio
- * @public
+ * @category Player Experience
+ *
+ * @example
+ * ```typescript
+ * const soundManager = createSoundManager();
+ * soundManager.play('music_bg', { volume: 0.5, loop: true });
+ * ```
  */
 
 export { Howl, Howler } from 'howler';

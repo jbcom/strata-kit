@@ -1,7 +1,6 @@
 /**
- * Audio Components
- *
- * React components for spatial audio in Three.js scenes.
+ * Complete Spatial Audio System.
+ * @packageDocumentation
  * @module components/audio
  */
 

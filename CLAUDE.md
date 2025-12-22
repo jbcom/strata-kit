@@ -52,15 +52,27 @@ pnpm run demo              # Serve demo files
 ```
 src/
 ├── core/           # Pure TypeScript (NO React imports!)
-│   ├── math/       # Math utilities, noise, vectors
-│   ├── state/      # State management
+│   ├── ai/         # AI logic and pathfinding
+│   ├── animation/  # Animation and IK solvers
+│   ├── audio/      # Audio system core
+│   ├── camera/     # Camera math and utilities
+│   ├── debug/      # Debug tools
+│   ├── decals/     # Decals and billboards logic
 │   ├── ecs/        # Entity component system
-│   ├── pathfinding/# A* and navigation
-│   ├── audio/      # Audio system
-│   └── debug/      # Debug tools
-├── components/     # React Three Fiber components
+│   ├── math/       # General math, noise, vectors
+│   ├── state/      # State management core
+│   └── ...
+├── components/     # Modular React Three Fiber components
+│   ├── ai/         # AI components
+│   ├── animation/  # Animation components
+│   ├── audio/      # Audio components
+│   ├── camera/     # Camera components
+│   ├── ...         # (Physics, Sky, UI, etc.)
 ├── shaders/        # GLSL shaders
-├── presets/        # Ready-to-use configurations
+├── presets/        # Pre-configured modular logic
+│   ├── ai/         # AI behavior presets
+│   ├── physics/    # Physical presets
+│   └── ...
 ├── hooks/          # React hooks
 └── api/            # High-level API
 ```

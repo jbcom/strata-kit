@@ -1,7 +1,8 @@
 /**
  * World factory and entity management utilities for Strata ECS.
+ * @packageDocumentation
  * @module core/ecs/world
- * @public
+ * @category Game Systems
  */
 
 import { World } from 'miniplex';
@@ -11,11 +12,8 @@ let entityIdCounter = 0;
 
 /**
  * Generates a unique entity ID.
- * @returns A unique string identifier
- * @example
- * ```typescript
- * const id = generateEntityId(); // 'entity_1'
- * ```
+ * @category Game Systems
+ * @returns A unique string identifier.
  */
 export function generateEntityId(): string {
     return `entity_${++entityIdCounter}`;
@@ -23,11 +21,7 @@ export function generateEntityId(): string {
 
 /**
  * Resets the entity ID counter. Useful for testing.
- * @example
- * ```typescript
- * resetEntityIdCounter();
- * generateEntityId(); // 'entity_1'
- * ```
+ * @category Game Systems
  */
 export function resetEntityIdCounter(): void {
     entityIdCounter = 0;
@@ -35,15 +29,11 @@ export function resetEntityIdCounter(): void {
 
 /**
  * Creates a new Strata ECS world with enhanced utilities.
- * @param config - Optional configuration for the world
- * @returns A StrataWorld instance with entity management utilities
- * @throws {Error} When maxEntities is exceeded
- * @example
- * ```typescript
- * interface GameEntity extends BaseEntity { position: { x: number; y: number; z: number }; }
- * const world = createWorld<GameEntity>();
- * const player = world.spawn({ position: { x: 0, y: 0, z: 0 } });
- * ```
+ *
+ * @category Game Systems
+ * @param config - Optional configuration for the world.
+ * @returns A StrataWorld instance with entity management utilities.
+ * @throws {Error} When maxEntities is exceeded.
  */
 export function createWorld<T extends BaseEntity>(config: WorldConfig<T> = {}): StrataWorld<T> {
     const miniplexWorld = new World<T>();
@@ -113,13 +103,11 @@ export function createWorld<T extends BaseEntity>(config: WorldConfig<T> = {}): 
 
 /**
  * Creates an entity that matches a specific archetype.
- * @param archetype - The archetype definition
- * @param components - The component values for the entity
- * @returns A new entity matching the archetype
- * @example
- * ```typescript
- * const player = createFromArchetype(playerArchetype, { position: { x: 0, y: 0, z: 0 } });
- * ```
+ *
+ * @category Game Systems
+ * @param archetype - The archetype definition.
+ * @param components - The component values for the entity.
+ * @returns A new entity matching the archetype.
  */
 export function createFromArchetype<T extends BaseEntity>(
     archetype: Archetype<T>,
@@ -135,7 +123,10 @@ export function createFromArchetype<T extends BaseEntity>(
     return { ...components, id } as T;
 }
 
-/** Common game entity archetypes for quick entity creation. @public */
+/**
+ * Common game entity archetypes for quick entity creation.
+ * @category Game Systems
+ */
 export const ARCHETYPES = {
     MOVABLE: { name: 'movable', components: ['position', 'velocity'] as const, tags: ['physics'] },
     RENDERABLE: {
@@ -153,13 +144,11 @@ export const ARCHETYPES = {
 
 /**
  * Checks if an entity has all specified components.
- * @param entity - The entity to check
- * @param components - Component keys to check for
- * @returns True if entity has all components
- * @example
- * ```typescript
- * hasComponents(entity, 'position', 'health'); // true or false
- * ```
+ *
+ * @category Game Systems
+ * @param entity - The entity to check.
+ * @param components - Component keys to check for.
+ * @returns True if entity has all components.
  */
 export function hasComponents<T extends BaseEntity>(
     entity: T,
@@ -170,14 +159,12 @@ export function hasComponents<T extends BaseEntity>(
 
 /**
  * Adds a component to an existing entity.
- * @param world - The Strata world
- * @param entity - The entity to modify
- * @param component - The component key
- * @param value - The component value
- * @example
- * ```typescript
- * addComponent(world, entity, 'velocity', { x: 1, y: 0, z: 0 });
- * ```
+ *
+ * @category Game Systems
+ * @param world - The Strata world.
+ * @param entity - The entity to modify.
+ * @param component - The component key.
+ * @param value - The component value.
  */
 export function addComponent<T extends BaseEntity, K extends keyof T>(
     world: StrataWorld<T>,
@@ -190,13 +177,11 @@ export function addComponent<T extends BaseEntity, K extends keyof T>(
 
 /**
  * Removes a component from an existing entity.
- * @param world - The Strata world
- * @param entity - The entity to modify
- * @param component - The component key to remove
- * @example
- * ```typescript
- * removeComponent(world, entity, 'velocity');
- * ```
+ *
+ * @category Game Systems
+ * @param world - The Strata world.
+ * @param entity - The entity to modify.
+ * @param component - The component key to remove.
  */
 export function removeComponent<T extends BaseEntity, K extends keyof T>(
     world: StrataWorld<T>,
@@ -209,13 +194,11 @@ export function removeComponent<T extends BaseEntity, K extends keyof T>(
 /**
  * Finds an entity by its ID.
  * Uses O(1) lookup via internal Map when available, falls back to O(n) search.
- * @param world - The Strata world
- * @param id - The entity ID to find
- * @returns The entity if found, undefined otherwise
- * @example
- * ```typescript
- * const player = findEntityById(world, 'entity_1');
- * ```
+ *
+ * @category Game Systems
+ * @param world - The Strata world.
+ * @param id - The entity ID to find.
+ * @returns The entity if found, undefined otherwise.
  */
 export function findEntityById<T extends BaseEntity>(
     world: StrataWorld<T>,
@@ -232,13 +215,11 @@ export function findEntityById<T extends BaseEntity>(
 /**
  * Counts entities matching a specific query.
  * Uses O(1) size property from Miniplex archetypes when available.
- * @param world - The Strata world
- * @param components - Component keys to query
- * @returns Number of matching entities
- * @example
- * ```typescript
- * const movingCount = countEntities(world, 'position', 'velocity');
- * ```
+ *
+ * @category Game Systems
+ * @param world - The Strata world.
+ * @param components - Component keys to query.
+ * @returns Number of matching entities.
  */
 export function countEntities<T extends BaseEntity>(
     world: StrataWorld<T>,

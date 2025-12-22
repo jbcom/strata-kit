@@ -1,7 +1,7 @@
 /**
- * Water Materials - Core TypeScript (no React)
- *
- * Pure TypeScript functions for creating water materials
+ * Water Materials and Geometry - Core TypeScript (no React).
+ * @packageDocumentation
+ * @module presets/water
  */
 
 import * as THREE from 'three';

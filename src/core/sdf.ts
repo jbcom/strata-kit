@@ -1,13 +1,7 @@
 /**
- * Signed Distance Field (SDF) utilities
- *
- * SDFs represent geometry as a function that returns the distance to the nearest surface.
- * Negative values are inside, positive values are outside.
- *
- * These functions are designed to work both on CPU (for marching cubes)
- * and can be ported to GLSL for raymarching.
- *
- * Lifted from Otterfall procedural terrain system.
+ * Core Signed Distance Field (SDF) Primitives and Operations.
+ * @packageDocumentation
+ * @module core/sdf
  */
 
 import * as THREE from 'three';

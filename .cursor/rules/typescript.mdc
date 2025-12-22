@@ -108,6 +108,53 @@ pnpm add -D typescript
 pnpm run build
 ```
 
+## Documentation (JSDoc Gold Standard)
+
+All public APIs (components, functions, interfaces) MUST follow the "Gold Standard" JSDoc pattern to ensure professional TypeDoc generation and IDE discoverability.
+
+### Module/File Level
+Every module must start with a `@packageDocumentation` block:
+```typescript
+/**
+ * [A "selling" description focusing on the developer's goal]
+ *
+ * @packageDocumentation
+ * @module [path/to/module]
+ * @category [Rendering Pipeline | Player Experience | Game Systems | World Building | Entities & Simulation | UI & Interaction]
+ *
+ * ## Interactive Demos
+ * - 🎮 [Live Demo](http://jonbogaty.com/nodejs-strata/demos/[demo].html)
+ * - 📦 [Example Source](https://github.com/jbcom/nodejs-strata/tree/main/examples/[example])
+ *
+ * ## API Documentation
+ * - [Full API Reference](http://jonbogaty.com/nodejs-strata/api)
+ * - [Examples Mapping](https://github.com/jbcom/nodejs-strata/blob/main/EXAMPLES_API_MAP.md#...)
+ */
+```
+
+### Component/Function Level
+Include a `@category` tag and at least one `@example`:
+```typescript
+/**
+ * [Descriptive summary of the component/function]
+ *
+ * @category [Category Name]
+ * @example
+ * ```tsx
+ * <MyComponent prop={value} />
+ * ```
+ */
+```
+
+### Interface/Prop Level
+Every property must have a descriptive JSDoc comment:
+```typescript
+export interface MyProps {
+  /** [Property description]. Default: [Value]. */
+  size: number;
+}
+```
+
 ## Testing
 
 ```typescript

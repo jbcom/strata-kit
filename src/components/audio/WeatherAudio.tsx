@@ -12,20 +12,19 @@ import { AmbientAudio } from './AmbientAudio';
 import type { AmbientAudioRef, WeatherAudioProps } from './types';
 
 /**
- * Weather audio system for rain, wind, and thunder effects.
+ * Specialized Weather Audio System.
  *
+ * Coordinates complex weather soundscapes including looping precipitation sounds
+ * and randomly triggered thunder strikes with intensity-based volume control.
+ *
+ * @category Player Experience
  * @example
  * ```tsx
- * const [stormIntensity, setStormIntensity] = useState(0);
- *
  * <WeatherAudio
- *   rainUrl="/sounds/rain-loop.mp3"
- *   windUrl="/sounds/wind-loop.mp3"
- *   thunderUrl="/sounds/thunder.mp3"
- *   rainIntensity={stormIntensity * 0.8}
- *   windIntensity={stormIntensity * 0.5}
- *   thunderActive={stormIntensity > 0.7}
- *   fadeTime={2}
+ *   rainUrl="/sfx/heavy_rain.mp3"
+ *   thunderUrl="/sfx/thunder_distant.mp3"
+ *   rainIntensity={0.8}
+ *   thunderActive
  * />
  * ```
  */

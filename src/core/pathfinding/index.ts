@@ -1,43 +1,29 @@
 /**
- * Strata Pathfinding module - Graph-based pathfinding powered by ngraph.
+ * Graph-Based Pathfinding System.
  *
+ * Powered by ngraph, this module provides utilities for creating navigation graphs,
+ * performing A* pathfinding, and generating smooth movement paths for AI agents.
+ *
+ * @packageDocumentation
  * @module core/pathfinding
- * @public
+ * @category Entities & Simulation
+ *
+ * ## Interactive Demos
+ * - 🎮 [Live AI Demo](http://jonbogaty.com/nodejs-strata/demos/ai.html)
+ * - 📦 [AI Navigation Example](https://github.com/jbcom/nodejs-strata/tree/main/examples/ai-navigation)
+ *
+ * ## API Documentation
+ * - [Full API Reference](http://jonbogaty.com/nodejs-strata/api)
  *
  * @example
  * ```typescript
- * import {
- *   createGraph,
- *   addNode,
- *   addEdge,
- *   createPathfinder,
- *   findPath,
- *   smoothPath,
- *   fromNavMesh
- * } from '@jbcom/strata/core/pathfinding';
- *
- * // Create a graph and add nodes using helper functions
  * const graph = createGraph();
  * addNode(graph, 'A', { x: 0, y: 0, z: 0 });
  * addNode(graph, 'B', { x: 10, y: 0, z: 0 });
- * addNode(graph, 'C', { x: 10, y: 0, z: 10 });
  * addEdge(graph, 'A', 'B');
- * addEdge(graph, 'B', 'C');
  *
- * // Create pathfinder and find path
  * const pathfinder = createPathfinder(graph);
- * const result = pathfinder.find('A', 'C');
- *
- * if (result.found) {
- *   console.log('Path:', result.path); // ['A', 'B', 'C']
- *   console.log('Cost:', result.cost);
- *
- *   // Smooth the path for natural movement
- *   const smoothed = smoothPath(result.positions, { iterations: 2 });
- * }
- *
- * // Convert Yuka NavMesh to graph
- * const navGraph = fromNavMesh(yukaNavMesh);
+ * const result = pathfinder.find('A', 'B');
  * ```
  */
 

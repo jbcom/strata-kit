@@ -1,8 +1,7 @@
 /**
- * Terrain Preset - SDF-based terrain generation
- *
- * Provides terrain generation using SDFs and marching cubes
- * for creating landscapes, caves, and organic terrain.
+ * SDF-Based Terrain Generation Presets.
+ * @packageDocumentation
+ * @module presets/terrain
  */
 
 import * as THREE from 'three';

@@ -1,7 +1,12 @@
 /**
- * Core Weather System
+ * Core Weather and Environmental Simulation.
  *
- * Provides weather state management, transitions, and environmental simulation.
+ * Provides pure TypeScript state management for dynamic weather systems,
+ * including transitions between weather types, wind simulation, and atmospheric conditions.
+ *
+ * @packageDocumentation
+ * @module core/weather
+ * @category World Building
  */
 
 import * as THREE from 'three';

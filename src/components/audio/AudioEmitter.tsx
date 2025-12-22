@@ -14,19 +14,17 @@ import type { AudioEmitterProps, AudioEmitterRef } from './types';
 /**
  * Positional audio emitter that can follow an object.
  *
+ * Attaches a 3D sound source to a moving object or world position. Supports
+ * distance-based attenuation and occlusion.
+ *
+ * @category Player Experience
  * @example
  * ```tsx
- * const carRef = useRef<THREE.Group>(null);
- *
- * <group ref={carRef}>
- *   <Car />
- * </group>
  * <AudioEmitter
- *   url="/sounds/engine.mp3"
+ *   url="/sounds/engine_hum.mp3"
  *   follow={carRef}
- *   loop={true}
- *   autoplay={true}
- *   refDistance={5}
+ *   refDistance={2}
+ *   maxDistance={20}
  * />
  * ```
  */

@@ -10,14 +10,19 @@ import { ENVIRONMENT_PRESETS } from '../../core/audio';
 import type { AudioEnvironmentProps } from './types';
 
 /**
- * Audio environment component for reverb and filter effects.
- * Currently uses preset configurations; custom effects require Web Audio API integration.
+ * Environmental Audio Effects.
  *
+ * Simulates acoustic environments by applying global reverb and filtering
+ * to the audio listener. Perfect for caves, large halls, or underwater scenes.
+ *
+ * @category Player Experience
  * @example
  * ```tsx
- * <AudioEnvironment type="cave" reverbDecay={4} reverbWet={0.6} />
- *
- * <AudioEnvironment type="underwater" lowpassFrequency={800} />
+ * <AudioEnvironment
+ *   type="cave"
+ *   reverbDecay={3.5}
+ *   reverbWet={0.5}
+ * />
  * ```
  */
 export function AudioEnvironment({

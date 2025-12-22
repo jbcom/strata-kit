@@ -29,25 +29,14 @@ function useGameStateContextInternal<T extends object>(): GameStateContextValue<
 /**
  * Hook for save/load game state to persistent storage.
  *
- * @public
- * @param options - Save/load configuration
- * @returns Save/load functions
+ * @category Game Systems
+ * @param options - Save/load configuration.
+ * @returns Save/load functions.
  *
  * @example
  * ```tsx
- * const { save, load, listSaves } = useSaveLoad();
- *
- * // Save to default slot
- * await save();
- *
- * // Save to named slot
- * await save('checkpoint-1');
- *
- * // Load from slot
- * await load('checkpoint-1');
- *
- * // List all saves
- * const saves = await listSaves();
+ * const { save, load } = useSaveLoad();
+ * await save('slot-1');
  * ```
  */
 export function useSaveLoad<T extends object>(
@@ -117,22 +106,8 @@ export function useSaveLoad<T extends object>(
 /**
  * Hook for checkpoint save/restore functionality.
  *
- * @public
- * @returns Checkpoint management functions
- *
- * @example
- * ```tsx
- * const { createCheckpoint, restoreCheckpoint, listCheckpoints } = useCheckpoint();
- *
- * // Create named checkpoint
- * await createCheckpoint('before-boss', 'Before the boss fight');
- *
- * // List checkpoints
- * const checkpoints = listCheckpoints();
- *
- * // Restore checkpoint
- * await restoreCheckpoint('before-boss');
- * ```
+ * @category Game Systems
+ * @returns Checkpoint management functions.
  */
 export function useCheckpoint<T extends object>(): UseCheckpointReturn<T> {
     const { store } = useGameStateContextInternal<T>();
@@ -182,26 +157,9 @@ export function useCheckpoint<T extends object>(): UseCheckpointReturn<T> {
 /**
  * Hook for automatic state saving at intervals.
  *
- * @public
- * @param options - Autosave configuration
- * @returns Autosave control functions
- *
- * @example
- * ```tsx
- * const { enable, disable, isEnabled, triggerSave } = useAutoSave({
- *   intervalMs: 30000,
- *   onSave: (success) => console.log('Autosave:', success),
- * });
- *
- * // Enable autosave
- * useEffect(() => {
- *   enable();
- *   return () => disable();
- * }, []);
- *
- * // Manually trigger save
- * await triggerSave();
- * ```
+ * @category Game Systems
+ * @param options - Autosave configuration.
+ * @returns Autosave control functions.
  */
 export function useAutoSave<T extends object>(options: UseAutoSaveOptions = {}): UseAutoSaveReturn {
     const { store } = useGameStateContextInternal<T>();

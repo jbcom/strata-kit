@@ -1,7 +1,12 @@
 /**
- * Core camera utilities
+ * Core Camera and Perspective Utilities.
  *
- * Pure TypeScript camera math functions and classes for smooth camera control.
+ * Provides pure TypeScript math functions and controller logic for smooth
+ * camera movement, screen shake effects, and perspective transitions.
+ *
+ * @packageDocumentation
+ * @module core/camera
+ * @category Player Experience
  */
 
 import * as THREE from 'three';
