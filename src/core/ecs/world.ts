@@ -73,19 +73,11 @@ export function createWorld<T extends BaseEntity>(config: WorldConfig<T> = {}): 
         log(`Despawned entity: ${entity.id}`);
     };
 
-    // Using `as any` as a workaround for a TypeScript limitation where it cannot
-    // properly infer types when spreading a generic array into a variadic function.
-    // The function signature ensures type safety for callers.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const query = <K extends keyof T>(...c: K[]): QueryResult<T> =>
-        miniplexWorld.with(...(c as any)) as QueryResult<T>;
+        miniplexWorld.with(...c) as QueryResult<T>;
 
-    // Using `as any` as a workaround for a TypeScript limitation where it cannot
-    // properly infer types when spreading a generic array into a variadic function.
-    // The function signature ensures type safety for callers.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const queryWithout = <K extends keyof T>(...c: K[]): QueryResult<T> =>
-        miniplexWorld.without(...(c as any)) as QueryResult<T>;
+        miniplexWorld.without(...c) as QueryResult<T>;
 
     const clear = (): void => {
         [...miniplexWorld.entities].forEach((e) => miniplexWorld.remove(e));
@@ -193,10 +185,7 @@ export function addComponent<T extends BaseEntity, K extends keyof T>(
     component: K,
     value: T[K]
 ): void {
-    // HACK: Using `as any` to work around a TypeScript limitation with correlating
-    // generic keys and values. The function signature ensures type safety for callers.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    world.world.addComponent(entity, component as any, value);
+    world.world.addComponent(entity, component, value);
 }
 
 /**
