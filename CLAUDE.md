@@ -6,7 +6,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**@jbcom/strata** - Procedural 3D graphics library for React Three Fiber providing terrain, water, vegetation, sky, volumetrics, and character animation.
+**@jbcom/strata** - Evolving from a procedural 3D graphics library into a **complete game framework** for React Three Fiber.
+
+### Current (Toolkit)
+Terrain, water, vegetation, sky, volumetrics, ECS, physics, AI, animation.
+
+### In Development (Framework)
+Game orchestration, world topology, compositional objects, declarative game definition.
+
+**See:** [Architecture Docs](docs/architecture/README.md) | [Epic #50](https://github.com/jbcom/nodejs-strata/issues/50)
 
 ## Quick Start
 
@@ -107,4 +115,61 @@ Before completing work:
 - `API.md` - Complete API documentation
 - `CONTRACT.md` - Stability guarantees and versioning
 - `AGENTS.md` - Agent-specific instructions
+
+## Architecture (Game Framework)
+
+**Epic #50** tracks the evolution to a game framework. Key documents:
+
+| Document | Purpose |
+|----------|---------|
+| [Vision](docs/architecture/GAME_FRAMEWORK_VISION.md) | High-level framework goals |
+| [Roadmap](docs/architecture/ROADMAP.md) | Implementation timeline |
+| [RFC-001](docs/architecture/rfc/RFC-001-GAME-ORCHESTRATION.md) | Scenes, modes, triggers |
+| [RFC-002](docs/architecture/rfc/RFC-002-COMPOSITIONAL-OBJECTS.md) | Materials, skeletons, props |
+| [RFC-003](docs/architecture/rfc/RFC-003-WORLD-TOPOLOGY.md) | Regions, connections |
+| [RFC-004](docs/architecture/rfc/RFC-004-DECLARATIVE-GAMES.md) | createGame() API |
+| [Migration](docs/architecture/guides/MIGRATION.md) | Toolkit → Framework |
+
+## Compositional System (RFC-002)
+
+The framework introduces a compositional object system:
+
+```typescript
+// Materials: fur, metal, wood, shell, crystal, flesh
+const furOtter = createFurMaterial({ color: '#4a3520', length: 0.03 });
+
+// Skeletons: biped, quadruped, avian, serpentine
+const skeleton = createQuadrupedSkeleton({ bodyLength: 0.6 });
+
+// Props: composites of shapes + materials
+const crate = createProp({
+  components: [
+    { shape: 'box', size: [1, 1, 1], material: 'wood_oak' },
+    { shape: 'box', size: [1.05, 0.03, 0.02], material: 'metal_iron' },
+  ],
+});
+
+// Creatures: skeleton + covering + AI + stats
+const otter = createCreature({
+  skeleton: 'quadruped_medium',
+  covering: { regions: { '*': { material: 'fur_otter' } } },
+  ai: 'prey',
+  stats: { health: 50, speed: 6 },
+});
+```
+
+## Goal
+
+Enable games to be defined declaratively with **10x code reduction**:
+
+```typescript
+const game = createGame({
+  content: { creatures, props, materials },
+  world: worldGraph,
+  modes: { exploration, racing, combat },
+  statePreset: 'rpg',
+});
+
+<StrataGame game={game} />
+```
 
