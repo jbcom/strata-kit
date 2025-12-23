@@ -19,24 +19,67 @@ interface PooledDecal {
 /**
  * High-Performance Decal Pooling System.
  *
- * Efficiently manages a revolving pool of temporary decals (e.g., bullet holes,
- * splashes, debris). Automatically handles memory reuse and smooth fade-outs to
- * maintain steady frame rates in combat-heavy scenes.
+ * Efficiently manages hundreds of temporary surface decals with automatic memory reuse,
+ * smooth fade-outs, and zero garbage collection spikes. Essential for action games with
+ * bullet holes, blood splatters, footprints, or any dynamic surface details.
+ *
+ * **Key Features:**
+ * - Object pooling prevents memory allocation during gameplay
+ * - Automatic FIFO removal when pool is full
+ * - Smooth fade-out animations
+ * - Per-decal customization (size, texture, color, lifetime)
+ *
+ * **Performance:** Handles 100+ decals at 60fps with minimal overhead.
  *
  * @category World Building
+ *
  * @example
  * ```tsx
- * const poolRef = useRef<DecalPoolRef>(null);
+ * import { DecalPool } from '@jbcom/strata';
+ * import { useRef } from 'react';
  *
- * <DecalPool
- *   ref={poolRef}
- *   maxDecals={100}
- *   defaultTexture={bulletHole}
- * />
+ * function CombatScene() {
+ *   const poolRef = useRef<DecalPoolRef>(null);
  *
- * // Add on impact
- * poolRef.current?.addDecal(point, normal);
+ *   const onBulletHit = (point: Vector3, normal: Vector3) => {
+ *     poolRef.current?.addDecal(point, normal, {
+ *       texture: bulletHoleTexture,
+ *       size: 0.15,
+ *       fadeTime: 10
+ *     });
+ *   };
+ *
+ *   return (
+ *     <>
+ *       <DecalPool
+ *         ref={poolRef}
+ *         maxDecals={200}
+ *         fadeTime={8}
+ *         defaultTexture={bulletHoleTexture}
+ *       />
+ *       <mesh onClick={(e) => onBulletHit(e.point, e.face.normal)}>
+ *         <boxGeometry />
+ *       </mesh>
+ *     </>
+ *   );
+ * }
  * ```
+ *
+ * @example
+ * ```tsx
+ * // Blood splatter system
+ * const onHit = (point, normal) => {
+ *   poolRef.current?.addDecal(point, normal, {
+ *     texture: bloodTexture,
+ *     size: [0.5, 0.3], // Stretched oval
+ *     rotation: Math.random() * Math.PI * 2,
+ *     color: 0xaa0000,
+ *     fadeTime: 15
+ *   });
+ * };
+ * ```
+ *
+ * @see {@link https://github.com/jbcom/nodejs-strata/tree/main/examples Example demos}
  */
 export const DecalPool = forwardRef<DecalPoolRef, DecalPoolProps>(
     (

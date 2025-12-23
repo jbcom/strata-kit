@@ -11,6 +11,13 @@ import { generateBiomeInstanceData } from './utils';
  * Uses optimized GPU batching for rendering tens of thousands of blades.
  *
  * @category World Building
+ *
+ * ## Interactive Demos
+ * <iframe src="../../demos/vegetation.html" width="100%" height="400px" style="border-radius: 8px; border: 1px solid #1e293b;"></iframe>
+ *
+ * - 🎮 [Full Screen Vegetation Demo](../../demos/vegetation.html)
+ * - 📦 [Vegetation Showcase](https://github.com/jbcom/nodejs-strata/tree/main/examples/vegetation-showcase)
+ *
  * @example
  * ```tsx
  * // Lush green field
