@@ -9,7 +9,9 @@
  * @category World Building
  *
  * ## Interactive Demos
- * - 🎮 [Live Water Demo](http://jonbogaty.com/nodejs-strata/demos/water.html)
+ * <iframe src="../../demos/water.html" width="100%" height="400px" style="border-radius: 8px; border: 1px solid #1e293b;"></iframe>
+ *
+ * - 🎮 [Full Screen Water Demo](../../demos/water.html)
  * - 📦 [Water Scene Example](https://github.com/jbcom/nodejs-strata/tree/main/examples/water-scene)
  *
  * ## API Documentation

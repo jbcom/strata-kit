@@ -1,11 +1,39 @@
 /**
- * GPU-Driven Instancing - Core TypeScript (no React).
+ * GPU-Accelerated Instancing - Render millions of objects efficiently.
  *
- * Pure TypeScript functions for instancing that work with any framework.
+ * Instance tens of thousands of vegetation, rocks, or props with minimal performance cost.
+ * Perfect for massive forests, grass fields, and detail-rich environments.
  *
  * @packageDocumentation
  * @module core/instancing
  * @category Rendering Pipeline
+ *
+ * ## Interactive Demos
+ * - 🎮 [Vegetation Showcase](https://github.com/jbcom/nodejs-strata/tree/main/examples/vegetation-showcase)
+ *
+ * ## Why Instancing?
+ * Traditional rendering creates a new draw call per object. GPU instancing sends geometry once,
+ * then renders thousands of copies with different transforms in a single draw call.
+ *
+ * @example
+ * ```typescript
+ * // Scatter 10,000 rocks across terrain
+ * import { generateInstanceData, createInstancedMesh } from '@jbcom/strata/core/instancing';
+ *
+ * const biomes = [{ type: 'mountain', center: new Vector2(0, 0), radius: 100 }];
+ * const instances = generateInstanceData(
+ *   10000,
+ *   200,
+ *   (x, z) => getTerrainHeight(x, z, biomes)
+ * );
+ *
+ * const rockMesh = createInstancedMesh({
+ *   geometry: rockGeometry,
+ *   material: rockMaterial,
+ *   count: 10000,
+ *   instances
+ * });
+ * ```
  */
 
 import * as THREE from 'three';
