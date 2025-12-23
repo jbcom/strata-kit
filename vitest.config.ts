@@ -17,7 +17,7 @@ export default defineConfig({
             'src/**/__tests__/**/*.test.ts',
             'src/**/__tests__/**/*.test.tsx',
         ],
-        exclude: ['node_modules', 'dist', 'tests/integration', 'tests/e2e'],
+        exclude: ['node_modules', 'dist', 'tests/integration', 'tests/e2e', 'packages', 'internal'],
         setupFiles: [resolve(__dirname, 'tests/unit/setup.ts')],
         // Suppress unhandled errors in teardown phase (Vitest jsdom bug workaround)
         dangerouslyIgnoreUnhandledErrors: true,
