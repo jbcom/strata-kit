@@ -342,18 +342,132 @@ function arePolygonsAdjacent(polyA: Polygon, polyB: Polygon): boolean {
 }
 
 /**
- * Creates a grid-based graph for tile-based games.
+ * Creates a grid-based navigation graph for tile-based games.
+ *
+ * Generates a uniform grid of nodes connected horizontally, vertically, and optionally
+ * diagonally. Perfect for strategy games, roguelikes, tactical RPGs, and any game with
+ * tile-based movement. Each grid cell becomes a pathfindable node.
  *
  * @param width - Grid width in cells
  * @param height - Grid height in cells
- * @param cellSize - Size of each cell
- * @param options - Grid configuration
- * @returns A graph representing the grid
+ * @param cellSize - Size of each cell in world units (default: 1)
+ * @param options - Grid configuration options
+ * @returns A graph representing the grid with all connections
  *
- * @example
+ * @category Entities & Simulation
+ *
+ * @example Basic 10x10 Grid
  * ```typescript
- * const grid = createGridGraph(10, 10, 1);
- * // Creates 100 nodes connected in a grid pattern
+ * import { createGridGraph, createPathfinder } from '@jbcom/strata/core/pathfinding';
+ *
+ * // Create a simple grid
+ * const grid = createGridGraph(10, 10, 1.0);
+ *
+ * // Find path from bottom-left to top-right
+ * const pathfinder = createPathfinder(grid);
+ * const result = pathfinder.find('0_0', '9_9');
+ *
+ * console.log('Grid has', grid.getNodeCount(), 'nodes'); // 100 nodes
+ * console.log('Path length:', result.nodeCount); // ~19 steps (no diagonal)
+ * ```
+ *
+ * @example Grid with Diagonal Movement
+ * ```typescript
+ * import { createGridGraph } from '@jbcom/strata/core/pathfinding';
+ *
+ * // Enable diagonal movement (8-way instead of 4-way)
+ * const grid = createGridGraph(20, 20, 1.0, {
+ *   allowDiagonals: true,
+ *   y: 0  // Y-level for all nodes
+ * });
+ *
+ * // Diagonal edges have √2 weight (correct distance)
+ * const pathfinder = createPathfinder(grid);
+ * const result = pathfinder.find('0_0', '19_19');
+ * console.log('Diagonal path length:', result.nodeCount); // ~20 steps (diagonal)
+ * ```
+ *
+ * @example Adding Obstacles to Grid
+ * ```typescript
+ * import { createGridGraph } from '@jbcom/strata/core/pathfinding';
+ *
+ * const grid = createGridGraph(15, 15, 1.0, { allowDiagonals: true });
+ *
+ * // Mark wall tiles as unwalkable
+ * const wallCoords = [
+ *   [5, 0], [5, 1], [5, 2], [5, 3], [5, 4],
+ *   [5, 5], [5, 6], [5, 7]
+ * ];
+ *
+ * wallCoords.forEach(([x, z]) => {
+ *   const nodeId = `${x}_${z}`;
+ *   const node = grid.getNode(nodeId);
+ *   if (node) {
+ *     node.data.walkable = false;  // Mark as obstacle
+ *   }
+ * });
+ *
+ * // Path will route around the wall
+ * const pathfinder = createPathfinder(grid, {
+ *   blocked: (nodeData) => !nodeData.walkable
+ * });
+ * ```
+ *
+ * @example Dynamic Terrain Costs
+ * ```typescript
+ * import { createGridGraph } from '@jbcom/strata/core/pathfinding';
+ *
+ * const grid = createGridGraph(20, 20, 1.0);
+ *
+ * // Set different movement costs for different terrain
+ * for (let x = 0; x < 20; x++) {
+ *   for (let z = 0; z < 20; z++) {
+ *     const node = grid.getNode(`${x}_${z}`);
+ *     if (!node) continue;
+ *
+ *     // Muddy area in middle costs more to traverse
+ *     if (x >= 8 && x <= 12 && z >= 8 && z <= 12) {
+ *       node.data.cost = 3.0;  // 3x slower through mud
+ *     }
+ *     // Rocky area
+ *     else if (x < 5 || z < 5) {
+ *       node.data.cost = 1.5;  // 1.5x slower on rocks
+ *     }
+ *   }
+ * }
+ *
+ * // A* will prefer paths that avoid high-cost areas
+ * const pathfinder = createPathfinder(grid, {
+ *   distance: (from, to, edge) => {
+ *     const baseCost = edge.weight ?? 1;
+ *     const nodeCost = to.cost ?? 1;
+ *     return baseCost * nodeCost;
+ *   }
+ * });
+ * ```
+ *
+ * @example Converting Grid Coordinates
+ * ```typescript
+ * // Grid node ID format is "x_z"
+ * function worldToGrid(worldPos, cellSize) {
+ *   const x = Math.floor(worldPos.x / cellSize);
+ *   const z = Math.floor(worldPos.z / cellSize);
+ *   return `${x}_${z}`;
+ * }
+ *
+ * function gridToWorld(nodeId, cellSize) {
+ *   const [x, z] = nodeId.split('_').map(Number);
+ *   return {
+ *     x: x * cellSize + cellSize / 2,  // Center of cell
+ *     y: 0,
+ *     z: z * cellSize + cellSize / 2
+ *   };
+ * }
+ *
+ * // Use with pathfinding
+ * const startNode = worldToGrid({ x: 3.5, z: 7.2 }, 1.0); // "3_7"
+ * const endNode = worldToGrid({ x: 15.1, z: 18.9 }, 1.0); // "15_18"
+ * const path = pathfinder.find(startNode, endNode);
  * ```
  */
 export function createGridGraph(
