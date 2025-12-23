@@ -1,11 +1,7 @@
 import { Html } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
-import React, {
-    forwardRef,
-    useImperativeHandle,
-    useRef,
-    useState,
-} from 'react';
+import type React from 'react';
+import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import type * as THREE from 'three';
 import { calculateFade } from '../../core/ui';
 import type { NameplateProps, NameplateRef } from './types';

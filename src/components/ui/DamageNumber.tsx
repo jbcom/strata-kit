@@ -1,6 +1,7 @@
 import { Html } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
-import React, { useRef, useState } from 'react';
+import type React from 'react';
+import { useRef, useState } from 'react';
 import { easeOutCubic, formatNumber, getDamageNumberColor } from '../../core/ui';
 import type { DamageNumberProps } from './types';
 

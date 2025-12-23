@@ -6,7 +6,7 @@ import {
     ToneMapping,
 } from '@react-three/postprocessing';
 import { ToneMappingMode } from 'postprocessing';
-import React from 'react';
+import type React from 'react';
 import type { NeonEffectsProps } from './types';
 
 /**

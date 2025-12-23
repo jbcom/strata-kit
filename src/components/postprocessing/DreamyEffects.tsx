@@ -5,7 +5,7 @@ import {
     HueSaturation,
     Vignette,
 } from '@react-three/postprocessing';
-import React from 'react';
+import type React from 'react';
 import type { DreamyEffectsProps } from './types';
 
 /**

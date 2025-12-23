@@ -1,12 +1,7 @@
 import { Html } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
-import React, {
-    forwardRef,
-    useEffect,
-    useImperativeHandle,
-    useRef,
-    useState,
-} from 'react';
+import type React from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import type * as THREE from 'three';
 import { calculateFade, clampProgress, easeOutCubic, lerp } from '../../core/ui';
 import type { HealthBarProps, HealthBarRef } from './types';
@@ -152,7 +147,9 @@ export const HealthBar = forwardRef<HealthBarRef, HealthBarProps>(
                                             key={i}
                                             style={{
                                                 flex: 1,
-                                                backgroundColor: isFilled ? fillColor : 'transparent',
+                                                backgroundColor: isFilled
+                                                    ? fillColor
+                                                    : 'transparent',
                                             }}
                                         />
                                     );

@@ -1,5 +1,6 @@
 import { useFrame, useThree } from '@react-three/fiber';
-import React, { useRef } from 'react';
+import type React from 'react';
+import { useRef } from 'react';
 import type * as THREE from 'three';
 import { clampProgress } from '../../core/ui';
 import type { ProgressBar3DProps } from './types';

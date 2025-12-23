@@ -1,11 +1,6 @@
-import {
-    Bloom,
-    EffectComposer,
-    SSAO,
-    ToneMapping,
-} from '@react-three/postprocessing';
+import { Bloom, EffectComposer, SSAO, ToneMapping } from '@react-three/postprocessing';
 import { ToneMappingMode } from 'postprocessing';
-import React from 'react';
+import type React from 'react';
 import type { RealisticEffectsProps } from './types';
 
 /**

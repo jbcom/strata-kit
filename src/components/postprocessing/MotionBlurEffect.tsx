@@ -1,5 +1,5 @@
 import { Bloom, EffectComposer } from '@react-three/postprocessing';
-import React from 'react';
+import type React from 'react';
 import type { MotionBlurEffectProps } from './types';
 
 /**

@@ -1,6 +1,6 @@
 import { useFrame } from '@react-three/fiber';
 import React, { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
-import * as THREE from 'three';
+import type * as THREE from 'three';
 import { createCrystalMaterial } from '../../shaders/materials';
 import type { CrystalMeshProps, CrystalMeshRef } from './types';
 

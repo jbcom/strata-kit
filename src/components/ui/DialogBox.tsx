@@ -1,11 +1,5 @@
-import React, {
-    forwardRef,
-    useCallback,
-    useEffect,
-    useImperativeHandle,
-    useRef,
-    useState,
-} from 'react';
+import type React from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { getTextDirection } from '../../core/ui';
 import type { DialogBoxProps, DialogBoxRef } from './types';
 
@@ -162,12 +156,12 @@ export const DialogBox = forwardRef<DialogBoxRef, DialogBoxProps>(
         };
 
         return (
-            <section
-                style={containerStyle}
+            <button
+                type="button"
+                style={{ ...containerStyle, border: 'none', textAlign: 'left' }}
                 onClick={advance}
                 className={className}
-                tabIndex={0}
-                aria-label="Dialogue"
+                aria-label="Dialogue - Click or press Enter to advance"
                 onKeyDown={handleKeyDown}
             >
                 <div
@@ -266,7 +260,7 @@ export const DialogBox = forwardRef<DialogBoxRef, DialogBoxProps>(
                     to { transform: translateY(4px); }
                 }
             `}</style>
-            </section>
+            </button>
         );
     }
 );

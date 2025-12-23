@@ -11,12 +11,12 @@ describe('DialogBox UX', () => {
     it('should be accessible via keyboard and screen readers', () => {
         render(<DialogBox lines={lines} visible={true} />);
 
-        // 1. Check for accessible role
-        const dialog = screen.getByRole('region', { name: /Dialogue/i });
+        // 1. Check for accessible role (button for interactive dialog)
+        const dialog = screen.getByRole('button', { name: /Dialogue/i });
         expect(dialog).toBeDefined();
 
-        // 2. Check focusability
-        expect(dialog.getAttribute('tabindex')).toBe('0');
+        // 2. Buttons are focusable by default
+        expect(dialog).not.toBeNull();
 
         // 3. Check for screen reader text (hidden but live)
         const hiddenText = document.querySelector('[aria-live="polite"]');
@@ -27,7 +27,7 @@ describe('DialogBox UX', () => {
     it('should advance on Enter key', async () => {
         const { container } = render(<DialogBox lines={lines} typewriterSpeed={10} />);
 
-        const dialog = screen.getByRole('region', { name: /Dialogue/i });
+        const dialog = screen.getByRole('button', { name: /Dialogue/i });
         dialog.focus();
 
         // Initial state: text is typing

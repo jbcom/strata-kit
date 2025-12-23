@@ -1,7 +1,6 @@
-
 import { describe, expect, it, vi } from 'vitest';
 import { createGameStore } from '../store';
-import { PersistenceAdapter, SaveData } from '../types';
+import type { PersistenceAdapter, SaveData } from '../types';
 
 describe('GameStore Security', () => {
     it('should reject loading state with invalid checksum', async () => {
@@ -20,10 +19,13 @@ describe('GameStore Security', () => {
             getSaveInfo: vi.fn().mockResolvedValue(null),
         };
 
-        const store = createGameStore({ count: 0 }, {
-            persistenceAdapter: mockPersistence,
-            enablePersistence: true
-        });
+        const store = createGameStore(
+            { count: 0 },
+            {
+                persistenceAdapter: mockPersistence,
+                enablePersistence: true,
+            }
+        );
 
         // Try to load the tampered data
         const success = await store.getState().load('tampered');

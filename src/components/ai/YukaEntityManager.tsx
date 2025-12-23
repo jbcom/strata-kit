@@ -18,7 +18,8 @@
  */
 
 import { useFrame } from '@react-three/fiber';
-import React, { createContext, useContext, useMemo, useRef } from 'react';
+import type React from 'react';
+import { createContext, useContext, useMemo, useRef } from 'react';
 import * as YUKA from 'yuka';
 import type { YukaEntityManagerContextValue, YukaEntityManagerProps } from './types';
 

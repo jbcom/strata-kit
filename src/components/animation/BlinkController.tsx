@@ -1,7 +1,7 @@
 import { useFrame } from '@react-three/fiber';
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 'react';
 import type * as THREE from 'three';
-import { BlinkControllerRef, BlinkControllerProps } from './types';
+import type { BlinkControllerProps, BlinkControllerRef } from './types';
 
 /**
  * Natural Blink Controller for characters.

@@ -11,8 +11,8 @@ import {
     ToneMapping,
     Vignette,
 } from '@react-three/postprocessing';
-import { BlendFunction, ToneMappingMode } from 'postprocessing';
-import React from 'react';
+import { BlendFunction, type ToneMappingMode } from 'postprocessing';
+import type React from 'react';
 import * as THREE from 'three';
 import type { EffectStackProps } from './types';
 

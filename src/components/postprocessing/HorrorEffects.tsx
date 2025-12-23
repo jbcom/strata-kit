@@ -7,7 +7,7 @@ import {
     Vignette,
 } from '@react-three/postprocessing';
 import { BlendFunction } from 'postprocessing';
-import React from 'react';
+import type React from 'react';
 import * as THREE from 'three';
 import type { HorrorEffectsProps } from './types';
 

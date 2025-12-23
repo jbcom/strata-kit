@@ -1,7 +1,7 @@
 import { useFrame } from '@react-three/fiber';
 import React, { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import type * as THREE from 'three';
-import { BreathingAnimationRef, BreathingAnimationProps } from './types';
+import type { BreathingAnimationProps, BreathingAnimationRef } from './types';
 
 /**
  * Organic Breathing Animation.

@@ -2,12 +2,12 @@ import {
     Bloom,
     ChromaticAberration,
     EffectComposer,
+    Noise,
     ToneMapping,
     Vignette,
-    Noise,
 } from '@react-three/postprocessing';
 import { BlendFunction, ToneMappingMode } from 'postprocessing';
-import React from 'react';
+import type React from 'react';
 import * as THREE from 'three';
 import type { CinematicEffectsProps } from './types';
 

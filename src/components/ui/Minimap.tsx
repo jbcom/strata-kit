@@ -1,5 +1,5 @@
 import { useFrame, useThree } from '@react-three/fiber';
-import React from 'react';
+import type React from 'react';
 import type { MinimapProps } from './types';
 
 /**

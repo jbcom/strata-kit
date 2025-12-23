@@ -173,14 +173,7 @@ export function createSpotlightConeGeometry(
     const height = distance;
     const segments = 32;
 
-    const geometry = new THREE.CylinderGeometry(
-        radiusTop,
-        radiusBottom,
-        height,
-        segments,
-        1,
-        true
-    );
+    const geometry = new THREE.CylinderGeometry(radiusTop, radiusBottom, height, segments, 1, true);
     geometry.translate(0, -height / 2, 0);
     geometry.rotateX(-Math.PI / 2);
 
@@ -217,10 +210,7 @@ export function getLightScreenPosition(
  * Calculate light intensity based on sun angle (0-180).
  * @category Effects & Atmosphere
  */
-export function calculateGodRayIntensityFromAngle(
-    sunAngle: number,
-    baseIntensity: number
-): number {
+export function calculateGodRayIntensityFromAngle(sunAngle: number, baseIntensity: number): number {
     // Max intensity near horizon (0 and 180), min at noon (90)
     const factor = Math.abs(Math.cos((sunAngle * Math.PI) / 180));
     return baseIntensity * (0.2 + 0.8 * factor); // Never fully zero
@@ -237,7 +227,7 @@ export function blendGodRayColors(
     target = new THREE.Color()
 ): THREE.Color {
     // Blend towards atmosphere color near horizon
-    const factor = Math.pow(Math.abs(Math.cos((sunAngle * Math.PI) / 180)), 2);
+    const factor = Math.abs(Math.cos((sunAngle * Math.PI) / 180)) ** 2;
     return target.copy(lightColor).lerp(atmosphereColor, factor * 0.8);
 }
 
@@ -248,5 +238,5 @@ export function blendGodRayColors(
 export function calculateScatteringIntensity(viewDir: THREE.Vector3, lightDir: THREE.Vector3) {
     const dot = Math.max(0, viewDir.dot(lightDir));
     // Mie scattering approximation
-    return Math.pow(dot, 4);
+    return dot ** 4;
 }
