@@ -1,0 +1,94 @@
+/* Custom CSS for TypeDoc to align with jbcom design system */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+:root {
+    /* Aligned with jbcom.github.io design system */
+    --bg-default: #0a0f1a;
+    --bg-paper: #111827;
+    --bg-elevated: #1e293b;
+    --primary: #06b6d4;
+    --primary-light: #22d3ee;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-disabled: #475569;
+    --border: #1e293b;
+    
+    /* Legacy aliases for compatibility */
+    --jb-deep-slate: #0a0f1a;
+    --jb-cyan: #06b6d4;
+    --jb-teal: #14b8a6;
+    --jb-glass-bg: var(--bg-paper);
+    --jb-glass-border: var(--border);
+    
+    /* TypeDoc Overrides */
+    --p-color-background: var(--bg-default);
+    --p-color-text: var(--text-secondary);
+    --p-color-text-aside: var(--text-secondary);
+    --p-color-link: var(--primary);
+    --p-color-accent: var(--primary);
+    --p-font-family: 'Inter', sans-serif;
+    --p-font-family-mono: 'JetBrains Mono', monospace;
+}
+
+body {
+    background-color: var(--bg-default);
+    color: var(--text-secondary);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', sans-serif !important;
+    color: var(--text-primary) !important;
+}
+
+.tsd-page-title h1 {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.tsd-navigation.primary, .tsd-navigation.secondary {
+    background: var(--bg-paper);
+    border-right: 1px solid var(--border);
+}
+
+.tsd-panel {
+    background: var(--bg-paper) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1) !important;
+}
+
+code, .tsd-signature {
+    font-family: 'JetBrains Mono', monospace !important;
+    background: var(--bg-paper) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 6px !important;
+}
+
+.tsd-kind-icon {
+    color: var(--primary) !important;
+}
+
+.tsd-index-section h3 {
+    border-bottom: 2px solid var(--primary);
+    display: inline-block;
+    padding-bottom: 4px;
+    margin-bottom: 20px;
+}
+
+/* Header/Toolbar */
+header {
+    background: var(--bg-paper) !important;
+    border-bottom: 1px solid var(--border) !important;
+}
+
+.tsd-widget.search:before {
+    filter: invert(1);
+}
+
+/* Footer */
+footer {
+    border-top: 1px solid var(--border) !important;
+    background: var(--bg-default) !important;
+    color: var(--text-disabled) !important;
+}

@@ -1,0 +1,173 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+:root {
+    /* Aligned with jbcom.github.io design system */
+    --bg-default: #0a0f1a;
+    --bg-paper: #111827;
+    --bg-elevated: #1e293b;
+    --primary: #06b6d4;
+    --primary-light: #22d3ee;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-disabled: #475569;
+    --border: #1e293b;
+    
+    /* Legacy aliases for compatibility */
+    --jb-deep-slate: #0a0f1a;
+    --jb-cyan: #06b6d4;
+    --jb-teal: #14b8a6;
+    --jb-glass-bg: var(--bg-paper);
+    --jb-glass-border: var(--border);
+    --jb-font-heading: 'Space Grotesk', sans-serif;
+    --jb-font-body: 'Inter', sans-serif;
+    --jb-font-mono: 'JetBrains Mono', monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body { 
+    background: var(--bg-default); 
+    color: var(--text-primary);
+    overflow: hidden; 
+    font-family: var(--jb-font-body); 
+}
+
+#root { width: 100vw; height: 100vh; }
+
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 1.5rem 2rem;
+    background: linear-gradient(180deg, rgba(10, 15, 26, 0.9) 0%, transparent 100%);
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    backdrop-filter: blur(4px);
+}
+
+.overlay h1 { 
+    color: var(--text-primary); 
+    font-family: var(--jb-font-heading);
+    font-size: 1.25rem; 
+    letter-spacing: 0.15em;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.overlay h1 span {
+    color: var(--primary);
+}
+
+.overlay a { 
+    color: var(--text-secondary); 
+    text-decoration: none; 
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: color 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.overlay a:hover { color: var(--primary); }
+
+.feature-list {
+    position: absolute;
+    bottom: 2rem;
+    left: 2rem;
+    background: var(--bg-paper);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    z-index: 100;
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.3), 0 8px 10px -6px rgb(0 0 0 / 0.3);
+    max-width: 300px;
+}
+
+.feature-list h3 { 
+    color: var(--text-primary); 
+    font-family: var(--jb-font-heading);
+    margin-bottom: 1rem; 
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.feature-list ul { list-style: none; }
+
+.feature-list li { 
+    padding: 0.4rem 0; 
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.feature-list li::before { 
+    content: '→'; 
+    color: var(--primary);
+    font-weight: bold;
+}
+
+code {
+    font-family: var(--jb-font-mono);
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    color: var(--primary);
+    font-size: 0.85em;
+}
+
+/* Specific to demo content placeholders */
+.demo-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    background: radial-gradient(circle at center, var(--bg-elevated) 0%, var(--bg-default) 100%);
+}
+
+.demo-placeholder-content {
+    text-align: center;
+    color: var(--text-secondary);
+    max-width: 450px;
+    padding: 2rem;
+}
+
+.demo-icon {
+    font-size: 5rem;
+    margin-bottom: 1.5rem;
+    filter: drop-shadow(0 0 20px rgba(6, 182, 212, 0.3));
+}
+
+.demo-title {
+    color: var(--text-primary);
+    font-family: var(--jb-font-heading);
+    margin-bottom: 1rem;
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.demo-description {
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.demo-code {
+    background: var(--bg-paper);
+    padding: 0.75rem 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    display: inline-block;
+}
+
+.showcase-iframe {
+    width: 100%;
+    height: 500px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin: 1rem 0;
+}
