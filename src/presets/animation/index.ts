@@ -1,8 +1,126 @@
 /**
- * Animation Presets
+ * Animation Presets - Production-Ready Configuration Templates.
  *
- * Pre-configured animation settings for common use cases.
+ * Pre-tuned animation settings that you can use immediately. These presets are based on real-world
+ * character proportions and physics, saving you hours of tweaking parameters.
+ *
+ * ## Why Use Presets?
+ *
+ * - **Instant Results**: Start with proven configurations that look good
+ * - **Learn by Example**: See how different values affect behavior
+ * - **Easy Customization**: Use as-is or tweak to your needs
+ * - **Type Safety**: Full TypeScript types ensure correct usage
+ *
+ * ## Interactive Demos
+ *
+ * - 🎮 [Live Animation Demo](http://jonbogaty.com/nodejs-strata/demos/animation.html) - See all presets in action
+ * - 📦 [Character Examples](https://github.com/jbcom/nodejs-strata/tree/main/examples/characters) - Real usage
+ * - 📚 [API Reference](http://jonbogaty.com/nodejs-strata/api) - Full documentation
+ *
+ * ## Available Presets
+ *
+ * ### IK Presets (Inverse Kinematics)
+ * - **humanArm** - Standard human arm (upper arm + forearm)
+ * - **humanLeg** - Standard human leg (thigh + shin)
+ * - **spiderLeg** - Multi-segment spider/insect leg
+ * - **tentacle** - Flexible multi-segment tentacle
+ * - **finger** - Human finger with 3 bones
+ * - **spine** - Character spine for bending
+ * - **tail** - Animal tail with many segments
+ *
+ * ### Spring Presets (Physics)
+ * - **stiff** - Very stiff, minimal bounce (ears, antennae)
+ * - **bouncy** - Springy and bouncy (ponytails, ribbons)
+ * - **floppy** - Loose and floppy (long tails, capes)
+ * - **hair** - Natural hair movement
+ * - **cloth** - Fabric-like movement
+ * - **jelly** - Wobbly jelly-like physics
+ *
+ * ### Gait Presets (Locomotion)
+ * - **walk** - Standard walking gait
+ * - **run** - Running with longer strides
+ * - **sneak** - Slow sneaking movement
+ * - **limp** - Asymmetric limping gait
+ * - **march** - Military-style marching
+ * - **crawl** - Low, crawling movement
+ *
+ * ### Look-At Presets (Tracking)
+ * - **lazy** - Slow, lazy tracking
+ * - **snappy** - Fast, responsive tracking
+ * - **smooth** - Balanced smooth tracking
+ * - **robotic** - Mechanical, precise tracking
+ * - **organic** - Natural, smooth tracking
+ *
+ * @example
+ * ```typescript
+ * import {
+ *   ikPresets,
+ *   springPresets,
+ *   gaitPresets,
+ *   lookAtPresets
+ * } from '@jbcom/strata';
+ *
+ * // Use IK preset for human arm
+ * const armPreset = ikPresets.humanArm;
+ * const armChain = createBoneChainFromLengths(
+ *   armRoot,
+ *   armPreset.boneLengths
+ * );
+ * const solver = armPreset.solver === 'fabrik'
+ *   ? new FABRIKSolver(armPreset.tolerance, armPreset.maxIterations)
+ *   : new CCDSolver(armPreset.tolerance, armPreset.maxIterations);
+ *
+ * // Use spring preset for hair
+ * const hairSpring = new SpringDynamics(springPresets.hair.config);
+ *
+ * // Use gait preset for walking
+ * const walkGait = new ProceduralGait(gaitPresets.walk.config);
+ *
+ * // Use look-at preset
+ * const headTracker = new LookAtController(lookAtPresets.smooth.config);
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // Use presets with React components
+ * import { IKChain, SpringBone, ProceduralWalk } from '@jbcom/strata';
+ * import { ikPresets, springPresets, gaitPresets } from '@jbcom/strata';
+ *
+ * function AnimatedCharacter() {
+ *   return (
+ *     <group>
+ *       <IKChain
+ *         boneLengths={ikPresets.humanArm.boneLengths}
+ *         solver={ikPresets.humanArm.solver}
+ *         target={targetRef}
+ *       />
+ *       <SpringBone config={springPresets.bouncy.config}>
+ *         <mesh />
+ *       </SpringBone>
+ *       <ProceduralWalk
+ *         config={gaitPresets.walk.config}
+ *         bodyRef={bodyRef}
+ *       />
+ *     </group>
+ *   );
+ * }
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Customize presets
+ * import { gaitPresets } from '@jbcom/strata';
+ *
+ * // Start with walk preset and adjust
+ * const myGait = new ProceduralGait({
+ *   ...gaitPresets.walk.config,
+ *   stepHeight: 0.25,  // Higher steps than default
+ *   bodyBob: 0.08      // More bounce
+ * });
+ * ```
+ *
  * @module presets/animation
+ * @category Entities & Simulation
  */
 
 import type { GaitConfig, LookAtConfig, SpringConfig } from '../../core/animation';

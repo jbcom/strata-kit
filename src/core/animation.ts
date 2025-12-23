@@ -1,8 +1,52 @@
 /**
  * Core Animation and Kinematics System.
  *
- * Provides high-performance, pure TypeScript utilities for procedural animation,
- * including CCD and FABRIK IK solvers, spring dynamics, and complex locomotion logic.
+ * Build life-like character animations without keyframes! This module delivers production-ready
+ * inverse kinematics (IK), spring physics, and procedural locomotion for React Three Fiber applications.
+ *
+ * ## Why This Module?
+ *
+ * - **Zero Keyframes Needed**: Generate natural motion algorithmically - arms reaching, tails swaying,
+ *   legs walking, all computed in real-time
+ * - **Battle-Tested Algorithms**: FABRIK and CCD IK solvers used in AAA games, optimized for web
+ * - **Physics-Driven**: Spring dynamics for hair, cloth, tails, and secondary motion
+ * - **Procedural Locomotion**: Walk/run/sneak gaits that adapt to terrain and velocity
+ * - **Pure TypeScript**: Framework-agnostic core logic - use with React, vanilla Three.js, or anything
+ *
+ * ## Interactive Demos
+ *
+ * - 🎮 [Live Animation Demo](http://jonbogaty.com/nodejs-strata/demos/animation.html) - See IK, springs, and gaits in action
+ * - 📦 [Character Examples](https://github.com/jbcom/nodejs-strata/tree/main/examples/characters) - Full character implementations
+ * - 📚 [API Reference](http://jonbogaty.com/nodejs-strata/api) - Complete documentation
+ *
+ * ## Quick Start
+ *
+ * @example
+ * ```typescript
+ * import { FABRIKSolver, createBoneChainFromLengths, SpringDynamics, ProceduralGait } from '@jbcom/strata';
+ * import * as THREE from 'three';
+ *
+ * // Create an IK chain for an arm reaching to a target
+ * const armRoot = new THREE.Object3D();
+ * const armChain = createBoneChainFromLengths(armRoot, [0.3, 0.25]); // upper arm, forearm
+ * const solver = new FABRIKSolver(0.001, 20);
+ * const targetPos = new THREE.Vector3(1, 2, 0);
+ * const result = solver.solve(armChain, targetPos);
+ * solver.apply(armChain, result);
+ *
+ * // Add spring physics to hair or tail
+ * const spring = new SpringDynamics({ stiffness: 100, damping: 10, mass: 1 });
+ * const hairTarget = new THREE.Vector3(0, 1, 0);
+ * const hairPos = spring.update(hairTarget, deltaTime);
+ *
+ * // Create procedural walking animation
+ * const gait = new ProceduralGait({ stepLength: 0.8, stepHeight: 0.15 });
+ * const bodyPos = new THREE.Vector3(0, 1, 0);
+ * const forward = new THREE.Vector3(0, 0, 1);
+ * const velocity = new THREE.Vector3(0, 0, 2);
+ * const state = gait.update(bodyPos, forward, velocity, deltaTime);
+ * // Use state.leftFootTarget and state.rightFootTarget to position feet
+ * ```
  *
  * @packageDocumentation
  * @module core/animation
@@ -168,6 +212,29 @@ export interface LookAtState {
     velocity: THREE.Vector3;
 }
 
+/**
+ * Create a bone chain from existing Three.js objects.
+ *
+ * Analyzes a hierarchy of objects and calculates the distances between them to create
+ * an IK-ready bone chain. Useful when working with imported models or manually placed objects.
+ *
+ * @category Entities & Simulation
+ *
+ * @param bones - Array of Three.js objects representing bones in parent-child order
+ * @returns A bone chain with calculated lengths and total length
+ *
+ * @example
+ * ```typescript
+ * // Create chain from existing scene objects
+ * const shoulder = scene.getObjectByName('shoulder');
+ * const elbow = scene.getObjectByName('elbow');
+ * const wrist = scene.getObjectByName('wrist');
+ *
+ * const armChain = createBoneChain([shoulder, elbow, wrist]);
+ * console.log(armChain.totalLength); // Total arm reach
+ * console.log(armChain.lengths); // [upperArmLength, forearmLength]
+ * ```
+ */
 export function createBoneChain(bones: THREE.Object3D[]): BoneChain {
     const lengths: number[] = [];
     let totalLength = 0;
@@ -185,6 +252,38 @@ export function createBoneChain(bones: THREE.Object3D[]): BoneChain {
     return { bones, lengths, totalLength };
 }
 
+/**
+ * Create a bone chain procedurally from specified lengths.
+ *
+ * Generates a new hierarchy of Three.js objects positioned according to the provided lengths.
+ * Perfect for creating IK chains programmatically or prototyping character rigs.
+ *
+ * @category Entities & Simulation
+ *
+ * @param root - The root object to attach the chain to
+ * @param boneLengths - Array of bone lengths (each creates one segment)
+ * @param direction - Direction to extend the chain (default: downward [0, -1, 0])
+ * @returns A bone chain with the generated objects
+ *
+ * @example
+ * ```typescript
+ * // Create a 3-segment tentacle
+ * const tentacleRoot = new THREE.Object3D();
+ * scene.add(tentacleRoot);
+ *
+ * const tentacle = createBoneChainFromLengths(
+ *   tentacleRoot,
+ *   [0.5, 0.4, 0.3], // Lengths taper toward the tip
+ *   new THREE.Vector3(0, -1, 0) // Hang downward
+ * );
+ *
+ * // Now use with an IK solver
+ * const solver = new FABRIKSolver();
+ * const target = new THREE.Vector3(1, -1, 0);
+ * const result = solver.solve(tentacle, target);
+ * solver.apply(tentacle, result);
+ * ```
+ */
 export function createBoneChainFromLengths(
     root: THREE.Object3D,
     boneLengths: number[],
@@ -207,15 +306,111 @@ export function createBoneChainFromLengths(
     return { bones, lengths: boneLengths, totalLength };
 }
 
+/**
+ * Forward And Backward Reaching Inverse Kinematics (FABRIK) Solver.
+ *
+ * Industry-standard IK algorithm used in games like The Witcher 3 and Uncharted.
+ * Provides fast, stable convergence for multi-bone chains like arms, tentacles, tails, and spines.
+ *
+ * **When to use FABRIK:**
+ * - Multi-segment chains (3+ bones)
+ * - Smooth, natural-looking motion
+ * - Arms, legs, tentacles, spines
+ * - When you need pole targets for elbow/knee direction
+ *
+ * **Algorithm Overview:**
+ * 1. **Backward Pass**: Start at end effector, pull toward target
+ * 2. **Forward Pass**: Start at root, restore correct bone lengths
+ * 3. **Repeat**: Until target is reached or max iterations exceeded
+ *
+ * @category Entities & Simulation
+ *
+ * @example
+ * ```typescript
+ * // Spider leg reaching for ground
+ * const legRoot = new THREE.Object3D();
+ * const legChain = createBoneChainFromLengths(
+ *   legRoot,
+ *   [0.2, 0.3, 0.25, 0.15] // 4-segment leg
+ * );
+ *
+ * const solver = new FABRIKSolver(
+ *   0.001, // tolerance: stop when within 1mm of target
+ *   20     // max iterations per frame
+ * );
+ *
+ * // Solve for foot position on terrain
+ * const groundTarget = new THREE.Vector3(1.5, 0, 0.5);
+ * const result = solver.solve(legChain, groundTarget);
+ *
+ * if (result.reached) {
+ *   console.log(`Reached target in ${result.iterations} iterations`);
+ *   solver.apply(legChain, result); // Apply rotations to bones
+ * } else {
+ *   console.log(`Target out of reach by ${result.error.toFixed(3)}m`);
+ * }
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Character arm with pole target for elbow direction
+ * const armChain = createBoneChainFromLengths(armRoot, [0.3, 0.25]);
+ * const solver = new FABRIKSolver();
+ *
+ * // Target is where the hand should go
+ * const handTarget = new THREE.Vector3(0.5, 1.5, 0.3);
+ *
+ * // Pole target controls where the elbow points
+ * const elbowPole = new THREE.Vector3(0, 1.5, 0.5); // Point elbow forward
+ *
+ * const result = solver.solve(armChain, handTarget, elbowPole);
+ * solver.apply(armChain, result);
+ * ```
+ *
+ * @see {@link CCDSolver} - Alternative algorithm for different use cases
+ * @see {@link TwoBoneIKSolver} - Optimized solver for exactly 2 bones
+ */
 export class FABRIKSolver {
     private tolerance: number;
     private maxIterations: number;
 
+    /**
+     * Create a new FABRIK solver.
+     *
+     * @param tolerance - Distance threshold for convergence (meters). Default: 0.001
+     * @param maxIterations - Maximum solver iterations per frame. Default: 20
+     */
     constructor(tolerance: number = 0.001, maxIterations: number = 20) {
         this.tolerance = tolerance;
         this.maxIterations = maxIterations;
     }
 
+    /**
+     * Solve IK for a bone chain to reach a target position.
+     *
+     * Computes joint angles needed to position the end effector at the target.
+     * If the target is out of reach, the chain stretches as far as possible.
+     *
+     * @param chain - The bone chain to solve
+     * @param target - World position the end effector should reach
+     * @param pole - Optional pole target to control mid-joint orientation (e.g., elbow/knee direction)
+     * @returns Solver result with positions, rotations, and convergence info
+     *
+     * @example
+     * ```typescript
+     * const solver = new FABRIKSolver();
+     * const result = solver.solve(armChain, targetPos);
+     *
+     * // Check if solution is valid
+     * if (result.reached) {
+     *   solver.apply(armChain, result);
+     * }
+     *
+     * // Monitor performance
+     * console.log(`Converged in ${result.iterations} iterations`);
+     * console.log(`Final error: ${result.error.toFixed(4)}m`);
+     * ```
+     */
     solve(chain: BoneChain, target: THREE.Vector3, pole?: THREE.Vector3): IKSolverResult {
         const positions = chain.bones.map((bone) => {
             const pos = new THREE.Vector3();
@@ -428,6 +623,21 @@ export class FABRIKSolver {
         return rotations;
     }
 
+    /**
+     * Apply solved rotations to the bone chain.
+     *
+     * Takes the computed rotations from solve() and applies them to the actual Three.js objects.
+     * Call this after solving to update your scene.
+     *
+     * @param chain - The bone chain to modify
+     * @param result - The solver result containing rotations
+     *
+     * @example
+     * ```typescript
+     * const result = solver.solve(chain, target);
+     * solver.apply(chain, result); // Bones now point toward target
+     * ```
+     */
     apply(chain: BoneChain, result: IKSolverResult): void {
         for (let i = 0; i < chain.bones.length; i++) {
             const bone = chain.bones[i];
@@ -439,11 +649,73 @@ export class FABRIKSolver {
     }
 }
 
+/**
+ * Cyclic Coordinate Descent (CCD) IK Solver.
+ *
+ * Alternative IK algorithm that iterates from end to root, rotating each joint to point
+ * toward the target. Often faster than FABRIK but can produce less natural-looking results.
+ *
+ * **When to use CCD:**
+ * - Chains with many segments (5+ bones) where speed matters
+ * - Mechanical/robotic motion (less organic than FABRIK)
+ * - Spines, tails, or tentacles that need quick response
+ * - When pole targets aren't needed
+ *
+ * **Algorithm Overview:**
+ * 1. Start at the joint nearest the end effector
+ * 2. Rotate that joint to point end effector toward target
+ * 3. Move to next joint toward root, repeat
+ * 4. Loop until converged or max iterations
+ *
+ * @category Entities & Simulation
+ *
+ * @example
+ * ```typescript
+ * // Long mechanical arm with many segments
+ * const armChain = createBoneChainFromLengths(
+ *   armRoot,
+ *   [0.2, 0.2, 0.2, 0.2, 0.2] // 5 equal segments
+ * );
+ *
+ * const solver = new CCDSolver(
+ *   0.002,  // tolerance
+ *   25,     // max iterations (CCD may need more than FABRIK)
+ *   0.8     // damping factor (0.8 = smoother, less snappy)
+ * );
+ *
+ * const result = solver.solve(armChain, targetPos);
+ * solver.apply(armChain, result);
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Character spine bending toward look target
+ * const spineChain = createBoneChainFromLengths(
+ *   spineRoot,
+ *   [0.1, 0.1, 0.1, 0.1, 0.1] // 5 spine segments
+ * );
+ *
+ * // CCD is great for spines - fast and responsive
+ * const solver = new CCDSolver(0.001, 15, 1.0);
+ * const result = solver.solve(spineChain, headTarget);
+ * solver.apply(spineChain, result);
+ * ```
+ *
+ * @see {@link FABRIKSolver} - Often produces more natural results
+ * @see {@link TwoBoneIKSolver} - Optimized for exactly 2 bones
+ */
 export class CCDSolver {
     private tolerance: number;
     private maxIterations: number;
     private dampingFactor: number;
 
+    /**
+     * Create a new CCD solver.
+     *
+     * @param tolerance - Distance threshold for convergence (meters). Default: 0.001
+     * @param maxIterations - Maximum solver iterations per frame. Default: 20
+     * @param dampingFactor - Rotation damping (0-1). Lower = smoother but slower. Default: 1.0
+     */
     constructor(
         tolerance: number = 0.001,
         maxIterations: number = 20,
@@ -454,6 +726,25 @@ export class CCDSolver {
         this.dampingFactor = dampingFactor;
     }
 
+    /**
+     * Solve IK for a bone chain to reach a target position.
+     *
+     * Uses cyclic coordinate descent to iteratively rotate joints toward the target.
+     *
+     * @param chain - The bone chain to solve
+     * @param target - World position the end effector should reach
+     * @returns Solver result with positions, rotations, and convergence info
+     *
+     * @example
+     * ```typescript
+     * const solver = new CCDSolver(0.002, 25, 0.8);
+     * const result = solver.solve(tentacleChain, foodPosition);
+     *
+     * if (result.reached) {
+     *   solver.apply(tentacleChain, result);
+     * }
+     * ```
+     */
     solve(chain: BoneChain, target: THREE.Vector3): IKSolverResult {
         const positions = chain.bones.map((bone) => {
             const pos = new THREE.Vector3();
@@ -536,6 +827,86 @@ export class CCDSolver {
     }
 }
 
+/**
+ * Two-Bone IK Solver (Analytical Solution).
+ *
+ * Specialized, high-performance IK solver for exactly 2-bone chains like arms and legs.
+ * Uses analytical geometry instead of iterative solving, making it faster and more predictable
+ * than FABRIK or CCD for this specific use case.
+ *
+ * **When to use TwoBoneIK:**
+ * - Human/creature arms (shoulder → elbow → wrist)
+ * - Human/creature legs (hip → knee → foot)
+ * - Any exactly 2-joint system
+ * - When you need guaranteed single-frame solution
+ * - When performance is critical
+ *
+ * **Features:**
+ * - Analytical solution (no iterations needed)
+ * - Pole target for controlling elbow/knee direction
+ * - Handles out-of-reach targets gracefully
+ * - Deterministic - same input always gives same output
+ *
+ * @category Entities & Simulation
+ *
+ * @example
+ * ```typescript
+ * // Character arm reaching for object
+ * const solver = new TwoBoneIKSolver();
+ *
+ * // Arm bones
+ * const shoulder = character.getObjectByName('shoulder');
+ * const elbow = character.getObjectByName('elbow');
+ * const wrist = character.getObjectByName('wrist');
+ *
+ * // Where the hand should reach
+ * const targetPos = pickedUpObject.position;
+ *
+ * // Control elbow direction (point forward)
+ * const elbowPole = shoulder.position.clone().add(new THREE.Vector3(0, 0, 1));
+ *
+ * // Solve and apply
+ * solver.solveLimb(shoulder, elbow, wrist, targetPos, elbowPole);
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Character leg stepping on terrain
+ * const solver = new TwoBoneIKSolver();
+ *
+ * const hip = character.getObjectByName('leftHip');
+ * const knee = character.getObjectByName('leftKnee');
+ * const foot = character.getObjectByName('leftFoot');
+ *
+ * // Ground position from raycast
+ * const groundPos = raycaster.intersectObject(terrain)[0].point;
+ *
+ * // Knee points forward
+ * const kneePole = hip.position.clone().add(new THREE.Vector3(0, 0, 1));
+ *
+ * solver.solveLimb(hip, knee, foot, groundPos, kneePole);
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Low-level API for custom control
+ * const result = solver.solve(
+ *   shoulderPos,
+ *   elbowPos,  // Current position (ignored, recalculated)
+ *   wristPos,  // Current position (ignored, recalculated)
+ *   targetPos,
+ *   polePos,
+ *   0.3,  // Upper arm length
+ *   0.25  // Forearm length
+ * );
+ *
+ * // Manually apply result
+ * elbow.position.copy(result.midPosition);
+ * wrist.position.copy(result.endPosition);
+ * shoulder.quaternion.copy(result.upperRotation);
+ * elbow.quaternion.copy(result.lowerRotation);
+ * ```
+ */
 export class TwoBoneIKSolver {
     solve(
         rootPos: THREE.Vector3,
@@ -664,11 +1035,77 @@ export class TwoBoneIKSolver {
     }
 }
 
+/**
+ * Look-At Controller with Constraints and Smoothing.
+ *
+ * Rotates objects to face targets with natural motion, angular limits, dead zones, and smooth damping.
+ * Perfect for character heads, eyes, cameras, turrets, or any tracking behavior.
+ *
+ * **Features:**
+ * - Maximum angle constraints (prevent unrealistic rotations)
+ * - Dead zone (ignore small movements)
+ * - Smooth damping (no instant snapping)
+ * - Exponential smoothing for natural feel
+ *
+ * **Use Cases:**
+ * - Character head tracking player
+ * - Eyes following cursor
+ * - Camera smooth follow
+ * - Turret tracking enemies
+ * - NPCs watching interesting objects
+ *
+ * @category Entities & Simulation
+ *
+ * @example
+ * ```typescript
+ * // Character head tracking player
+ * const headController = new LookAtController({
+ *   maxAngle: Math.PI / 3,  // Can't turn head more than 60°
+ *   speed: 5,               // Tracking speed
+ *   deadzone: 0.05,         // Ignore tiny movements
+ *   smoothing: 0.1          // Smooth interpolation
+ * });
+ *
+ * // In update loop
+ * function animate(deltaTime: number) {
+ *   const playerPos = player.position;
+ *   const headRotation = headController.update(head, playerPos, deltaTime);
+ *   head.quaternion.copy(headRotation);
+ * }
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Lazy eye tracking (slow, large deadzone)
+ * const eyeController = new LookAtController({
+ *   maxAngle: Math.PI / 4,  // Limited range
+ *   speed: 2,               // Slow tracking
+ *   deadzone: 0.2,          // Large deadzone
+ *   smoothing: 0.15         // Very smooth
+ * });
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Snappy turret tracking (fast, no deadzone)
+ * const turretController = new LookAtController({
+ *   maxAngle: Math.PI,      // Full rotation
+ *   speed: 10,              // Fast
+ *   deadzone: 0,            // No deadzone
+ *   smoothing: 0.05         // Minimal smoothing
+ * });
+ * ```
+ */
 export class LookAtController {
     private config: LookAtConfig;
     private currentQuat: THREE.Quaternion;
     private velocity: THREE.Vector3;
 
+    /**
+     * Create a new look-at controller.
+     *
+     * @param config - Configuration for tracking behavior
+     */
     constructor(config: Partial<LookAtConfig> = {}) {
         this.config = {
             maxAngle: config.maxAngle ?? Math.PI / 2,
@@ -742,12 +1179,85 @@ export class LookAtController {
     }
 }
 
+/**
+ * Physical Spring Dynamics System.
+ *
+ * Simulates realistic spring-mass-damper physics for secondary motion like hair, cloth, tails,
+ * and dangling objects. Based on Hooke's law with velocity damping.
+ *
+ * **Use Cases:**
+ * - Hair strands that bounce and sway
+ * - Cape/cloth simulation (combine multiple springs)
+ * - Antenna, tails, ears that react to movement
+ * - Camera shake with spring return
+ * - UI elements with springy feedback
+ *
+ * **Physics Parameters:**
+ * - **Stiffness**: How strongly the spring returns to rest (higher = stiffer, snappier)
+ * - **Damping**: How quickly oscillations decay (higher = less bounce, more drag)
+ * - **Mass**: Inertia of the object (higher = more momentum, slower response)
+ *
+ * @category Entities & Simulation
+ *
+ * @example
+ * ```typescript
+ * // Bouncy ponytail
+ * const ponytail = new SpringDynamics({
+ *   stiffness: 150,  // Medium stiffness
+ *   damping: 5,      // Low damping = bouncy
+ *   mass: 1          // Medium mass
+ * });
+ *
+ * // In update loop
+ * const headPos = character.head.position;
+ * const targetPos = headPos.clone().add(new THREE.Vector3(0, -0.5, 0));
+ * const hairPos = ponytail.update(targetPos, deltaTime);
+ * hairMesh.position.copy(hairPos);
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Stiff antenna that snaps back quickly
+ * const antenna = new SpringDynamics({
+ *   stiffness: 500,  // Very stiff
+ *   damping: 25,     // High damping = no bounce
+ *   mass: 0.3        // Light mass = fast response
+ * });
+ *
+ * // React to head movement
+ * const restPos = head.position.clone().add(new THREE.Vector3(0, 0.2, 0));
+ * const antennaPos = antenna.update(restPos, deltaTime);
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Gravity-affected cape
+ * const cape = new SpringDynamics({
+ *   stiffness: 80,
+ *   damping: 6,
+ *   mass: 2  // Heavier = more droop
+ * });
+ *
+ * const gravity = new THREE.Vector3(0, -9.8, 0);
+ * const shoulderPos = character.shoulder.position;
+ * const targetPos = shoulderPos.clone().add(
+ *   gravity.clone().multiplyScalar(0.02) // Add gravity influence
+ * );
+ * const capePos = cape.update(targetPos, deltaTime);
+ * ```
+ */
 export class SpringDynamics {
     private config: SpringConfig;
     private position: THREE.Vector3;
     private velocity: THREE.Vector3;
     private restPosition: THREE.Vector3;
 
+    /**
+     * Create a new spring dynamics system.
+     *
+     * @param config - Spring configuration (stiffness, damping, mass)
+     * @param initialPosition - Starting position of the spring. Default: origin
+     */
     constructor(config: Partial<SpringConfig> = {}, initialPosition?: THREE.Vector3) {
         this.config = {
             stiffness: config.stiffness ?? 100,
@@ -760,6 +1270,27 @@ export class SpringDynamics {
         this.restPosition = this.position.clone();
     }
 
+    /**
+     * Update spring physics for one time step.
+     *
+     * Computes spring force, damping force, and updates position based on physics simulation.
+     *
+     * @param targetPosition - The position the spring is attached to (moves with parent object)
+     * @param deltaTime - Time step in seconds (typically frame delta)
+     * @returns New position of the spring
+     *
+     * @example
+     * ```typescript
+     * const spring = new SpringDynamics({ stiffness: 100, damping: 10, mass: 1 });
+     *
+     * // In render loop
+     * function animate(deltaTime: number) {
+     *   const targetPos = parentObject.position;
+     *   const springPos = spring.update(targetPos, deltaTime);
+     *   childObject.position.copy(springPos);
+     * }
+     * ```
+     */
     update(targetPosition: THREE.Vector3, deltaTime: number): THREE.Vector3 {
         const displacement = this.position.clone().sub(targetPosition);
 
@@ -802,10 +1333,76 @@ export class SpringDynamics {
     }
 }
 
+/**
+ * Multi-Segment Spring Chain System.
+ *
+ * Simulates a chain of connected springs (like a rope, tail, or hair strand) where each segment
+ * follows the one before it with spring physics. Creates realistic swaying, dragging motion.
+ *
+ * **Use Cases:**
+ * - Character tails (dragon, cat, lizard)
+ * - Hair strands or ponytails
+ * - Ropes, chains, vines
+ * - Tentacles with secondary motion
+ * - Cloth strips or ribbons
+ *
+ * **Features:**
+ * - Automatic length constraints
+ * - Gravity influence
+ * - Progressive stiffness (base is stiffer than tip)
+ * - Progressive damping (tip has more drag)
+ *
+ * @category Entities & Simulation
+ *
+ * @example
+ * ```typescript
+ * // Dragon tail with 8 segments
+ * const tail = new SpringChain(
+ *   8,                          // Number of segments
+ *   {
+ *     stiffness: 100,           // Base stiffness
+ *     damping: 10,              // Base damping
+ *     mass: 1
+ *   },
+ *   0.4                         // Segment length
+ * );
+ *
+ * // In update loop
+ * function animate(deltaTime: number) {
+ *   const rootPos = dragon.tailRoot.position;
+ *   const rootQuat = dragon.tailRoot.quaternion;
+ *   const gravity = new THREE.Vector3(0, -9.8, 0);
+ *
+ *   const positions = tail.update(rootPos, rootQuat, deltaTime, gravity);
+ *
+ *   // Position tail segments
+ *   positions.forEach((pos, i) => {
+ *     if (tailSegments[i]) {
+ *       tailSegments[i].position.copy(pos);
+ *     }
+ *   });
+ * }
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Rope hanging from ceiling (stronger gravity)
+ * const rope = new SpringChain(10, { stiffness: 80, damping: 8 }, 0.3);
+ * const strongGravity = new THREE.Vector3(0, -20, 0);
+ * const positions = rope.update(ceilingPos, ceilingQuat, deltaTime, strongGravity);
+ * ```
+ */
 export class SpringChain {
     private springs: SpringDynamics[];
     private restLengths: number[];
 
+    /**
+     * Create a new spring chain.
+     *
+     * @param nodeCount - Number of segments in the chain
+     * @param config - Spring configuration for the chain
+     * @param restLength - Length of each segment
+     */
     constructor(nodeCount: number, config: Partial<SpringConfig> = {}, restLength: number = 0.5) {
         this.springs = [];
         this.restLengths = [];
@@ -874,6 +1471,94 @@ export class SpringChain {
     }
 }
 
+/**
+ * Procedural Locomotion and Gait System.
+ *
+ * Generates natural walking, running, and movement animations without keyframes. Automatically
+ * calculates foot placement, step timing, and body motion based on character velocity and direction.
+ *
+ * **Features:**
+ * - Adaptive step length based on movement speed
+ * - Natural body bob and sway
+ * - Hip rotation for realistic weight transfer
+ * - Configurable gait types (walk, run, sneak, limp, etc.)
+ * - Foot lifting phases for smooth animation
+ *
+ * **Use Cases:**
+ * - Bipedal character locomotion
+ * - Quadruped or multi-legged creatures (use multiple instances)
+ * - NPCs that walk procedurally
+ * - Adaptive animation for varied terrain
+ *
+ * @category Entities & Simulation
+ *
+ * @example
+ * ```typescript
+ * // Basic walking character
+ * const gait = new ProceduralGait({
+ *   stepLength: 0.8,      // How far each step reaches
+ *   stepHeight: 0.15,     // How high feet lift
+ *   stepDuration: 0.4,    // Time per step (seconds)
+ *   bodyBob: 0.05,        // Vertical body bounce
+ *   bodySwayAmplitude: 0.02, // Side-to-side sway
+ *   hipRotation: 0.1,     // Hip twist during walk
+ *   phaseOffset: 0.5,     // Left/right foot timing (0.5 = alternating)
+ *   footOvershoot: 0.1    // Foot lands slightly ahead
+ * });
+ *
+ * // In update loop
+ * function animate(deltaTime: number) {
+ *   const bodyPos = character.position;
+ *   const forward = character.getWorldDirection(new THREE.Vector3());
+ *   const velocity = character.velocity;
+ *
+ *   const state = gait.update(bodyPos, forward, velocity, deltaTime);
+ *
+ *   // Position feet
+ *   leftFoot.position.copy(state.leftFootTarget);
+ *   rightFoot.position.copy(state.rightFootTarget);
+ *
+ *   // Apply body motion
+ *   character.position.add(state.bodyOffset);
+ *   character.rotation.setFromEuler(state.bodyRotation);
+ *
+ *   // Check for footstep events
+ *   if (state.leftFootLifted) {
+ *     playFootstepSound();
+ *   }
+ * }
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Running gait - faster, longer strides
+ * const runGait = new ProceduralGait({
+ *   stepLength: 1.5,      // Long strides
+ *   stepHeight: 0.25,     // Higher lift
+ *   stepDuration: 0.3,    // Quick steps
+ *   bodyBob: 0.08,        // More bounce
+ *   bodySwayAmplitude: 0.01, // Less sway
+ *   hipRotation: 0.12,
+ *   phaseOffset: 0.5,
+ *   footOvershoot: 0.15
+ * });
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Sneaking gait - slow, careful steps
+ * const sneakGait = new ProceduralGait({
+ *   stepLength: 0.4,      // Short steps
+ *   stepHeight: 0.05,     // Barely lift feet
+ *   stepDuration: 0.8,    // Slow steps
+ *   bodyBob: 0.01,        // Minimal bounce
+ *   bodySwayAmplitude: 0.005,
+ *   hipRotation: 0.03,
+ *   phaseOffset: 0.5,
+ *   footOvershoot: 0.02
+ * });
+ * ```
+ */
 export class ProceduralGait {
     private config: GaitConfig;
     private phase: number = 0;
@@ -881,6 +1566,11 @@ export class ProceduralGait {
     private rightFootGrounded: THREE.Vector3;
     private lastBodyPosition: THREE.Vector3;
 
+    /**
+     * Create a new procedural gait system.
+     *
+     * @param config - Gait configuration (step length, height, timing, body motion)
+     */
     constructor(config: Partial<GaitConfig> = {}) {
         this.config = {
             stepLength: config.stepLength ?? 0.8,
@@ -1017,12 +1707,66 @@ export class ProceduralGait {
     }
 }
 
+/**
+ * Clamp an angle to a specified range.
+ *
+ * Normalizes angles to the -π to π range before clamping.
+ *
+ * @category Entities & Simulation
+ *
+ * @param angle - Input angle in radians
+ * @param min - Minimum allowed angle
+ * @param max - Maximum allowed angle
+ * @returns Clamped angle in radians
+ *
+ * @example
+ * ```typescript
+ * // Limit joint rotation to 90 degrees
+ * const maxBend = Math.PI / 2;
+ * const clampedAngle = clampAngle(jointAngle, -maxBend, maxBend);
+ * ```
+ */
 export function clampAngle(angle: number, min: number, max: number): number {
     if (angle < -Math.PI) angle += Math.PI * 2;
     if (angle > Math.PI) angle -= Math.PI * 2;
     return Math.max(min, Math.min(max, angle));
 }
 
+/**
+ * Damped spring interpolation for scalar values.
+ *
+ * Smoothly interpolates a value toward a target using spring physics.
+ * Useful for camera smoothing, UI animations, or any single-value spring behavior.
+ *
+ * @category Entities & Simulation
+ *
+ * @param current - Current value
+ * @param target - Target value to reach
+ * @param velocity - Velocity object (modified in place)
+ * @param stiffness - Spring stiffness (higher = faster)
+ * @param damping - Damping factor (higher = less oscillation)
+ * @param deltaTime - Time step in seconds
+ * @returns New interpolated value
+ *
+ * @example
+ * ```typescript
+ * // Smooth camera zoom
+ * const velocity = { value: 0 };
+ * let currentZoom = 5;
+ * const targetZoom = 10;
+ *
+ * // In update loop
+ * currentZoom = dampedSpring(
+ *   currentZoom,
+ *   targetZoom,
+ *   velocity,
+ *   10,  // stiffness
+ *   5,   // damping
+ *   deltaTime
+ * );
+ * camera.position.z = currentZoom;
+ * ```
+ */
 export function dampedSpring(
     current: number,
     target: number,
@@ -1039,6 +1783,42 @@ export function dampedSpring(
     return current + velocity.value * deltaTime;
 }
 
+/**
+ * Damped spring interpolation for Vector3 values.
+ *
+ * Smoothly interpolates a 3D vector toward a target using spring physics.
+ * Perfect for position smoothing, camera follow, or object tracking.
+ *
+ * @category Entities & Simulation
+ *
+ * @param current - Current position
+ * @param target - Target position to reach
+ * @param velocity - Velocity vector (modified in place)
+ * @param stiffness - Spring stiffness (higher = faster)
+ * @param damping - Damping factor (higher = less oscillation)
+ * @param deltaTime - Time step in seconds
+ * @param out - Optional output vector to avoid allocation
+ * @returns New interpolated position
+ *
+ * @example
+ * ```typescript
+ * // Smooth camera follow
+ * const velocity = new THREE.Vector3();
+ * let cameraPos = new THREE.Vector3(0, 5, 10);
+ * const targetPos = player.position.clone();
+ *
+ * // In update loop
+ * cameraPos = dampedSpringVector3(
+ *   cameraPos,
+ *   targetPos,
+ *   velocity,
+ *   8,   // stiffness
+ *   4,   // damping
+ *   deltaTime
+ * );
+ * camera.position.copy(cameraPos);
+ * ```
+ */
 export function dampedSpringVector3(
     current: THREE.Vector3,
     target: THREE.Vector3,
