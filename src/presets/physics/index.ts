@@ -11,13 +11,13 @@ import type {
     DestructibleConfig,
     PhysicsMaterial,
     VehicleConfig,
-} from '../core/physics';
+} from '../../core/physics';
 import {
     createDefaultBuoyancyConfig,
     createDefaultCharacterConfig,
     createDefaultDestructibleConfig,
     createDefaultVehicleConfig,
-} from '../core/physics';
+} from '../../core/physics';
 
 /**
  * Character preset definition

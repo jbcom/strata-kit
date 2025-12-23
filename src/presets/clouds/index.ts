@@ -5,7 +5,12 @@
  */
 
 import * as THREE from 'three';
-import type { CloudLayerConfig, CloudSkyConfig, DayNightConfig, WindConfig } from '../core/clouds';
+import type {
+    CloudLayerConfig,
+    CloudSkyConfig,
+    DayNightConfig,
+    WindConfig,
+} from '../../core/clouds';
 
 export type CloudPresetName = 'clear' | 'partlyCloudy' | 'overcast' | 'stormy' | 'sunset';
 

@@ -12,7 +12,7 @@ import type {
     HologramMaterialOptions,
     ScanlineMaterialOptions,
     ToonMaterialOptions,
-} from '../shaders/materials';
+} from '../../shaders/materials';
 
 export interface ToonPreset extends ToonMaterialOptions {
     name: string;

@@ -5,9 +5,15 @@
  */
 
 import * as THREE from 'three';
-import { type BiomeData, createInstancedMesh, generateInstanceData } from '../../core/instancing';
+import {
+    createInstancedMesh,
+    generateInstanceData,
+    type InstanceData,
+} from '../../core/instancing';
+import type { BiomeData } from '../../core/sdf';
 
-export type { BiomeData, InstanceData } from '../../core/instancing';
+export type { InstanceData } from '../../core/instancing';
+export type { BiomeData } from '../../core/sdf';
 
 export interface VegetationOptions {
     count: number;

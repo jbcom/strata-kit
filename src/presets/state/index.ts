@@ -4,7 +4,7 @@
  * Pre-configured state templates for common game types.
  */
 
-import type { AutoSaveConfig } from '../core/state';
+import type { AutoSaveConfig } from '../../core/state';
 
 export interface RPGPlayerStats {
     level: number;

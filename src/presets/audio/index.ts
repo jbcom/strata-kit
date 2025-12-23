@@ -4,7 +4,7 @@
  * Pre-configured audio settings for common game environments and scenarios.
  */
 
-import type { DistanceModel, EnvironmentPreset, SpatialConfig } from '../core/audio';
+import type { DistanceModel, EnvironmentPreset, SpatialConfig } from '../../core/audio';
 
 interface ReverbSettings {
     decay: number;

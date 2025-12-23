@@ -5,7 +5,7 @@
  * @module presets/animation
  */
 
-import type { GaitConfig, LookAtConfig, SpringConfig } from '../core/animation';
+import type { GaitConfig, LookAtConfig, SpringConfig } from '../../core/animation';
 
 export interface IKPreset {
     name: string;
