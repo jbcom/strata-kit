@@ -1,9 +1,28 @@
 /**
- * Core Physics Utilities.
+ * Core Physics Utilities - Realistic Physical Simulation Foundation.
  *
  * Provides pure TypeScript helper functions, mathematical calculations, and
- * configuration types for character controllers, vehicle physics, and rigid body dynamics.
- * Designed for use with `@react-three/rapier`.
+ * configuration types for character controllers, vehicle physics, ragdolls, buoyancy,
+ * and destructible objects. Build believable physical interactions with collision
+ * detection, forces, impulses, and joint constraints. Designed for use with `@react-three/rapier`.
+ *
+ * **Features:**
+ * - Character controller with ground detection, slope limits, and jump mechanics
+ * - Vehicle dynamics with suspension, steering, and motor forces
+ * - Ragdoll articulation with spherical and revolute joints
+ * - Buoyancy simulation with multi-point sampling and water drag
+ * - Destructible objects with health and debris generation
+ * - Collision layer system with bitmask filtering
+ * - Physical material properties (friction, restitution, density)
+ *
+ * **Interactive Demos:**
+ * - 🎮 [Physics Playground](http://jonbogaty.com/nodejs-strata/demos/physics.html)
+ * - 🚗 [Vehicle Demo](http://jonbogaty.com/nodejs-strata/demos/vehicle.html)
+ * - 🏃 [Character Controller](http://jonbogaty.com/nodejs-strata/demos/character.html)
+ *
+ * **API Documentation:**
+ * - [Full API Reference](http://jonbogaty.com/nodejs-strata/api)
+ * - [Examples → API Mapping](https://github.com/jbcom/nodejs-strata/blob/main/EXAMPLES_API_MAP.md#physics)
  *
  * @packageDocumentation
  * @module core/physics
@@ -14,52 +33,84 @@ import * as THREE from 'three';
 
 /**
  * Core physics simulation configuration.
+ * Controls global physics world parameters for accurate and stable simulation.
+ *
  * @category Entities & Simulation
  */
 export interface PhysicsConfig {
-    /** Global gravity vector. Default: [0, -9.81, 0]. */
+    /** Global gravity vector [x, y, z] in m/s². Default: [0, -9.81, 0]. */
     gravity: [number, number, number];
-    /** Simulation time step in seconds. Default: 1/60. */
+    /** Simulation time step in seconds. Smaller values = more accurate but slower. Default: 1/60. */
     timeStep: number;
-    /** Iterations for stabilization constraints. */
+    /** Iterations for stabilization constraints. Higher = more stable joints. Default: 4. */
     maxStabilizationIterations: number;
-    /** Iterations for velocity resolution. */
+    /** Iterations for velocity resolution. Higher = better penetration correction. Default: 1. */
     maxVelocityIterations: number;
-    /** Iterations for velocity friction resolution. */
+    /** Iterations for velocity friction resolution. Higher = more realistic friction. Default: 8. */
     maxVelocityFrictionIterations: number;
-    /** Error reduction parameter. */
+    /** Error reduction parameter (0-1). Controls how fast constraint violations are corrected. Default: 0.8. */
     erp: number;
-    /** Allowed linear error before correction. */
+    /** Allowed linear error in meters before correction kicks in. Default: 0.001. */
     allowedLinearError: number;
-    /** Distance for contact prediction. */
+    /** Distance in meters for speculative contact prediction. Prevents tunneling. Default: 0.002. */
     predictionDistance: number;
 }
 
 /**
- * Collision layer bitmask definitions.
+ * Collision layer bitmask definitions for physics interaction filtering.
+ * Allows selective collision between different object types for performance and gameplay.
+ *
  * @category Entities & Simulation
+ * @example
+ * ```ts
+ * // Character only collides with static, dynamic, trigger, and water
+ * const characterFilter = {
+ *   memberships: CollisionLayer.Character,
+ *   filter: CollisionLayer.Static | CollisionLayer.Dynamic | CollisionLayer.Trigger | CollisionLayer.Water
+ * };
+ * ```
  */
 export enum CollisionLayer {
+    /** Default layer for uncategorized objects. */
     Default = 0x0001,
+    /** Static environment geometry (walls, floors). */
     Static = 0x0002,
+    /** Dynamic physics objects (crates, props). */
     Dynamic = 0x0004,
+    /** Player-controlled character bodies. */
     Character = 0x0008,
+    /** Vehicle chassis and wheels. */
     Vehicle = 0x0010,
+    /** Fast-moving projectiles (bullets, arrows). */
     Projectile = 0x0020,
+    /** Sensor volumes for event triggering. */
     Trigger = 0x0040,
+    /** Small destructible fragments. */
     Debris = 0x0080,
+    /** Fluid volumes for buoyancy simulation. */
     Water = 0x0100,
+    /** All layers combined (collide with everything). */
     All = 0xffff,
 }
 
 /**
- * Collision filter configuration.
+ * Collision filter configuration for selective physics interactions.
+ * Determines which collision layers an object belongs to and which layers it can collide with.
+ *
  * @category Entities & Simulation
+ * @example
+ * ```ts
+ * // Projectile that hits characters and vehicles but not other projectiles
+ * const projectileFilter: CollisionFilter = {
+ *   memberships: CollisionLayer.Projectile,
+ *   filter: CollisionLayer.Static | CollisionLayer.Character | CollisionLayer.Vehicle
+ * };
+ * ```
  */
 export interface CollisionFilter {
-    /** The layer(s) this object belongs to. */
+    /** The collision layer(s) this object belongs to (bitmask). */
     memberships: number;
-    /** The layer(s) this object should interact with. */
+    /** The collision layer(s) this object should interact with (bitmask). */
     filter: number;
 }
 
@@ -115,88 +166,114 @@ export const collisionFilters: Record<string, CollisionFilter> = {
 };
 
 /**
- * Advanced character controller configuration.
+ * Advanced character controller configuration for responsive player movement.
+ * Fine-tune walking, jumping, ground detection, and slope behavior for FPS, third-person, or platformer games.
+ *
  * @category Entities & Simulation
+ * @example
+ * ```ts
+ * const fpsConfig: CharacterControllerConfig = {
+ *   capsuleRadius: 0.25,
+ *   capsuleHeight: 1.6,
+ *   maxSpeed: 7,
+ *   jumpForce: 7,
+ *   coyoteTime: 0.1,
+ *   // ...other properties
+ * };
+ * ```
  */
 export interface CharacterControllerConfig {
-    /** Horizontal radius of the capsule. */
+    /** Horizontal radius of the capsule collider in meters. Affects width of character. */
     capsuleRadius: number;
-    /** Total height of the capsule. */
+    /** Total height of the capsule collider in meters. Affects standing height. */
     capsuleHeight: number;
-    /** Mass of the character in kg. */
+    /** Mass of the character in kilograms. Affects momentum and impact forces. */
     mass: number;
-    /** Maximum walking speed. */
+    /** Maximum walking speed in meters per second. */
     maxSpeed: number;
-    /** Rate of acceleration. */
+    /** Rate of acceleration in m/s². Higher = snappier movement. */
     acceleration: number;
-    /** Rate of deceleration. */
+    /** Rate of deceleration in m/s². Higher = faster stopping. */
     deceleration: number;
-    /** Impulse applied on jump. */
+    /** Vertical impulse applied on jump in Newtons. Higher = higher jump. */
     jumpForce: number;
-    /** Maximum number of multi-jumps. */
+    /** Maximum number of consecutive jumps (multi-jump). 1 = single jump only. */
     maxJumps: number;
-    /** Raycast distance for ground detection. */
+    /** Raycast distance in meters for ground detection. Should be slightly larger than skin width. */
     groundCheckDistance: number;
-    /** Maximum angle in radians the character can walk up. */
+    /** Maximum walkable slope angle in radians. Steeper slopes cause sliding. Default: PI/4 (45°). */
     slopeLimit: number;
-    /** Maximum height of a step the character can climb. */
+    /** Maximum height in meters of a step the character can automatically climb. */
     stepHeight: number;
-    /** Time in seconds after leaving ground that a jump is still allowed. */
+    /** "Coyote time" in seconds after leaving ground edge that a jump is still allowed. Improves feel. */
     coyoteTime: number;
-    /** Time in seconds to buffer a jump input before landing. */
+    /** "Jump buffer time" in seconds to remember a jump input before landing. Improves responsiveness. */
     jumpBufferTime: number;
-    /** Multiplier for movement control while in the air. */
+    /** Multiplier (0-1) for movement control while airborne. 0 = no air control, 1 = full control. */
     airControl: number;
-    /** Local gravity multiplier for the character. */
+    /** Local gravity multiplier. >1 = faster falling, <1 = floaty, moon-like. */
     gravityScale: number;
-    /** Distance to snap the character to the ground. */
+    /** Distance in meters to snap character down to ground for stable slope walking. */
     snapToGroundDistance: number;
-    /** Inset distance for collision detection. */
+    /** Collision skin width in meters. Small buffer to prevent clipping into walls. */
     skinWidth: number;
-    /** Whether to automatically climb steps. */
+    /** Whether to automatically climb steps up to stepHeight. */
     autoStepEnabled: boolean;
-    /** Whether to slide down steep slopes. */
+    /** Whether to slide down slopes steeper than slopeLimit. */
     slideEnabled: boolean;
 }
 
 /**
- * Vehicle physics configuration.
+ * Vehicle physics configuration for arcade-style or realistic driving.
+ * Controls chassis, wheels, suspension, steering, and motor behavior.
+ *
  * @category Entities & Simulation
+ * @example
+ * ```ts
+ * const racingCarConfig: VehicleConfig = {
+ *   chassisMass: 1200,
+ *   wheelRadius: 0.35,
+ *   motorForce: 2500,
+ *   maxSteerAngle: Math.PI / 6,
+ *   driveWheels: 'rear',
+ *   // ...other properties
+ * };
+ * ```
  */
 export interface VehicleConfig {
-    /** Mass of the vehicle body. */
+    /** Mass of the vehicle chassis in kilograms. Affects acceleration and handling. */
     chassisMass: number;
-    /** Dimensions of the chassis [width, height, length]. */
+    /** Dimensions of the chassis [width, height, length] in meters. */
     chassisSize: [number, number, number];
-    /** Radius of the wheels. */
+    /** Radius of the wheels in meters. Affects top speed and acceleration. */
     wheelRadius: number;
-    /** Width of the wheels. */
+    /** Width/thickness of the wheels in meters. Visual only. */
     wheelWidth: number;
-    /** Local positions of each wheel. */
+    /** Local positions [x, y, z] of each wheel relative to chassis center. */
     wheelPositions: [number, number, number][];
-    /** Target length of the suspension springs. */
+    /** Target resting length of the suspension springs in meters. */
     suspensionRestLength: number;
-    /** Stiffness multiplier for suspension. */
+    /** Stiffness multiplier for suspension springs. Higher = stiffer, bouncier. */
     suspensionStiffness: number;
-    /** Damping multiplier for suspension. */
+    /** Damping multiplier for suspension. Higher = less oscillation. */
     suspensionDamping: number;
-    /** Maximum travel distance for suspension. */
+    /** Maximum compression/extension travel distance for suspension in meters. */
     suspensionTravel: number;
-    /** Maximum steering angle in radians. */
+    /** Maximum steering angle in radians for front wheels. Affects turning radius. */
     maxSteerAngle: number;
-    /** Which wheels receive motor force. */
+    /** Which wheels receive motor torque. 'front' = FWD, 'rear' = RWD, 'all' = AWD. */
     driveWheels: 'front' | 'rear' | 'all';
-    /** Strength of the motor impulse. */
+    /** Strength of the motor force in Newtons. Higher = faster acceleration. */
     motorForce: number;
-    /** Strength of the braking force. */
+    /** Strength of the braking force in Newtons. Higher = shorter braking distance. */
     brakeForce: number;
-    /** Friction coefficient for tire grip. */
+    /** Friction coefficient for tire grip (0-1). Higher = better traction. */
     frictionSlip: number;
-    /** Impact of lateral forces on roll. */
+    /** Impact of lateral forces on chassis roll (0-1). Lower = less body roll. */
     rollInfluence: number;
-    /** Stabilizer bar strength. */
+    /** Stabilizer bar strength to reduce body roll in turns. */
     antiRoll: number;
-    /** Vertical offset for the physical center of mass. */
+    /** Vertical offset [x, y, z] for the physical center of mass. Lower = more stable. */
     centerOfMassOffset: [number, number, number];
 }
 

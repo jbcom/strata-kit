@@ -1,51 +1,137 @@
 /**
- * Core Input System
+ * Core Input System - Immersive Interaction Foundation.
  *
- * Pure TypeScript input handling with unified pointer, touch, gamepad events.
- * Provides normalized axis/force outputs, haptic feedback, and drag state machine.
+ * Pure TypeScript input handling with unified pointer, touch, and gamepad events.
+ * Build responsive, tactile controls with normalized axis outputs, haptic feedback,
+ * and intelligent drag state machines. Perfect for 3D joysticks, buttons, switches,
+ * and pressure plates that feel native to your 3D world.
+ *
+ * **Features:**
+ * - Unified input abstraction for mouse, touch, and gamepad
+ * - Drag state machine with press, dragging, and release phases
+ * - Haptic feedback patterns (pulse, impact, error, success)
+ * - Normalized axis values with configurable deadzones
+ * - Force/pressure simulation for depth-based interactions
+ * - Event system with activation, deactivation, and axis change callbacks
+ *
+ * **Interactive Demos:**
+ * - 🎮 [3D Controls Demo](http://jonbogaty.com/nodejs-strata/demos/input.html)
+ * - 🕹️ [Joystick Showcase](http://jonbogaty.com/nodejs-strata/demos/joystick.html)
+ * - 🔘 [Interactive Buttons](http://jonbogaty.com/nodejs-strata/demos/buttons.html)
+ *
+ * **API Documentation:**
+ * - [Full API Reference](http://jonbogaty.com/nodejs-strata/api)
+ * - [Examples → API Mapping](https://github.com/jbcom/nodejs-strata/blob/main/EXAMPLES_API_MAP.md#input)
+ *
+ * @packageDocumentation
+ * @module core/input
+ * @category UI & Interaction
  */
 
 import * as THREE from 'three';
 
+/**
+ * Drag interaction state for input controls.
+ * Tracks the progression from idle → pressed → dragging → released → idle.
+ *
+ * @category UI & Interaction
+ */
 export type DragState = 'idle' | 'pressed' | 'dragging' | 'released';
 
+/**
+ * Normalized 2D axis values for joysticks and directional controls.
+ *
+ * @category UI & Interaction
+ */
 export interface InputAxis {
+    /** Horizontal axis value, typically -1 (left) to +1 (right). */
     x: number;
+    /** Vertical axis value, typically -1 (down/back) to +1 (up/forward). */
     y: number;
 }
 
+/**
+ * Unified input event emitted by controls.
+ *
+ * @category UI & Interaction
+ */
 export interface InputEvent {
+    /** Event type indicating the interaction phase. */
     type: 'activate' | 'deactivate' | 'axisChange' | 'press' | 'release';
+    /** Current axis values at the time of the event. */
     axis: InputAxis;
+    /** Normalized force/pressure (0-1). Used for pressure plates and analog buttons. */
     force: number;
+    /** 3D world position of the control when the event was emitted. */
     worldPosition: THREE.Vector3;
+    /** Millisecond timestamp of the event. */
     timestamp: number;
 }
 
+/**
+ * Custom haptic vibration pattern configuration.
+ *
+ * @category UI & Interaction
+ */
 export interface HapticPattern {
+    /** Array of vibration durations in milliseconds. Example: [50, 100, 50] for triple pulse. */
     pattern: number[];
+    /** Optional intensity multiplier (0-1). Not all devices support intensity. */
     intensity?: number;
 }
 
+/**
+ * Current state of a connected gamepad.
+ *
+ * @category UI & Interaction
+ */
 export interface GamepadState {
+    /** Whether a gamepad is currently connected. */
     connected: boolean;
+    /** Raw axis values from the gamepad (typically 4-6 axes). */
     axes: number[];
+    /** Raw button states from the gamepad (true = pressed). */
     buttons: boolean[];
+    /** Last update timestamp from the gamepad API. */
     timestamp: number;
 }
 
+/**
+ * Current pointer/mouse interaction state.
+ *
+ * @category UI & Interaction
+ */
+/**
+ * Current pointer/mouse interaction state.
+ *
+ * @category UI & Interaction
+ */
 export interface PointerState {
+    /** Whether the pointer button is currently held down. */
     isDown: boolean;
+    /** Screen position where the interaction started. */
     startPosition: THREE.Vector2;
+    /** Current screen position of the pointer. */
     currentPosition: THREE.Vector2;
+    /** Movement delta since last frame. */
     delta: THREE.Vector2;
+    /** Simulated force/pressure (0-1). Based on movement or touch pressure if available. */
     force: number;
 }
 
+/**
+ * Input manager configuration for deadzone, haptics, and gamepad.
+ *
+ * @category UI & Interaction
+ */
 export interface InputManagerConfig {
+    /** Minimum axis value to register (0-1). Values below this are treated as 0. Default: 0.1. */
     deadzone?: number;
+    /** Maximum drag distance in pixels. Used for normalizing force calculations. Default: 100. */
     maxDistance?: number;
+    /** Enable haptic feedback for supported devices. Default: true. */
     hapticEnabled?: boolean;
+    /** Index of the gamepad to use (0-3). Default: 0. */
     gamepadIndex?: number;
 }
 
