@@ -10,7 +10,9 @@
  * @category World Building
  *
  * ## Interactive Demos
- * - 🎮 [Live Sky Demo](http://jonbogaty.com/nodejs-strata/demos/sky.html)
+ * <iframe src="../../demos/sky.html" width="100%" height="400px" style="border-radius: 8px; border: 1px solid #1e293b;"></iframe>
+ *
+ * - 🎮 [Full Screen Sky Demo](../../demos/sky.html)
  * - 📦 [Sky & Volumetrics Example](https://github.com/jbcom/nodejs-strata/tree/main/examples/sky-volumetrics)
  *
  * ## API Documentation

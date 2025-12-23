@@ -4,21 +4,40 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useSta
 import type { InventoryProps, InventoryRef, InventorySlot } from './types';
 
 /**
- * Grid-Based Inventory System.
+ * Professional Grid-Based Inventory System.
  *
- * Provides a customizable HTML overlay for item management. Supports
- * drag-and-drop, slot selection, rarity-based coloring, and locked slots.
+ * A robust, RPG-ready inventory management system that renders as a high-performance
+ * HTML overlay. Supports modern interaction patterns including drag-and-drop,
+ * rarity-based styling, slot selection, and locked states.
+ *
+ * **Key Features:**
+ * - **Interactivity:** Full drag-and-drop support for item reordering.
+ * - **Visual Feedback:** Rarity-based borders, hover scaling, and selection highlights.
+ * - **Flexible Layout:** Responsive grid with configurable columns, rows, and slot sizes.
+ * - **State Sync:** Reflects quantities, stack limits, and slot status in real-time.
  *
  * @category UI & Interaction
+ *
  * @example
  * ```tsx
+ * // 8x2 RPG Hotbar configuration
  * <Inventory
  *   columns={8}
  *   rows={2}
- *   slots={playerSlots}
- *   onSlotClick={(item) => useItem(item)}
+ *   slots={[
+ *     { id: '1', itemName: 'Health Potion', itemIcon: '/icons/potion.png', quantity: 5, rarity: 'common' },
+ *     { id: '2', itemName: 'Magic Sword', itemIcon: '/icons/sword.png', rarity: 'rare', highlighted: true },
+ *     { id: '3', locked: true }
+ *   ]}
+ *   onSlotClick={(slot) => equipItem(slot)}
+ *   onSlotDrop={(from, to) => swapItems(from, to)}
  * />
  * ```
+ *
+ * ## Interactive Demos
+ * <iframe src="../../demos/ui.html" width="100%" height="400px" style="border-radius: 8px; border: 1px solid #1e293b;"></iframe>
+ *
+ * - 🎮 [Live UI Demo](../../demos/ui.html)
  */
 export const Inventory = forwardRef<InventoryRef, InventoryProps>(
     (

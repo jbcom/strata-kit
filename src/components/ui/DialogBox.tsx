@@ -4,23 +4,48 @@ import { getTextDirection } from '../../core/ui';
 import type { DialogBoxProps, DialogBoxRef } from './types';
 
 /**
- * Interactive Dialogue Box.
+ * Advanced Game Dialogue System.
  *
- * Provides a highly-functional dialogue system with typewriter effects,
- * speaker images, branching choices, and auto-advance capabilities.
- * Supports right-to-left (RTL) text detection.
+ * A highly-functional, RPG-ready dialogue system that bridges the gap between your game's
+ * narrative and the player. Includes typewriter effects, character portraits, branching
+ * choices, and automatic RTL detection for global localization.
+ *
+ * **Key Features:**
+ * - **Narrative Flow:** Typewriter animation with skip and auto-advance support.
+ * - **Portraits:** Customizable speaker images with flexible positioning.
+ * - **Branching:** Interactive choices with conditional visibility.
+ * - **Accessibility:** Keyboard support (Space/Enter) and ARIA attributes.
  *
  * @category UI & Interaction
+ *
  * @example
  * ```tsx
+ * // Complex branching dialogue example
  * <DialogBox
  *   lines={[
- *     { speaker: 'NPC', text: 'Hello, traveler!', speakerImage: '/img/npc.png' },
- *     { speaker: 'NPC', text: 'Do you want a quest?', choices: [{ id: 'yes', text: 'Yes!' }] }
+ *     {
+ *       speaker: 'Gatekeeper',
+ *       text: 'Halt! Who goes there?',
+ *       speakerImage: '/portraits/guard.png'
+ *     },
+ *     {
+ *       speaker: 'Gatekeeper',
+ *       text: 'The path ahead is dangerous. Are you prepared?',
+ *       choices: [
+ *         { id: 'yes', text: 'I am ready.' },
+ *         { id: 'no', text: 'Not yet...', consequence: 'exit' }
+ *       ]
+ *     }
  *   ]}
- *   onChoiceSelect={(id) => handleChoice(id)}
+ *   onChoiceSelect={(id) => console.log(`Player chose: ${id}`)}
+ *   typewriterSpeed={40}
  * />
  * ```
+ *
+ * ## Interactive Demos
+ * <iframe src="../../demos/ui.html" width="100%" height="400px" style="border-radius: 8px; border: 1px solid #1e293b;"></iframe>
+ *
+ * - 🎮 [Live UI Demo](../../demos/ui.html)
  */
 export const DialogBox = forwardRef<DialogBoxRef, DialogBoxProps>(
     (

@@ -1,19 +1,38 @@
 /**
- * Core User Interface Utilities.
+ * Core User Interface Utilities and Definitions.
  *
- * Provides pure TypeScript logic, configurations, and helper functions for
- * building immersive in-game UI systems, independent of the rendering framework.
+ * Provides pure TypeScript logic, configurations, and helper functions for building
+ * immersive, game-ready UI systems that bridge the gap between 2D interfaces and 3D scenes.
+ *
+ * **Key Features:**
+ * - **Coordinate Mapping:** Transform world positions to screen space for nameplates and markers.
+ * - **HUD Systems:** Definitions and logic for crosshairs, minimaps, and progress bars.
+ * - **Interaction:** Advanced dialogue and inventory state definitions.
+ * - **Accessibility:** Automatic RTL (right-to-left) text detection.
  *
  * @packageDocumentation
  * @module core/ui
  * @category UI & Interaction
+ *
+ * @example
+ * ```typescript
+ * // Convert world position to screen coordinates for a nameplate
+ * const screenPos = worldToScreen(entityPosition, camera, window.innerWidth, window.innerHeight);
+ * if (screenPos.visible) {
+ *   updateUIElement(screenPos.x, screenPos.y);
+ * }
+ * ```
  */
 
 import * as THREE from 'three';
+import { lerp, easeOutCubic, easeOutElastic } from './math/utils';
 
-// Re-export easing functions from camera for backward compatibility
-export { easeOutCubic, easeOutElastic, lerp } from './camera';
+export { lerp, easeOutCubic, easeOutElastic };
 
+/**
+ * Screen-space anchor points for UI elements.
+ * @category UI & Interaction
+ */
 export type UIAnchor =
     | 'topLeft'
     | 'topRight'
@@ -25,205 +44,429 @@ export type UIAnchor =
     | 'left'
     | 'right';
 
+/**
+ * Supported text directions.
+ * @category UI & Interaction
+ */
 export type TextDirection = 'ltr' | 'rtl' | 'auto';
 
+/**
+ * Configuration for a progress bar UI element.
+ * @category UI & Interaction
+ */
 export interface ProgressBarConfig {
+    /** Current progress value. */
     value: number;
+    /** Maximum value representing 100% completion. */
     maxValue: number;
+    /** Physical or pixel width. */
     width?: number;
+    /** Physical or pixel height. */
     height?: number;
+    /** CSS-compatible background color string. */
     backgroundColor?: string;
+    /** CSS-compatible fill color string. */
     fillColor?: string;
+    /** CSS-compatible border color string. */
     borderColor?: string;
+    /** Border thickness in pixels. */
     borderWidth?: number;
+    /** Border radius in pixels for rounded corners. */
     borderRadius?: number;
+    /** Whether to display text (e.g., "75%"). */
     showText?: boolean;
+    /** Format for the displayed progress text. */
     textFormat?: 'percentage' | 'fraction' | 'value' | 'none';
+    /** Duration of fill animations in milliseconds. */
     animationDuration?: number;
+    /** Number of visual segments (e.g., for segmented health bars). */
     segments?: number;
+    /** CSS-compatible glow color string. */
     glowColor?: string;
+    /** Intensity of the glow effect (0-1). */
     glowIntensity?: number;
 }
 
+/**
+ * Definition of a single item slot in an inventory.
+ * @category UI & Interaction
+ */
 export interface InventorySlot {
+    /** Unique identifier for this slot. */
     id: string;
+    /** ID of the item currently occupying this slot. */
     itemId?: string;
+    /** Display name of the item. */
     itemName?: string;
+    /** Path to the item's icon image. */
     itemIcon?: string;
+    /** Current quantity of the item. */
     quantity?: number;
+    /** Maximum stack size for this item. */
     maxStack?: number;
+    /** Whether this slot is locked (unusable). */
     locked?: boolean;
+    /** Whether this slot is currently highlighted. */
     highlighted?: boolean;
+    /** Item rarity, used for background coloring and categorization. */
     rarity?: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 }
 
+/**
+ * Configuration for an inventory grid or container.
+ * @category UI & Interaction
+ */
 export interface InventoryConfig {
+    /** Array of slots defining the inventory contents. */
     slots: InventorySlot[];
+    /** Number of columns in the grid. */
     columns: number;
+    /** Number of rows in the grid. */
     rows: number;
+    /** Pixel size of each slot. */
     slotSize?: number;
+    /** Gap between slots in pixels. */
     slotGap?: number;
+    /** CSS-compatible background color for the container. */
     backgroundColor?: string;
+    /** CSS-compatible background color for each slot. */
     slotBackgroundColor?: string;
+    /** CSS-compatible border color for each slot. */
     slotBorderColor?: string;
+    /** Border color for the currently selected slot. */
     selectedSlotBorderColor?: string;
+    /** Whether to show information tooltips on hover. */
     showTooltips?: boolean;
+    /** Whether to allow dragging items between slots. */
     allowDrag?: boolean;
+    /** Whether to display item quantities. */
     showQuantity?: boolean;
+    /** Mapping of rarity names to CSS-compatible color strings. */
     rarityColors?: Record<string, string>;
 }
 
+/**
+ * A single line of text in a dialogue sequence.
+ * @category UI & Interaction
+ */
 export interface DialogLine {
+    /** Name of the character speaking. */
     speaker?: string;
+    /** The actual dialogue text to display. */
     text: string;
+    /** Path to an image representing the speaker. */
     speakerImage?: string;
+    /** Array of interactive choices available after this line. */
     choices?: DialogChoice[];
+    /** Whether to advance to the next line automatically. */
     autoAdvance?: boolean;
+    /** Delay in milliseconds before auto-advancing. */
     autoAdvanceDelay?: number;
+    /** Optional emotion tag for facial expression synchronization. */
     emotion?: string;
+    /** Path to an audio file for this dialogue line. */
     voiceClip?: string;
 }
 
+/**
+ * An interactive choice presented during a dialogue.
+ * @category UI & Interaction
+ */
 export interface DialogChoice {
+    /** Unique identifier for this choice. */
     id: string;
+    /** Text displayed to the user for this choice. */
     text: string;
+    /** Whether this choice is currently disabled. */
     disabled?: boolean;
+    /** Optional function to determine if this choice should be visible. */
     condition?: () => boolean;
+    /** Optional tag for branching logic consequence. */
     consequence?: string;
 }
 
+/**
+ * Configuration for a dialogue system.
+ * @category UI & Interaction
+ */
 export interface DialogConfig {
+    /** The full sequence of lines in this dialogue. */
     lines: DialogLine[];
+    /** Index of the line currently being displayed. */
     currentLine?: number;
+    /** Characters per second for the typewriter effect. */
     typewriterSpeed?: number;
+    /** CSS-compatible text color string. */
     textColor?: string;
+    /** CSS-compatible background color string. */
     backgroundColor?: string;
+    /** CSS-compatible speaker name color string. */
     speakerColor?: string;
+    /** Base font size in pixels. */
     fontSize?: number;
+    /** CSS-compatible font family string. */
     fontFamily?: string;
+    /** Direction of text flow. */
     textDirection?: TextDirection;
+    /** Whether to display character portraits. */
     showSpeakerImage?: boolean;
+    /** Position of the character portrait relative to the text. */
     imagePosition?: 'left' | 'right';
+    /** Character shown when more text is available. */
     continueIndicator?: string;
+    /** Whether users can skip the typewriter animation. */
     skipEnabled?: boolean;
+    /** Internal container padding in pixels. */
     padding?: number;
+    /** Maximum width of the dialogue box in pixels. */
     maxWidth?: number;
+    /** Screen corner anchor point. */
     position?: UIAnchor;
 }
 
+/**
+ * Configuration for hoverable tooltips.
+ * @category UI & Interaction
+ */
 export interface TooltipConfig {
+    /** Main heading of the tooltip. */
     title?: string;
+    /** Detailed descriptive text. */
     description?: string;
+    /** Key-value pairs of statistics to display (e.g., for item stats). */
     stats?: Array<{ label: string; value: string | number; color?: string }>;
+    /** Display string for item rarity. */
     rarity?: string;
+    /** Color string for rarity text or border. */
     rarityColor?: string;
+    /** CSS-compatible background color string. */
     backgroundColor?: string;
+    /** CSS-compatible border color string. */
     borderColor?: string;
+    /** CSS-compatible text color string. */
     textColor?: string;
+    /** Maximum width in pixels. */
     maxWidth?: number;
+    /** Base font size in pixels. */
     fontSize?: number;
+    /** Internal padding in pixels. */
     padding?: number;
+    /** Delay in milliseconds before showing the tooltip. */
     showDelay?: number;
+    /** Delay in milliseconds before hiding the tooltip. */
     hideDelay?: number;
 }
 
+/**
+ * Configuration for temporary screen notifications or "toasts".
+ * @category UI & Interaction
+ */
 export interface NotificationConfig {
+    /** Unique identifier for the notification. */
     id?: string;
+    /** Main text message to display. */
     message: string;
+    /** Optional bold heading. */
     title?: string;
+    /** Visual style category. */
     type?: 'info' | 'success' | 'warning' | 'error';
+    /** Path to an icon image or emoji character. */
     icon?: string;
+    /** Duration in milliseconds before auto-hiding. */
     duration?: number;
+    /** Screen corner anchor point. */
     position?: UIAnchor;
+    /** Whether the user can manually close the notification. */
     dismissible?: boolean;
+    /** Whether to show a countdown progress bar. */
     progress?: boolean;
+    /** Callback fired when the notification is dismissed. */
     onDismiss?: () => void;
+    /** CSS-compatible background color string. */
     backgroundColor?: string;
+    /** CSS-compatible text color string. */
     textColor?: string;
+    /** CSS-compatible border color string. */
     borderColor?: string;
+    /** Name of the entry animation. */
     animationIn?: string;
+    /** Name of the exit animation. */
     animationOut?: string;
 }
 
+/**
+ * Configuration for an in-game minimap or radar system.
+ * @category UI & Interaction
+ */
 export interface MinimapConfig {
+    /** Pixel size of the map (square). */
     size?: number;
+    /** Current zoom level (meters per pixel). */
     zoom?: number;
+    /** Manual rotation offset in radians. */
     rotation?: number;
+    /** Whether the map centers on the player. */
     followPlayer?: boolean;
+    /** Whether the map rotates to match the player's heading. */
     rotateWithPlayer?: boolean;
+    /** CSS-compatible background color string. */
     backgroundColor?: string;
+    /** CSS-compatible border color string. */
     borderColor?: string;
+    /** Border thickness in pixels. */
     borderWidth?: number;
+    /** Corner radius (size/2 for circular maps). */
     borderRadius?: number;
+    /** Path to the player icon image. */
     playerIcon?: string;
+    /** Color for the player indicator. */
     playerColor?: string;
+    /** Size of the player indicator in pixels. */
     playerSize?: number;
+    /** Definitions for custom marker types. */
     markerTypes?: Record<string, MinimapMarker>;
+    /** Whether to enable fog-of-war exploration. */
     fogOfWar?: boolean;
+    /** Whether to display a north-facing compass needle. */
     showCompass?: boolean;
 }
 
+/**
+ * Definition of an interactive marker on the minimap.
+ * @category UI & Interaction
+ */
 export interface MinimapMarker {
+    /** Path to an icon image. */
     icon?: string;
+    /** Color for the marker indicator. */
     color?: string;
+    /** Size of the marker in pixels. */
     size?: number;
+    /** Text label to show on hover or next to marker. */
     label?: string;
+    /** Whether the marker should pulse or blink. */
     blinking?: boolean;
 }
 
+/**
+ * Configuration for a screen reticle or crosshair.
+ * @category UI & Interaction
+ */
 export interface CrosshairConfig {
+    /** Visual style of the reticle. */
     type?: 'dot' | 'cross' | 'circle' | 'custom';
+    /** Base size in pixels. */
     size?: number;
+    /** Thickness of the lines in pixels. */
     thickness?: number;
+    /** Gap between crosshair segments in pixels. */
     gap?: number;
+    /** CSS-compatible color string. */
     color?: string;
+    /** Color for the reticle outline. */
     outlineColor?: string;
+    /** Width of the outline in pixels. */
     outlineWidth?: number;
+    /** Global opacity (0-1). */
     opacity?: number;
+    /** Whether to show a center dot. */
     dot?: boolean;
+    /** Size of the center dot in pixels. */
     dotSize?: number;
+    /** Whether the crosshair expands with weapon spread. */
     dynamic?: boolean;
+    /** Sensitivity of the dynamic expansion. */
     spreadMultiplier?: number;
 }
 
+/**
+ * Configuration for animated damage/healing text numbers.
+ * @category UI & Interaction
+ */
 export interface DamageNumberConfig {
+    /** The numeric value to display. */
     value: number;
+    /** Category determining visual style (color/size). */
     type?: 'normal' | 'critical' | 'heal' | 'miss' | 'block';
+    /** CSS-compatible color string override. */
     color?: string;
+    /** Font size in pixels. */
     fontSize?: number;
+    /** CSS-compatible font family string. */
     fontFamily?: string;
+    /** CSS font-weight value. */
     fontWeight?: string;
+    /** Total animation duration in milliseconds. */
     duration?: number;
+    /** Vertical distance the number floats upwards. */
     floatDistance?: number;
+    /** Percentage of duration (0-1) when fading begins. */
     fadeStart?: number;
+    /** Initial scale multiplier for impact emphasis. */
     scale?: number;
+    /** Maximum random horizontal jitter in pixels. */
     randomOffset?: number;
 }
 
+/**
+ * Configuration for world-space entity nameplates and health bars.
+ * @category UI & Interaction
+ */
 export interface NameplateConfig {
+    /** Entity name to display. */
     name: string;
+    /** Optional sub-title or title (e.g., "The Destroyer"). */
     title?: string;
+    /** Character level or rank. */
     level?: number;
+    /** Configuration for the integrated health bar. */
     healthBar?: ProgressBarConfig;
+    /** Guild or faction name. */
     guild?: string;
+    /** Faction name or tag. */
     faction?: string;
+    /** Color for the main name text. */
     nameColor?: string;
+    /** Color for the title text. */
     titleColor?: string;
+    /** Background container color. */
     backgroundColor?: string;
+    /** Whether to display the integrated health bar. */
     showHealthBar?: boolean;
+    /** Whether to display the level indicator. */
     showLevel?: boolean;
+    /** Current distance from camera (for auto-scaling/fading). */
     distance?: number;
+    /** Distance when nameplate starts to fade out. */
     fadeStart?: number;
+    /** Distance when nameplate is completely hidden. */
     fadeEnd?: number;
 }
 
+/**
+ * Result of a world-to-screen projection.
+ * @category UI & Interaction
+ */
 export interface ScreenPosition {
+    /** Screen X coordinate in pixels. */
     x: number;
+    /** Screen Y coordinate in pixels. */
     y: number;
+    /** Whether the point is within the camera's view frustum and not behind it. */
     visible: boolean;
+    /** World distance from the camera. */
     distance: number;
 }
 
+/**
+ * Calculates the pixel offset for an element based on a screen anchor.
+ *
+ * @category UI & Interaction
+ * @param anchor - The screen corner or center to anchor to.
+ * @param width - Width of the UI element in pixels.
+ * @param height - Height of the UI element in pixels.
+ * @returns An {x, y} offset object.
+ */
 export function getAnchorOffset(
     anchor: UIAnchor,
     width: number,
@@ -253,6 +496,19 @@ export function getAnchorOffset(
     }
 }
 
+/**
+ * Projects a 3D world position into 2D screen coordinates.
+ *
+ * Essential for placing HTML-based UI elements (nameplates, HUD markers)
+ * correctly over 3D game objects.
+ *
+ * @category UI & Interaction
+ * @param position - The world position to project.
+ * @param camera - The active Three.js camera.
+ * @param width - Current viewport width in pixels.
+ * @param height - Current viewport height in pixels.
+ * @returns ScreenPosition object containing pixel coordinates and visibility.
+ */
 export function worldToScreen(
     position: THREE.Vector3,
     camera: THREE.Camera,
@@ -274,6 +530,20 @@ export function worldToScreen(
     return { x, y, visible, distance };
 }
 
+/**
+ * Unprojects 2D screen coordinates into a 3D world position at a specific depth.
+ *
+ * Used for mouse interaction, placement tools, or aiming systems.
+ *
+ * @category UI & Interaction
+ * @param screenX - Pixel X coordinate.
+ * @param screenY - Pixel Y coordinate.
+ * @param camera - The active Three.js camera.
+ * @param width - Viewport width in pixels.
+ * @param height - Viewport height in pixels.
+ * @param targetZ - The world Z-depth to project to (default: 0).
+ * @returns The resulting Vector3 in world space.
+ */
 export function screenToWorld(
     screenX: number,
     screenY: number,
@@ -299,6 +569,17 @@ export function screenToWorld(
     return camera.position.clone().add(dir.multiplyScalar(distance));
 }
 
+/**
+ * Calculates a 0-1 opacity fade based on distance.
+ *
+ * Used to smoothly hide UI elements as they get further from or closer to the camera.
+ *
+ * @category UI & Interaction
+ * @param distance - Current distance from camera.
+ * @param fadeStart - Distance where fading begins.
+ * @param fadeEnd - Distance where element is fully transparent.
+ * @returns Opacity value (0-1).
+ */
 export function calculateFade(distance: number, fadeStart: number, fadeEnd: number): number {
     if (distance <= fadeStart) return 1;
     if (distance >= fadeEnd) return 0;
@@ -307,6 +588,15 @@ export function calculateFade(distance: number, fadeStart: number, fadeEnd: numb
     return 1 - (distance - fadeStart) / (fadeEnd - fadeStart);
 }
 
+/**
+ * Formats progress values into human-readable strings.
+ *
+ * @category UI & Interaction
+ * @param value - Current value.
+ * @param maxValue - Maximum value.
+ * @param format - Output format choice.
+ * @returns Formatted string (e.g., "50%", "10/20").
+ */
 export function formatProgressText(
     value: number,
     maxValue: number,
@@ -325,30 +615,36 @@ export function formatProgressText(
     }
 }
 
+/**
+ * Clamps a progress value between 0 and its maximum.
+ *
+ * @category UI & Interaction
+ * @param value - Input value.
+ * @param maxValue - Ceiling value.
+ * @returns Clamped progress value.
+ */
 export function clampProgress(value: number, maxValue: number): number {
     return Math.max(0, Math.min(value, maxValue));
 }
 
-// Internal lerp - use import from camera.ts for public API
-function uiLerp(start: number, end: number, t: number): number {
-    return start + (end - start) * t;
-}
-
-// Internal easing functions - use imports from camera.ts for public API
-function uiEaseOutCubic(t: number): number {
-    return 1 - (1 - t) ** 3;
-}
-
-function uiEaseOutElastic(t: number): number {
-    const c4 = (2 * Math.PI) / 3;
-    return t === 0 ? 0 : t === 1 ? 1 : 2 ** (-10 * t) * Math.sin((t * 10 - 0.75) * c4) + 1;
-}
-
+/**
+ * Detects if a string primarily contains right-to-left characters.
+ *
+ * Useful for automatic UI orientation in multilingual games.
+ *
+ * @category UI & Interaction
+ * @param text - The string to analyze.
+ * @returns 'rtl' or 'ltr'.
+ */
 export function getTextDirection(text: string): 'ltr' | 'rtl' {
     const rtlChars = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/;
     return rtlChars.test(text) ? 'rtl' : 'ltr';
 }
 
+/**
+ * Creates a default ProgressBar configuration with common gaming styles.
+ * @category UI & Interaction
+ */
 export function createDefaultProgressBar(): ProgressBarConfig {
     return {
         value: 100,
@@ -366,6 +662,12 @@ export function createDefaultProgressBar(): ProgressBarConfig {
     };
 }
 
+/**
+ * Creates a default inventory configuration with a specified grid size.
+ * @category UI & Interaction
+ * @param columns - Number of columns (default: 6).
+ * @param rows - Number of rows (default: 4).
+ */
 export function createDefaultInventory(columns: number = 6, rows: number = 4): InventoryConfig {
     const slots: InventorySlot[] = [];
     for (let i = 0; i < columns * rows; i++) {
@@ -395,6 +697,10 @@ export function createDefaultInventory(columns: number = 6, rows: number = 4): I
     };
 }
 
+/**
+ * Creates a default dialogue system configuration.
+ * @category UI & Interaction
+ */
 export function createDefaultDialog(): DialogConfig {
     return {
         lines: [],
@@ -416,6 +722,10 @@ export function createDefaultDialog(): DialogConfig {
     };
 }
 
+/**
+ * Creates a default tooltip configuration with standard dark-mode styling.
+ * @category UI & Interaction
+ */
 export function createDefaultTooltip(): TooltipConfig {
     return {
         backgroundColor: 'rgba(20, 20, 20, 0.95)',
@@ -429,6 +739,10 @@ export function createDefaultTooltip(): TooltipConfig {
     };
 }
 
+/**
+ * Creates a default notification configuration.
+ * @category UI & Interaction
+ */
 export function createDefaultNotification(): NotificationConfig {
     return {
         message: '',
@@ -444,6 +758,10 @@ export function createDefaultNotification(): NotificationConfig {
     };
 }
 
+/**
+ * Creates a default minimap configuration.
+ * @category UI & Interaction
+ */
 export function createDefaultMinimap(): MinimapConfig {
     return {
         size: 150,
@@ -462,6 +780,10 @@ export function createDefaultMinimap(): MinimapConfig {
     };
 }
 
+/**
+ * Creates a default crosshair configuration.
+ * @category UI & Interaction
+ */
 export function createDefaultCrosshair(): CrosshairConfig {
     return {
         type: 'cross',
@@ -479,6 +801,10 @@ export function createDefaultCrosshair(): CrosshairConfig {
     };
 }
 
+/**
+ * Creates a default damage number configuration with standard impact styling.
+ * @category UI & Interaction
+ */
 export function createDefaultDamageNumber(): DamageNumberConfig {
     return {
         value: 0,
@@ -495,6 +821,10 @@ export function createDefaultDamageNumber(): DamageNumberConfig {
     };
 }
 
+/**
+ * Creates a default nameplate configuration.
+ * @category UI & Interaction
+ */
 export function createDefaultNameplate(): NameplateConfig {
     return {
         name: 'Unknown',
@@ -511,6 +841,8 @@ export function createDefaultNameplate(): NameplateConfig {
 /**
  * Gets the standard color for a damage number type.
  * @category UI & Interaction
+ * @param type - The category of damage (e.g., 'critical', 'heal').
+ * @returns CSS-compatible color string.
  */
 export function getDamageNumberColor(type: DamageNumberConfig['type']): string {
     switch (type) {
@@ -528,8 +860,11 @@ export function getDamageNumberColor(type: DamageNumberConfig['type']): string {
 }
 
 /**
- * Formats a number with commas and human-readable suffixes.
+ * Formats a number with commas and human-readable suffixes (K, M).
+ *
  * @category UI & Interaction
+ * @param value - The number to format.
+ * @returns Formatted string (e.g., "1.2K", "5.0M").
  */
 export function formatNumber(value: number): string {
     if (value >= 1000000) {
@@ -542,8 +877,10 @@ export function formatNumber(value: number): string {
 }
 
 /**
- * Gets the standard icon for a notification type.
+ * Gets the standard icon character for a notification type.
  * @category UI & Interaction
+ * @param type - The notification category.
+ * @returns A single-character icon string.
  */
 export function getNotificationIcon(type: NotificationConfig['type']): string {
     switch (type) {
@@ -559,8 +896,10 @@ export function getNotificationIcon(type: NotificationConfig['type']): string {
 }
 
 /**
- * Gets the standard color for a notification type.
+ * Gets the standard theme color for a notification type.
  * @category UI & Interaction
+ * @param type - The notification category.
+ * @returns CSS-compatible color string.
  */
 export function getNotificationColor(type: NotificationConfig['type']): string {
     switch (type) {

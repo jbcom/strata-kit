@@ -57,6 +57,7 @@ export interface InstanceData {
  * Import BiomeData from './sdf' instead.
  */
 import type { BiomeData } from './sdf';
+export type { BiomeData };
 
 /**
  * Options for creating an instanced mesh.

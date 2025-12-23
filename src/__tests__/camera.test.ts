@@ -5,18 +5,14 @@ import {
     calculateHeadBob,
     calculateLookAhead,
     calculateScreenShakeIntensity,
-    easeInCubic,
-    easeInOutCubic,
-    easeOutCubic,
-    easeOutElastic,
     evaluateCatmullRom,
     FOVTransition,
-    lerp,
     lerpVector3,
     slerp,
-    smoothDamp,
+    smoothDampScalar,
     smoothDampVector3,
 } from '../core/camera';
+import { easeInCubic, easeInOutCubic, easeOutCubic, easeOutElastic, lerp } from '../core/math';
 
 describe('lerp utility', () => {
     it('should return start value at t=0', () => {
@@ -112,23 +108,23 @@ describe('slerp utility', () => {
     });
 });
 
-describe('smoothDamp', () => {
+describe('smoothDampScalar', () => {
     it('should approach target value', () => {
         const velocity = { value: 0 };
-        const result = smoothDamp(0, 10, velocity, 0.5, 0.1);
+        const result = smoothDampScalar(0, 10, velocity, 0.5, 0.1);
         expect(result).toBeGreaterThan(0);
         expect(result).toBeLessThan(10);
     });
 
     it('should update velocity', () => {
         const velocity = { value: 0 };
-        smoothDamp(0, 10, velocity, 0.5, 0.1);
+        smoothDampScalar(0, 10, velocity, 0.5, 0.1);
         expect(velocity.value).not.toBe(0);
     });
 
     it('should respect max speed', () => {
         const velocity = { value: 0 };
-        smoothDamp(0, 100, velocity, 0.1, 0.1, 5);
+        smoothDampScalar(0, 100, velocity, 0.1, 0.1, 5);
         expect(Math.abs(velocity.value)).toBeLessThanOrEqual(5);
     });
 });

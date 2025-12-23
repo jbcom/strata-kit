@@ -3,21 +3,45 @@ import type React from 'react';
 import type { MinimapProps } from './types';
 
 /**
- * 2D Scene Minimap.
+ * Top-Down Tactical Minimap.
  *
- * Provides a top-down view of the scene with player and marker tracking.
- * Features customizable marker types, zoom levels, and compass indicators.
+ * Provides a highly-customizable 2D radar or map view that tracks players and points of
+ * interest (POI) in real-time. Supports orientation tracking, zoom levels, and
+ * custom marker definitions.
+ *
+ * **Key Features:**
+ * - **Tracking:** Real-time player and NPC position/rotation synchronization.
+ * - **Markers:** Extensible marker system with support for custom types and colors.
+ * - **Dynamic View:** Configurable zoom levels and optional player-relative rotation.
+ * - **Navigation:** Integrated north-facing compass indicator.
  *
  * @category UI & Interaction
+ *
  * @example
  * ```tsx
+ * // Square radar with quest markers
  * <Minimap
- *   size={200}
- *   zoom={1.5}
+ *   size={180}
+ *   zoom={2.0}
  *   playerPosition={[playerX, playerZ]}
- *   markers={questMarkers}
+ *   playerRotation={currentHeading}
+ *   rotateWithPlayer={true}
+ *   markers={[
+ *     { id: 'q1', position: [50, 50], type: 'quest' },
+ *     { id: 'e1', position: [-20, 10], type: 'enemy' }
+ *   ]}
+ *   markerTypes={{
+ *     quest: { color: '#fbbf24', size: 8, blinking: true },
+ *     enemy: { color: '#ef4444', size: 6 }
+ *   }}
+ *   borderRadius={8}
  * />
  * ```
+ *
+ * ## Interactive Demos
+ * <iframe src="../../demos/minimap.html" width="100%" height="400px" style="border-radius: 8px; border: 1px solid #1e293b;"></iframe>
+ *
+ * - 🎮 [Live Minimap Demo](../../demos/minimap.html)
  */
 export const Minimap: React.FC<MinimapProps> = ({
     size = 150,
