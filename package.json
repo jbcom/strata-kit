@@ -26,6 +26,14 @@
     "./presets": {
       "types": "./dist/presets/index.d.ts",
       "import": "./dist/presets/index.js"
+    },
+    "./api": {
+      "types": "./dist/api/index.d.ts",
+      "import": "./dist/api/index.js"
+    },
+    "./game": {
+      "types": "./dist/api/index.d.ts",
+      "import": "./dist/api/index.js"
     }
   },
   "files": [
