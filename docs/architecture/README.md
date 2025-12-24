@@ -6,7 +6,12 @@ This directory contains architectural documentation for Strata's evolution from 
 
 ### Vision & Strategy
 - [Game Framework Vision](./GAME_FRAMEWORK_VISION.md) - The high-level vision for Strata as a game framework
+- [Strata Game Studio Vision](./STRATA_GAME_STUDIO_VISION.md) - Unified game development platform
 - [Roadmap](./ROADMAP.md) - Implementation timeline and phases
+
+### Automation & Tooling
+- [Unified Multi-Agent Orchestrator](./UNIFIED_ORCHESTRATOR.md) - Autonomous development loop (Ollama + Jules + Cursor)
+- [AI Design Automation](./AI_DESIGN_AUTOMATION.md) - End-to-end UI/UX generation pipeline
 
 ### RFC Documents
 - [RFC-001: Game Orchestration](./rfc/RFC-001-GAME-ORCHESTRATION.md) - Scenes, modes, triggers
