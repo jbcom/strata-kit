@@ -21,6 +21,9 @@ export * from './compose';
 // Export core first - this is the canonical source for utilities and types
 export * from './core';
 
+// Export game orchestration
+export * from './game';
+
 // Export hooks
 export * from './hooks';
 

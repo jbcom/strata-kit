@@ -1,20 +1,34 @@
 /**
  * @fileoverview Strata API Showcase - Complete Example Index
- * 
+ *
  * This module exports all API examples organized by system.
  * Every example is JSDoc-linked to its corresponding API implementation.
- * 
+ *
  * @module examples
  */
 
 export { VegetationExamples } from './vegetation/VegetationExamples';
 export { WaterExamples } from './water/WaterExamples';
 export { SkyExamples } from './sky/SkyExamples';
+export { GameOrchestrationExamples } from './game/GameOrchestrationExamples';
 
 /**
  * Complete API coverage map
  */
 export const API_COVERAGE = {
+    game: {
+        examples: 3,
+        apis: [
+            'SceneManager',
+            'ModeManager',
+            'TriggerSystem',
+            'TransitionManager',
+            'createSceneManager',
+            'createModeManager',
+            'createTriggerSystem',
+            'createTransitionManager',
+        ],
+    },
     vegetation: {
         examples: 8,
         apis: [

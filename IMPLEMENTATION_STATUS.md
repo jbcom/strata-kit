@@ -3,6 +3,7 @@
 ## ✅ Production-Ready Features
 
 All features listed below are **production-ready** with:
+
 - ✅ Complete implementation (no TODOs or stubs)
 - ✅ Comprehensive unit tests
 - ✅ Integration tests
@@ -12,17 +13,21 @@ All features listed below are **production-ready** with:
 - ✅ Documentation
 
 ### Background Layer
+
 - ✅ **Sky** - Procedural sky with time-of-day and weather
 - ✅ **Volumetrics** - Volumetric fog and underwater effects
 - ✅ **Terrain** - SDF-based terrain generation with marching cubes
 - ✅ **Marching Cubes** - Mesh generation from SDFs
 
 ### Midground Layer
+
 - ✅ **Water** - Advanced water rendering with caustics and foam
 - ✅ **Vegetation** - GPU-instanced grass, trees, rocks
 - ✅ **Ray Marching** - GPU-accelerated SDF rendering
 
 ### Foreground Layer
+
+- ✅ **Game Orchestration** - Scene, mode, and transition management
 - ✅ **Character** - Articulated character system with procedural animation
 - ✅ **Fur** - Shell-based fur rendering
 - ✅ **Molecular** - Molecular structure visualization
@@ -31,6 +36,7 @@ All features listed below are **production-ready** with:
 - ✅ **Billboards** - Always-face-camera sprites
 
 ### Lighting & Effects
+
 - ✅ **Shadows** - Cascaded shadow maps, soft shadows, contact shadows
 - ✅ **Post-Processing** - Bloom, SSAO, color grading, motion blur, depth of field, chromatic aberration, vignette, film grain
 - ✅ **Reflections** - Reflection probes, environment mapping, probe manager
@@ -38,7 +44,9 @@ All features listed below are **production-ready** with:
 ## Test Coverage
 
 ### Unit Tests
+
 - ✅ `tests/unit/core/` - Core algorithms (SDF, marching cubes, instancing)
+- ✅ `tests/unit/game/` - Game orchestration (scenes, modes, triggers, transitions)
 - ✅ `tests/unit/presets/` - All preset systems
   - ✅ particles.test.ts
   - ✅ decals.test.ts
@@ -48,12 +56,14 @@ All features listed below are **production-ready** with:
   - ✅ reflections.test.ts
 
 ### Integration Tests
+
 - ✅ `tests/integration/presets/` - React component integration
   - ✅ particles.test.tsx
   - ✅ decals.test.tsx
   - ✅ billboards.test.tsx
 
 ### E2E Tests
+
 - ✅ `tests/e2e/rendering.spec.ts` - Playwright visual regression tests
 
 ## Documentation
@@ -68,6 +78,7 @@ All features listed below are **production-ready** with:
 ## No TODOs or Stubs
 
 All implementations are complete:
+
 - ✅ All functions have full implementations
 - ✅ All shaders are complete
 - ✅ All types are defined
@@ -89,6 +100,7 @@ All implementations are complete:
 ## Ready for Production
 
 Strata is **production-ready** with:
+
 - 9 core presets fully implemented
 - 6 new high-value primitives (particles, decals, billboards, shadows, post-processing, reflections)
 - Comprehensive test coverage
