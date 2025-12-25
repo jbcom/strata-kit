@@ -16,6 +16,8 @@
  * @module strata
  */
 
+// Export compositional system
+export * from './compose';
 // Export core first - this is the canonical source for utilities and types
 export * from './core';
 

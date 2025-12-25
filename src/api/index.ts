@@ -20,6 +20,9 @@
  * ### {@link systems | Game Systems}
  * State management, save/load, checkpoints - the infrastructure powering your game.
  *
+ * ### {@link compose | Compositional Objects}
+ * Materials, skeletons, props, and creatures - define complex objects declaratively.
+ *
  * ### {@link rendering | Rendering Pipeline}
  * Shaders, post-processing, materials - low-level graphics for advanced customization.
  *
@@ -40,6 +43,7 @@
  */
 
 export * from './createGame';
+export * from './compose';
 export * from './effects';
 export * from './entities';
 export * from './experience';
