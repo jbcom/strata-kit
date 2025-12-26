@@ -1,5 +1,5 @@
 {
-  "name": "@jbcom/strata",
+  "name": "@strata-game-library/core",
   "version": "1.4.10",
   "description": "Procedural 3D graphics library for React Three Fiber - terrain, water, vegetation, sky, volumetrics, and characters",
   "type": "module",
@@ -102,11 +102,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jbcom/nodejs-strata"
+    "url": "https://github.com/strata-game-library/core"
   },
-  "homepage": "https://github.com/jbcom/nodejs-strata#readme",
+  "homepage": "https://github.com/strata-game-library/core#readme",
   "bugs": {
-    "url": "https://github.com/jbcom/nodejs-strata/issues"
+    "url": "https://github.com/strata-game-library/core/issues"
   },
   "peerDependencies": {
     "@react-three/drei": ">=9.0.0",
