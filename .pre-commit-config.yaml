@@ -16,7 +16,7 @@ repos:
         exclude: ^(docs/|\.triage-recordings/)
       - id: check-yaml
         args: [--unsafe]  # Allow custom tags
-        exclude: ^\.github/workflows/  # actionlint handles these
+        exclude: ^(\.github/workflows/|pnpm-lock\.yaml)  # actionlint handles workflows, pnpm-lock has special syntax
       - id: check-json
       - id: check-added-large-files
         args: [--maxkb=500]

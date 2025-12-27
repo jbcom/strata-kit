@@ -64,7 +64,7 @@
     "test:all": "pnpm run test:unit && pnpm run test:integration && pnpm run test:e2e",
     "prepublishOnly": "pnpm run build && pnpm run test:unit",
     "prepare": "husky",
-    "triage": "agentic-triage",
+    "triage": "agentic-dev-triage",
     "typecheck": "tsc --noEmit",
     "docs": "typedoc"
   },
@@ -151,7 +151,7 @@
     "zustand": "^5.0.9"
   },
   "devDependencies": {
-    "@agentic/triage": "https://github.com/jbcom/nodejs-agentic-triage.git",
+    "@agentic-dev-library/triage": "^1.1.0",
     "@biomejs/biome": "2.3.10",
     "@playwright/test": "^1.57.0",
     "@react-three/drei": "^10.7.7",
@@ -187,8 +187,7 @@
     "typedoc": "^0.28.15",
     "typescript": "^5.9.3",
     "vitest": "^4.0.15",
-    "agentic-triage": "0.2.0",
-    "vitest-agentic-control": "https://github.com/jbcom/nodejs-agentic-control.git#path:packages/vitest-agentic-control",
+    "@agentic-dev-library/vitest-control": "github:agentic-dev-library/control#path:packages/vitest-agentic-control",
     "xstate": "^5.25.0",
     "yuka": "^0.7.8"
   }
