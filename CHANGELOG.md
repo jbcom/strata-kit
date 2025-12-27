@@ -28,7 +28,7 @@ All notable changes to this project will be documented in this file.
 
 # Changelog
 
-## [1.4.7] - 2023-10-27
+## [1.4.7] - 2025-12-20
 
 ### Other
 This release contains internal repository maintenance. We have synchronized configuration files for development tooling (like GitHub Copilot and Cursor) and our CI/CD workflows. These changes ensure consistency in our development process and do not affect the public API or functionality of the Strata library.
@@ -78,7 +78,7 @@ A patch release focused on internal improvements to bolster the library's securi
 -   Our continuous integration (CI) process has been hardened. All GitHub Actions are now pinned to exact commit SHAs to prevent unauthorized changes and enhance build security. This update also resolves an issue with the documentation generation workflow. (Thanks, @Jon B)
 All notable changes to this project will be documented in this file.
 
-# Changelog v1.4.0
+# Changelog v1.4.0 - 2025-12-15
 
 ## ✨ Features
 
@@ -111,7 +111,7 @@ This release includes numerous updates to improve the developer experience and p
 A special thank you to all contributors, including @dependabot[bot], @Jon Bogaty, and @google-labs-jules[bot], for their work on these foundational improvements.
 All notable changes to this project will be documented in this file.
 
-# Strata 1.3.1 Release Notes
+# Strata 1.3.1 Release Notes - 2025-12-12
 
 This is a patch release that includes internal configuration updates and a dependency upgrade to improve stability and keep the project up-to-date.
 
@@ -126,7 +126,7 @@ All notable changes to this project will be documented in this file.
 
 # Strata Changelog
 
-## v1.3.0
+## v1.3.0 - 2025-12-11
 
 ## ✨ Features
 - **Intelligent Triage System:** Introduced a new intelligent workflow to automatically categorize and prioritize scene assets and rendering tasks. This system helps streamline the rendering pipeline and makes it easier to identify potential performance bottlenecks.
@@ -139,7 +139,7 @@ All notable changes to this project will be documented in this file.
 - Enabled Coveralls code coverage reporting to help us maintain code quality. (@Jon Bogaty)
 All notable changes to this project will be documented in this file.
 
-## [1.2.3] - 2023-10-27
+## [1.2.3] - 2025-12-10
 
 ### 🐛 Bug Fixes
 
@@ -148,7 +148,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changelog
 
-## v1.2.2
+## v1.2.2 - 2025-12-10
 
 This patch release focuses on improving compatibility and modernizing internal dependencies to ensure a stable development environment.
 
@@ -177,14 +177,14 @@ All notable changes to this project will be documented in this file. The format 
 
 ---
 
-## [1.2.1] - 2023-10-27
+## [1.2.1] - 2025-12-09
 
 ### Internals
 
 *   Consolidated and updated GitHub Actions workflows to improve the stability and efficiency of our CI/CD pipeline. (@Jon Bogaty)
 All notable changes to this project will be documented in this file.
 
-# Changelog v1.2.0
+# Changelog v1.2.0 - 2025-12-09
 
 Strata v1.2.0 is here, bringing your 3D scenes to mobile devices. This release introduces first-class support for building cross-platform mobile apps with your existing web skills.
 
@@ -202,13 +202,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.4] - 2023-10-27
+## [1.1.4] - 2025-12-09
 
 ### Under the Hood
 *   **A significant refactor of the core architecture** has been completed. The library now uses a new "MCP-first" architecture, leveraging a GraphQL integration with GitHub to manage data and resources. This foundational change improves the long-term maintainability and stability of the library. (@Jon Bogaty in #169)
 All notable changes to this project will be documented in this file.
 
-# 1.1.3
+# 1.1.3 - 2025-12-08
 
 ## Internal
 - Updated internal development tooling and dependencies. This is a maintenance release and does not affect the public API or runtime behavior of the library.
@@ -218,8 +218,7 @@ All notable changes to this project will be documented in this file.
 
 ***
 
-## v1.1.2
-*Release Date: 2023-10-27*
+## v1.1.2 - 2025-12-08
 
 A small patch release focusing on internal improvements to ensure better long-term stability for the library.
 
@@ -236,7 +235,7 @@ Of course! Here is a user-friendly changelog for version 1.1.1 based on the prov
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.1] - 2023-10-27
+## [1.1.1] - 2025-12-08
 
 ### 🏗️ Internal
 

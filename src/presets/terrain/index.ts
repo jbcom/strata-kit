@@ -13,9 +13,6 @@ import {
 } from '../../core/marching-cubes';
 import { getTerrainHeight, type BiomeData as SDFBiomeData, sdTerrain } from '../../core/sdf';
 
-// Types are now exported from core, import them from '@jbcom/strata' or '@jbcom/strata/core'
-// @deprecated Import MarchingCubesOptions, TerrainChunk, BiomeData from '@jbcom/strata' instead
-
 export interface TerrainOptions {
     biomes: SDFBiomeData[];
     resolution?: number;

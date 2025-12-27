@@ -282,5 +282,10 @@ export function createInstancedMesh(options: InstancingOptions): THREE.Instanced
     mesh.instanceMatrix.needsUpdate = true;
     mesh.count = instanceCount;
 
+    // Attach custom properties for future GPU implementation or shader use
+    if (options.enableWind !== undefined) (mesh as any).enableWind = options.enableWind;
+    if (options.windStrength !== undefined) (mesh as any).windStrength = options.windStrength;
+    if (options.lodDistance !== undefined) (mesh as any).lodDistance = options.lodDistance;
+
     return mesh;
 }

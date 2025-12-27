@@ -8,11 +8,9 @@ import * as THREE from 'three';
 import {
     createInstancedMesh,
     generateInstanceData,
+    type InstanceData,
 } from '../../core/instancing';
 import type { BiomeData } from '../../core/sdf';
-
-// Types are now exported from core, import them from '@jbcom/strata' or '@jbcom/strata/core'
-// @deprecated Import InstanceData, BiomeData from '@jbcom/strata' instead
 
 export interface VegetationOptions {
     count: number;
@@ -39,10 +37,9 @@ export function createVegetationMesh(options: VegetationOptions): THREE.Instance
         seed,
         geometry,
         material,
-        // These options are available for future wind/LOD implementation
-        enableWind: _enableWind = true,
-        windStrength: _windStrength = 0.5,
-        lodDistance: _lodDistance = 100,
+        enableWind = true,
+        windStrength = 0.5,
+        lodDistance = 100,
     } = options;
 
     // Input validation
@@ -80,6 +77,9 @@ export function createVegetationMesh(options: VegetationOptions): THREE.Instance
         material,
         count,
         instances,
+        enableWind,
+        windStrength,
+        lodDistance,
     });
 }
 
