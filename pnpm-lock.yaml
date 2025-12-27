@@ -65,7 +65,7 @@ importers:
         version: 1.1.0(hono@4.11.1)
       '@agentic-dev-library/vitest-control':
         specifier: github:agentic-dev-library/control#path:packages/vitest-agentic-control
-        version: https://codeload.github.com/agentic-dev-library/control/tar.gz/1d4493c0d65da997bb529508193bbee1961cb947#path:packages/vitest-agentic-control(vitest@4.0.15(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jsdom@27.3.0(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2))
+        version: https://codeload.github.com/agentic-dev-library/control/tar.gz/2760c8ce7130c3c1b366c6dbea24b33dce190c82#path:packages/vitest-agentic-control(vitest@4.0.15(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jsdom@27.3.0(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2))
       '@biomejs/biome':
         specifier: 2.3.10
         version: 2.3.10
@@ -170,8 +170,8 @@ packages:
     engines: {node: '>=20'}
     hasBin: true
 
-  '@agentic-dev-library/vitest-control@https://codeload.github.com/agentic-dev-library/control/tar.gz/1d4493c0d65da997bb529508193bbee1961cb947#path:packages/vitest-agentic-control':
-    resolution: {path: packages/vitest-agentic-control, tarball: https://codeload.github.com/agentic-dev-library/control/tar.gz/1d4493c0d65da997bb529508193bbee1961cb947}
+  '@agentic-dev-library/vitest-control@https://codeload.github.com/agentic-dev-library/control/tar.gz/2760c8ce7130c3c1b366c6dbea24b33dce190c82#path:packages/vitest-agentic-control':
+    resolution: {path: packages/vitest-agentic-control, tarball: https://codeload.github.com/agentic-dev-library/control/tar.gz/2760c8ce7130c3c1b366c6dbea24b33dce190c82}
     version: 1.0.0
     engines: {node: '>=22.0.0'}
     peerDependencies:
@@ -4034,7 +4034,7 @@ snapshots:
       - hono
       - supports-color
 
-  '@agentic-dev-library/vitest-control@https://codeload.github.com/agentic-dev-library/control/tar.gz/1d4493c0d65da997bb529508193bbee1961cb947#path:packages/vitest-agentic-control(vitest@4.0.15(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jsdom@27.3.0(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2))':
+  '@agentic-dev-library/vitest-control@https://codeload.github.com/agentic-dev-library/control/tar.gz/2760c8ce7130c3c1b366c6dbea24b33dce190c82#path:packages/vitest-agentic-control(vitest@4.0.15(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jsdom@27.3.0(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2))':
     dependencies:
       vitest: 4.0.15(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jsdom@27.3.0(postcss@8.5.6))(tsx@4.21.0)(yaml@2.8.2)
 
