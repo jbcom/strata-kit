@@ -1,7 +1,6 @@
 /**
  * Equipment Template (Weapons, Armor, Backpacks, etc.)
  *
- * Migrated from example-project component library.
  */
 
 // ============================================
