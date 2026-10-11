@@ -9,7 +9,7 @@ area: plans
 
 # Remaining Work Product Requirements
 
-> **Superseded 2026-10-11.** The approved [trim to procedural kit plan](2026-10-11-trim-to-procedural-kit.md) replaces this framework backlog. Retain this document only as historical context; do not use it to prioritize, scope, or accept new work.
+> **Superseded 2026-10-11.** The active [trim to procedural kit plan](2026-10-11-trim-to-procedural-kit.md) replaces this framework backlog. The rebrand and bounded package direction are owner-approved; retain this document only as historical context and do not use it to prioritize, scope, or accept new work.
 
 This PRD records the work intentionally left unfinished after the April 16, 2026 consolidation session.
 
