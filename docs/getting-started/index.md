@@ -88,17 +88,20 @@ import { Character, createWalkCycle } from 'strata-game-library/core';
 />
 ```
 
-## Package Ecosystem
+## Public package and subpaths
 
-Strata is organized into several focused packages:
+Strata has one planned unscoped npm identity: `strata-game-library`. Its first
+public registry release is pending. Once it is available, its export subpaths
+keep optional code explicit without creating separate npm identities.
 
-| Package | Description | NPM |
-|---------|-------------|-----|
-| `strata-game-library/core` | Core library with all features | [![npm](https://img.shields.io/npm/v/strata-game-library/core.svg)](https://www.npmjs.com/package/strata-game-library/core) |
-| `strata-game-library/shaders` | Standalone GLSL shader collection | [![npm](https://img.shields.io/npm/v/strata-game-library/shaders.svg)](https://www.npmjs.com/package/strata-game-library/shaders) |
-| `strata-game-library/presets` | Ready-to-use configurations | [![npm](https://img.shields.io/npm/v/strata-game-library/presets.svg)](https://www.npmjs.com/package/strata-game-library/presets) |
-| `strata-game-library/react-native` | React Native mobile plugin | [![npm](https://img.shields.io/npm/v/strata-game-library/react-native.svg)](https://www.npmjs.com/package/strata-game-library/react-native) |
-| `strata-game-library/capacitor` | Capacitor mobile plugin | [![npm](https://img.shields.io/npm/v/strata-game-library/capacitor.svg)](https://www.npmjs.com/package/strata-game-library/capacitor) |
+| Import from `strata-game-library` | Use it for |
+| --- | --- |
+| `/core`, `/shaders`, `/presets` | Core algorithms, GLSL modules, and reusable settings. |
+| `/r3f`, `/reactylon`, `/pixi` | Renderer-specific adapters. |
+| `/react-native`, `/capacitor`, `/astro` | Platform and framework integrations. |
+
+Install the root package once; never pass these subpaths to an npm install
+command.
 
 ## Why Strata?
 

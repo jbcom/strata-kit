@@ -247,11 +247,12 @@ const game = createGame({
 <StrataGame game={game} />
 ```
 
-## Package Structure
+## Public export structure
 
-Strata is organized as multiple packages for flexibility:
+Strata publishes one umbrella package. The names below are explicit import
+subpaths within `strata-game-library`, not separate npm packages.
 
-### Main Package (`strata-game-library/core`)
+### Core subpath (`strata-game-library/core`)
 
 The core library with components, algorithms, and utilities:
 
@@ -269,7 +270,7 @@ import { clamp, lerp, smoothstep } from 'strata-game-library/utils';
 import type { BiomeConfig, WaterConfig } from 'strata-game-library/core';
 ```
 
-### Shaders Package (`strata-game-library/shaders`)
+### Shaders subpath (`strata-game-library/shaders`)
 
 Standalone GLSL shaders (works with any Three.js project):
 
@@ -282,16 +283,16 @@ import {
 } from 'strata-game-library/shaders';
 ```
 
-### Presets Package (`strata-game-library/presets`)
+### Presets subpath (`strata-game-library/presets`)
 
-Pre-configured settings (requires `strata-game-library/core`):
+Pre-configured settings:
 
 ```tsx
 import { tropicalOceanWater, arcticWater } from 'strata-game-library/presets';
 import { guardPreset, flockMemberPreset } from 'strata-game-library/presets';
 ```
 
-### Mobile Plugins
+### Mobile integration subpaths
 
 Platform-specific capabilities:
 
@@ -306,7 +307,7 @@ import { useDevice, useInput } from 'strata-game-library/capacitor';
 ## Directory Structure
 
 ```
-strata-game-library/core/
+strata-game-library/
 ├── src/
 │   ├── api/          # Public API contracts
 │   ├── components/   # React Three Fiber components

@@ -37,6 +37,8 @@ jobs:
         run: pnpm run release:validate
       - name: Publish with provenance
         run: pnpm run publish:ci
+      - name: Verify published registry package
+        run: node scripts/verify-published-umbrella.mjs
 
   docs:
     name: Deploy documentation

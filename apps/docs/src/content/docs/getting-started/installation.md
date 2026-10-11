@@ -14,36 +14,41 @@ Strata requires React Three Fiber and Three.js as peer dependencies. This guide 
 - **Three.js**: 0.150 or higher
 - **React Three Fiber**: 8.0 or higher
 
-## Quick Install
+## Registry availability
+
+The unscoped `strata-game-library` umbrella package is the only planned public
+npm identity. Its first registry publication is still pending, so npm has no
+installable fallback today. In particular, paths such as
+`strata-game-library/core` and `strata-game-library/r3f` are import subpaths,
+not npm package names.
+
+After the first public release, install the umbrella package once and choose
+the import subpaths your application needs.
+
+## Install after the first public release
 
 ### Using pnpm (Recommended)
 
 ```bash
-pnpm add strata-game-library @react-three/fiber @react-three/drei three
+pnpm add strata-game-library react react-dom three @react-three/fiber @react-three/drei
 ```
 
 ### Using npm
 
 ```bash
-npm install strata-game-library @react-three/fiber @react-three/drei three
+npm install strata-game-library react react-dom three @react-three/fiber @react-three/drei
 ```
 
 ### Using yarn
 
 ```bash
-yarn add strata-game-library @react-three/fiber @react-three/drei three
+yarn add strata-game-library react react-dom three @react-three/fiber @react-three/drei
 ```
 
 ### Using bun
 
 ```bash
-bun add strata-game-library @react-three/fiber @react-three/drei three
-```
-
-`strata-game-library` is the new umbrella package and is pending its first npm publish. If the package is not available in npm yet, use the current published fallback:
-
-```bash
-pnpm add strata-game-library/core strata-game-library/r3f @react-three/fiber @react-three/drei three
+bun add strata-game-library react react-dom three @react-three/fiber @react-three/drei
 ```
 
 ## TypeScript Support
@@ -56,36 +61,35 @@ pnpm add -D @types/three
 
 ## Optional Packages
 
-### Shaders Only
+### Shaders
 
-If you only need the GLSL shaders (no React dependencies):
+The umbrella package exposes GLSL shader modules through its `/shaders`
+subpath. Install the umbrella package, then import the subpath:
 
-```bash
-pnpm add strata-game-library/shaders
+```ts
+import { waterFragmentShader } from 'strata-game-library/shaders';
 ```
 
-### Presets Only
+### Presets
 
-For pre-configured terrain, weather, and effects:
+Pre-configured terrain, weather, and effects are available through `/presets`:
 
-```bash
-pnpm add strata-game-library/presets strata-game-library/core
+```ts
+import { arcticWater } from 'strata-game-library/presets';
 ```
 
-### Mobile Plugins
+### Mobile integrations
 
-For React Native projects:
+React Native and Capacitor integrations are export subpaths of the same
+package. Add the platform peer dependencies your app uses, then import the
+matching subpath:
 
-```bash
-npm install strata-game-library/react-native
-cd ios && pod install
+```ts
+import { useDevice } from 'strata-game-library/react-native';
 ```
 
-For Capacitor projects:
-
-```bash
-pnpm add strata-game-library/capacitor
-npx cap sync
+```ts
+import { useInput } from 'strata-game-library/capacitor';
 ```
 
 ## Framework Integration
