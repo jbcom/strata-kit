@@ -62,7 +62,7 @@ try {
     const files = new Set(packed.files.map((file) => file.path));
     tarballs.push(packed.filename);
 
-    for (const requiredFile of ['LICENSE', 'README.md', 'package.json']) {
+    for (const requiredFile of ['LICENSE', 'README.md', 'docs/API.md', 'docs/ARCHITECTURE.md', 'package.json']) {
       if (!files.has(requiredFile)) {
         errors.push(`${displayDirectory}: packed artifact is missing ${requiredFile}`);
       }
@@ -125,13 +125,21 @@ try {
   await writeFile(
     join(consumerDirectory, 'consumer.mjs'),
     [
-      "import * as strata from 'strata-game-library';",
-      "import { normalizeJoystick } from 'strata-game-library/core';",
-      "import { YukaEntityManager } from 'strata-game-library/yuka';",
-      "if (typeof strata.createGame !== 'function') throw new Error('createGame export is unavailable');",
-      "const value = normalizeJoystick({ x: 75, y: 0 }, 100, 0.2);",
-      "if (!Number.isFinite(value.x)) throw new Error('core input export is not executable');",
-      "if (typeof YukaEntityManager !== 'function') throw new Error('Yuka adapter export is unavailable');",
+      "import { createSeededTerrainField, createSurfacePlan, bakeSurface } from 'strata-kit';",
+      "import { createSeededNoise } from 'strata-kit/noise';",
+      "import { sdSphere } from 'strata-kit/sdf';",
+      "import { seededSurfaceNoiseGlsl } from 'strata-kit/shaders';",
+      "import { createThreeHeightfieldGeometry } from 'strata-kit/three';",
+      "import { StrataHeightfield } from 'strata-kit/r3f';",
+      "const field = createSeededTerrainField({ seed: 'consumer', biomes: [{ type: 'forest', center: [0, 0], radius: 10 }] });",
+      "const mesh = field.createHeightfield({ width: 3, depth: 3, cellSize: 1 });",
+      "const geometry = createThreeHeightfieldGeometry(mesh);",
+      "if (geometry.getAttribute('position').count !== 9) throw new Error('Three geometry export is not executable');",
+      "if (createSeededNoise('consumer')(1, 2) === createSeededNoise('different')(1, 2)) throw new Error('seeded noise is not keyed');",
+      "if (sdSphere({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }, 1) !== -1) throw new Error('SDF export is not executable');",
+      "if (!seededSurfaceNoiseGlsl.includes('strataKitNoise')) throw new Error('shader export is unavailable');",
+      "if (bakeSurface(createSurfacePlan({ seed: 'consumer' }), { width: 2, height: 2 }).color.length !== 16) throw new Error('material bake export is unavailable');",
+      "if (typeof StrataHeightfield !== 'function') throw new Error('R3F adapter export is unavailable');",
       "console.log('consumer-smoke-ok');",
     ].join('\n')
   );
@@ -139,12 +147,19 @@ try {
   await writeFile(
     join(consumerDirectory, 'consumer.ts'),
     [
-      "import { createGame } from 'strata-game-library';",
-      "import { normalizeJoystick } from 'strata-game-library/core';",
-      "import { YukaEntityManager } from 'strata-game-library/yuka';",
-      'void createGame;',
-      'void normalizeJoystick;',
-      'void YukaEntityManager;',
+      "import { createSeededTerrainField, createSurfacePlan } from 'strata-kit';",
+      "import { createSeededNoise } from 'strata-kit/noise';",
+      "import { sdSphere } from 'strata-kit/sdf';",
+      "import { seededSurfaceNoiseGlsl } from 'strata-kit/shaders';",
+      "import { createThreeHeightfieldGeometry } from 'strata-kit/three';",
+      "import { StrataHeightfield } from 'strata-kit/r3f';",
+      'void createSeededTerrainField;',
+      'void createSurfacePlan;',
+      'void createSeededNoise;',
+      'void sdSphere;',
+      'void seededSurfaceNoiseGlsl;',
+      'void createThreeHeightfieldGeometry;',
+      'void StrataHeightfield;',
     ].join('\n')
   );
   run('node', ['node_modules/typescript/bin/tsc', '--noEmit', '--skipLibCheck', '--module', 'NodeNext', '--moduleResolution', 'NodeNext', 'consumer.ts'], {

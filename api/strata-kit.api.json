@@ -1,0 +1,175 @@
+{
+  "package": "strata-kit",
+  "version": "0.1.0",
+  "subpaths": {
+    ".": {
+      "bakeSurface": "value",
+      "Biome": {
+        "type": "BiomeKind",
+        "center": "readonly [number, number]",
+        "radius": "number"
+      },
+      "BiomeKind": "type",
+      "createSeededNoise": "value",
+      "createSeededRandom": "value",
+      "createSeededTerrainField": "value",
+      "createSurfaceBakeManifest": "value",
+      "createSurfacePlan": "value",
+      "fractalNoise": "value",
+      "HeightfieldMesh": {
+        "positions": "Float32Array",
+        "normals": "Float32Array",
+        "indices": "Uint32Array",
+        "width": "number",
+        "depth": "number"
+      },
+      "opIntersection": "value",
+      "opSmoothSubtraction": "value",
+      "opSmoothUnion": "value",
+      "opSubtraction": "value",
+      "opUnion": "value",
+      "Random": "type",
+      "sampleSurface": "value",
+      "ScatterPoint": {
+        "rotation": "number",
+        "scale": "number"
+      },
+      "sdBox": "value",
+      "sdPlane": "value",
+      "sdSphere": "value",
+      "Seed": "type",
+      "SeededTerrainField": "type",
+      "SeededTerrainOptions": {
+        "seed": "Seed",
+        "biomes": "readonly Biome[]"
+      },
+      "seedToUint32": "value",
+      "SurfaceBake": {
+        "width": "number",
+        "height": "number",
+        "color": "Uint8Array",
+        "roughness": "Uint8Array",
+        "bump": "Uint8Array"
+      },
+      "SurfacePlan": {
+        "seed": "number",
+        "scale": "number",
+        "baseColor": "readonly [number, number, number]"
+      },
+      "SurfacePlanOptions": {
+        "seed": "Seed",
+        "scale?": "number",
+        "baseColor?": "readonly [number, number, number]"
+      },
+      "SurfaceSample": {
+        "color": "readonly [number, number, number, number]",
+        "roughness": "number",
+        "bump": "number"
+      },
+      "TerrainSample": {
+        "height": "number",
+        "distance": "number",
+        "caveDistance": "number"
+      },
+      "Vec3": {
+        "x": "number",
+        "y": "number",
+        "z": "number"
+      }
+    },
+    "./materials": {
+      "bakeSurface": "value",
+      "createSurfaceBakeManifest": "value",
+      "createSurfacePlan": "value",
+      "sampleSurface": "value",
+      "SurfaceBake": {
+        "width": "number",
+        "height": "number",
+        "color": "Uint8Array",
+        "roughness": "Uint8Array",
+        "bump": "Uint8Array"
+      },
+      "SurfacePlan": {
+        "seed": "number",
+        "scale": "number",
+        "baseColor": "readonly [number, number, number]"
+      },
+      "SurfacePlanOptions": {
+        "seed": "Seed",
+        "scale?": "number",
+        "baseColor?": "readonly [number, number, number]"
+      },
+      "SurfaceSample": {
+        "color": "readonly [number, number, number, number]",
+        "roughness": "number",
+        "bump": "number"
+      }
+    },
+    "./noise": {
+      "createSeededNoise": "value",
+      "createSeededRandom": "value",
+      "fractalNoise": "value",
+      "Random": "type",
+      "Seed": "type",
+      "seedToUint32": "value"
+    },
+    "./r3f": {
+      "StrataHeightfield": "value",
+      "StrataHeightfieldProps": {
+        "mesh": "HeightfieldMesh",
+        "material?": "Material"
+      }
+    },
+    "./sdf": {
+      "opIntersection": "value",
+      "opSmoothSubtraction": "value",
+      "opSmoothUnion": "value",
+      "opSubtraction": "value",
+      "opUnion": "value",
+      "sdBox": "value",
+      "sdPlane": "value",
+      "sdSphere": "value",
+      "Vec3": {
+        "x": "number",
+        "y": "number",
+        "z": "number"
+      }
+    },
+    "./shaders": {
+      "seededSurfaceNoiseGlsl": "value"
+    },
+    "./terrain": {
+      "Biome": {
+        "type": "BiomeKind",
+        "center": "readonly [number, number]",
+        "radius": "number"
+      },
+      "BiomeKind": "type",
+      "createSeededTerrainField": "value",
+      "HeightfieldMesh": {
+        "positions": "Float32Array",
+        "normals": "Float32Array",
+        "indices": "Uint32Array",
+        "width": "number",
+        "depth": "number"
+      },
+      "ScatterPoint": {
+        "rotation": "number",
+        "scale": "number"
+      },
+      "SeededTerrainField": "type",
+      "SeededTerrainOptions": {
+        "seed": "Seed",
+        "biomes": "readonly Biome[]"
+      },
+      "TerrainSample": {
+        "height": "number",
+        "distance": "number",
+        "caveDistance": "number"
+      }
+    },
+    "./three": {
+      "createThreeHeightfieldGeometry": "value"
+    }
+  }
+}
