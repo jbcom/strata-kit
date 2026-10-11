@@ -9,16 +9,18 @@ last_updated: 2026-03-01
 
 ## Overview
 
-This directory now contains two kinds of planning documents:
+This directory now contains three kinds of planning documents:
 
 - historical implementation plans from the February 2026 monorepo migration and renderer-agnostic restructure
-- the active remaining-work PRD that captures the post-consolidation backlog after the April 2026 implementation push
+- a superseded April 2026 framework PRD, retained for history only
+- the active October 2026 plan to trim the framework into the one `strata-kit` procedural-content package
 
 ## Documents
 
 | File | Date | Status | Description |
 |------|------|--------|-------------|
-| [2026-04-16-remaining-work-prd.md](2026-04-16-remaining-work-prd.md) | 2026-04-16 | Active | Canonical PRD for the work still left after the April 2026 consolidation session |
+| [2026-10-11-trim-to-procedural-kit.md](2026-10-11-trim-to-procedural-kit.md) | 2026-10-11 | Active | Canonical trim, rebrand, and publication plan for `strata-kit` |
+| [2026-04-16-remaining-work-prd.md](2026-04-16-remaining-work-prd.md) | 2026-04-16 | Superseded | Historical framework backlog; do not execute it |
 | [2026-02-24-monorepo-migration-design.md](2026-02-24-monorepo-migration-design.md) | 2026-02-24 | Complete | Design doc: consolidate 11 repos into Nx + pnpm monorepo |
 | [2026-02-24-monorepo-migration-plan.md](2026-02-24-monorepo-migration-plan.md) | 2026-02-24 | Complete | Step-by-step implementation: 9 phases, 30+ tasks |
 | [2026-02-24-renderer-agnostic-restructure-design.md](2026-02-24-renderer-agnostic-restructure-design.md) | 2026-02-24 | Complete | Design doc: extract R3F, create adapters/, plugins/, workflows |
@@ -26,18 +28,17 @@ This directory now contains two kinds of planning documents:
 
 ## Active Planning Doc
 
-### Remaining Work PRD (Current)
+### Trim to Procedural Kit (Current)
 
-**Problem:** The repo is locally green and materially more complete, but it still has unfinished work around package publishing, migration policy, runtime depth, platform parity, and CI/documentation hardening.
+**Problem:** The repository bundles procedural-content utilities with an unconsumed game framework. The framework is not a viable package boundary and overlaps the fleet's published kits.
 
-**Current reference:** [2026-04-16-remaining-work-prd.md](2026-04-16-remaining-work-prd.md)
+**Current reference:** [2026-10-11-trim-to-procedural-kit.md](2026-10-11-trim-to-procedural-kit.md)
 
 **Use this document for:**
 
-- post-merge prioritization
-- umbrella-package publish and migration planning
-- Layer 3/4 completion work
-- verification and documentation hardening
+- all implementation sequencing, package-boundary decisions, and rebrand work
+- the `strata-kit` publish gate and consumer migration
+- recording contested-symbol comparisons before deleting framework code
 
 ## Plan Details
 
@@ -97,7 +98,8 @@ This directory now contains two kinds of planning documents:
 
 ## Key Context
 
-- The April 2026 PRD is ACTIVE and should be treated as the current backlog contract
+- The October 2026 trim plan is ACTIVE and is the current backlog contract
+- The April 2026 PRD is SUPERSEDED and is historical evidence only
 - The February 2026 plans are HISTORICAL -- the work they describe is complete
 - The actual implementation may differ slightly from the plans (iteration during execution)
 - The monorepo migration plan is very detailed (~1000 lines) with exact file changes
