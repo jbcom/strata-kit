@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
@@ -52,6 +53,10 @@ try {
   const errors = [];
   const tarballs = [];
 
+  if (packages.length !== 1 || packages[0]?.manifest.name !== 'strata-kit') {
+    throw new Error('Only the strata-kit package may be publishable during the trim.');
+  }
+
   for (const { directory, manifest } of packages) {
     const displayDirectory = relative(workspaceRoot, directory);
     errors.push(...metadataErrors(manifest, displayDirectory));
@@ -95,6 +100,39 @@ try {
   if (errors.length) {
     throw new Error(`Package validation failed:\n- ${errors.join('\n- ')}`);
   }
+
+  const coreConsumerDirectory = join(temporaryDirectory, 'core-consumer');
+  await mkdir(coreConsumerDirectory);
+  await writeFile(
+    join(coreConsumerDirectory, 'package.json'),
+    JSON.stringify({ name: 'strata-kit-core-consumer', private: true, type: 'module' }, null, 2)
+  );
+  run('npm', ['install', '--omit=optional', '--ignore-scripts', '--no-audit', '--no-fund', ...tarballs], {
+    cwd: coreConsumerDirectory,
+    stdio: 'pipe',
+  });
+  for (const optionalPeer of ['three', 'react', '@react-three/fiber']) {
+    if (existsSync(join(coreConsumerDirectory, 'node_modules', optionalPeer))) {
+      throw new Error(`Pure consumer unexpectedly installed optional peer ${optionalPeer}.`);
+    }
+  }
+  await writeFile(
+    join(coreConsumerDirectory, 'consumer.mjs'),
+    [
+      "import { bakeSurface, createSeededTerrainField, createSurfacePlan } from 'strata-kit';",
+      "const field = createSeededTerrainField({ seed: 'node-24', biomes: [{ type: 'forest', center: [0, 0], radius: 10 }] });",
+      "const first = field.sample({ x: 1, y: 0, z: -2 });",
+      "const second = field.sample({ x: 1, y: 0, z: -2 });",
+      "if (JSON.stringify(first) !== JSON.stringify(second)) throw new Error('pure terrain is not deterministic');",
+      "const bake = bakeSurface(createSurfacePlan({ seed: 'node-24' }), { width: 2, height: 2 });",
+      "if (bake.color.length !== 16) throw new Error('pure material bake is unavailable');",
+      "console.log('core-consumer-node24-ok');",
+    ].join('\n')
+  );
+  run('mise', ['exec', 'node@24', '--', 'node', 'consumer.mjs'], {
+    cwd: coreConsumerDirectory,
+    stdio: 'inherit',
+  });
 
   const consumerDirectory = join(temporaryDirectory, 'consumer');
   await mkdir(consumerDirectory);
@@ -167,7 +205,7 @@ try {
     stdio: 'inherit',
   });
 
-  console.log(`Validated ${packages.length} package tarballs and a clean consumer install.`);
+  console.log(`Validated ${packages.length} package tarballs, a Node 24 pure consumer, and a clean adapter consumer install.`);
 } finally {
   await rm(temporaryDirectory, { recursive: true, force: true });
 }

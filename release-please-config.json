@@ -17,12 +17,12 @@
     { "type": "chore", "section": "Miscellaneous", "hidden": true }
   ],
   "packages": {
-    "packages/strata-game-library": {
-      "component": "strata-game-library",
+    "packages/strata-kit": {
+      "component": "strata-kit",
       "extra-files": [
         {
           "type": "json",
-          "path": "api/umbrella.api.json",
+          "path": "api/strata-kit.api.json",
           "jsonpath": "$.version"
         }
       ]
