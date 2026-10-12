@@ -20,6 +20,7 @@ This directory now contains three kinds of planning documents:
 | File | Date | Status | Description |
 |------|------|--------|-------------|
 | [2026-10-11-trim-to-procedural-kit.md](2026-10-11-trim-to-procedural-kit.md) | 2026-10-11 | Active | Canonical trim, rebrand, and publication plan for `strata-kit` |
+| [2026-10-12-procedural-layering-boundary.md](2026-10-12-procedural-layering-boundary.md) | 2026-10-12 | Approved follow-on | Ownership boundary for model-neutral construction and layers after the initial release |
 | [2026-04-16-remaining-work-prd.md](2026-04-16-remaining-work-prd.md) | 2026-04-16 | Superseded | Historical framework backlog; do not execute it |
 | [2026-02-24-monorepo-migration-design.md](2026-02-24-monorepo-migration-design.md) | 2026-02-24 | Complete | Design doc: consolidate 11 repos into Nx + pnpm monorepo |
 | [2026-02-24-monorepo-migration-plan.md](2026-02-24-monorepo-migration-plan.md) | 2026-02-24 | Complete | Step-by-step implementation: 9 phases, 30+ tasks |
