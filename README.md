@@ -2,8 +2,10 @@
 
 `strata-kit` provides deterministic procedural terrain, surface bakes, signed-distance primitives, and analytic scalar relief. The root package is pure TypeScript. Three.js and React Three Fiber are opt-in subpaths.
 
+Strata Kit is published to npm as [`strata-procedural`](https://www.npmjs.com/package/strata-procedural).
+
 ```ts
-import { bakeSurface, createSeededTerrainField, createSurfacePlan } from 'strata-kit';
+import { bakeSurface, createSeededTerrainField, createSurfacePlan } from 'strata-procedural';
 
 const terrain = createSeededTerrainField({
   seed: 'coast-01',
@@ -13,11 +15,11 @@ const mesh = terrain.createHeightfield({ width: 64, depth: 64, cellSize: 2 });
 const surface = bakeSurface(createSurfacePlan({ seed: 'paint-01' }), { width: 256, height: 256 });
 ```
 
-Use `strata-kit/three` for a Three.js `BufferGeometry`, and `strata-kit/r3f` for the opt-in heightfield component. `strata-kit/noise`, `/sdf`, `/terrain`, `/materials`, and `/shaders` have no renderer or React dependency.
+Use `strata-procedural/three` for a Three.js `BufferGeometry`, and `strata-procedural/r3f` for the opt-in heightfield component. `strata-procedural/noise`, `/sdf`, `/terrain`, `/materials`, and `/shaders` have no renderer or React dependency.
 
 ## Analytic scalar relief
 
-`strata-kit/surface-fields` provides a continuous, texture-free scalar profile and a matching GLSL ES 3 chunk. It has no knowledge of UV layout, body shape, texture atlases, skinning, or normal-map policy.
+`strata-procedural/surface-fields` provides a continuous, texture-free scalar profile and a matching GLSL ES 3 chunk. It has no knowledge of UV layout, body shape, texture atlases, skinning, or normal-map policy.
 
 ```ts
 import {
@@ -25,7 +27,7 @@ import {
   deriveReliefFrame,
   projectScalarProfileDerivative,
   sampleCubicHermiteProfile,
-} from 'strata-kit/surface-fields';
+} from 'strata-procedural/surface-fields';
 
 const profile = createCubicHermiteProfile([
   { coordinate: 0, value: 0, derivative: 0 },
@@ -50,10 +52,10 @@ The GLSL evaluator has an explicit eight-knot ceiling, so its profile work remai
 Install a released package from npm:
 
 ```sh
-pnpm add strata-kit@<released-version>
+pnpm add strata-procedural@<released-version>
 ```
 
-Then import `strata-kit/surface-fields` or another documented public subpath. The package publishes ESM entrypoints. `three`, `react`, and `@react-three/fiber` are optional peers and are loaded only by `strata-kit/three` or `strata-kit/r3f`.
+Then import `strata-procedural/surface-fields` or another documented public subpath. The package publishes ESM entrypoints. `three`, `react`, and `@react-three/fiber` are optional peers and are loaded only by `strata-procedural/three` or `strata-procedural/r3f`.
 
 ## Development
 

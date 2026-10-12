@@ -1,5 +1,5 @@
 {
-  "name": "strata-kit",
+  "name": "strata-procedural",
   "version": "0.1.0",
   "description": "Deterministic procedural terrain, surface fields, materials, and optional Three.js adapters",
   "type": "module",

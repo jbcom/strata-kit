@@ -21,15 +21,15 @@ const npmOptions = {
   stdio: 'pipe',
 };
 const pureEntrypoints = [
-  'strata-kit',
-  'strata-kit/noise',
-  'strata-kit/sdf',
-  'strata-kit/terrain',
-  'strata-kit/materials',
-  'strata-kit/shaders',
-  'strata-kit/surface-fields',
+  'strata-procedural',
+  'strata-procedural/noise',
+  'strata-procedural/sdf',
+  'strata-procedural/terrain',
+  'strata-procedural/materials',
+  'strata-procedural/shaders',
+  'strata-procedural/surface-fields',
 ];
-const allEntrypoints = [...pureEntrypoints, 'strata-kit/three', 'strata-kit/r3f'];
+const allEntrypoints = [...pureEntrypoints, 'strata-procedural/three', 'strata-procedural/r3f'];
 
 function sha256(file) {
   return createHash('sha256').update(readFileSync(file)).digest('hex');
@@ -84,10 +84,10 @@ function assertPureConsumerHasNoAdapters(destination) {
   });
 }
 
-const firstPackDirectory = mkdtempSync(path.join(tmpdir(), 'strata-kit-pack-a-'));
-const secondPackDirectory = mkdtempSync(path.join(tmpdir(), 'strata-kit-pack-b-'));
-const pureConsumerDirectory = mkdtempSync(path.join(tmpdir(), 'strata-kit-pure-'));
-const adapterConsumerDirectory = mkdtempSync(path.join(tmpdir(), 'strata-kit-adapter-'));
+const firstPackDirectory = mkdtempSync(path.join(tmpdir(), 'strata-procedural-pack-a-'));
+const secondPackDirectory = mkdtempSync(path.join(tmpdir(), 'strata-procedural-pack-b-'));
+const pureConsumerDirectory = mkdtempSync(path.join(tmpdir(), 'strata-procedural-pure-'));
+const adapterConsumerDirectory = mkdtempSync(path.join(tmpdir(), 'strata-procedural-adapter-'));
 
 try {
   const first = pack(firstPackDirectory);
@@ -135,7 +135,7 @@ try {
   ]);
   importEntrypoints(adapterConsumerDirectory, allEntrypoints, 'adapter packed consumer imports every public entrypoint');
 
-  console.log(`strata-kit: checked ${first.manifest.entryCount} packed files and both optional-peer modes`);
+  console.log(`strata-procedural: checked ${first.manifest.entryCount} packed files and both optional-peer modes`);
 } finally {
   for (const directory of [
     firstPackDirectory,
