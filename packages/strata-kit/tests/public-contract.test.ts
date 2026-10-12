@@ -17,7 +17,7 @@ import {
   sdSphere,
 } from '../src/sdf.ts';
 import { seededSurfaceNoiseGlsl } from '../src/shaders.ts';
-import { createSeededTerrainField } from '../src/terrain.ts';
+import { createSeededTerrainField, type Biome } from '../src/terrain.ts';
 import { createThreeHeightfieldGeometry } from '../src/three.ts';
 
 const directory = dirname(fileURLToPath(import.meta.url));
@@ -217,6 +217,16 @@ describe('strata-kit public contract', () => {
     mutableOptions.seed = 'mutated-after-construction';
     expect(captured.scatter({ count: 3, area: 4 })).toEqual(
       captured.scatter({ count: 3, area: 4, seed: 'captured-seed' })
+    );
+
+    const mutableBiomes: Biome[] = [{ type: 'forest', center: [0, 0], radius: 8 }];
+    const snapshotField = createSeededTerrainField({ seed: 'captured-biomes', biomes: mutableBiomes });
+    const snapshotHeight = snapshotField.heightAt(100, 0);
+    mutableBiomes.push({ type: 'mountain', center: [100, 0], radius: 8 });
+    expect(snapshotField.heightAt(100, 0)).toBe(snapshotHeight);
+
+    expect(() => field.createHeightfield({ width: 2, depth: 2, cellSize: 1e39 })).toThrow(
+      'createHeightfield: grid extent must fit finite Float32 positions'
     );
   });
 

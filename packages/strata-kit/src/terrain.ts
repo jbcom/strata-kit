@@ -102,11 +102,16 @@ export function createSeededTerrainField(options: SeededTerrainOptions): SeededT
   }
   requireBiomes(options.biomes);
   const seed = options.seed;
+  const biomes: Biome[] = options.biomes.map((biome) => ({
+    type: biome.type,
+    center: [biome.center[0], biome.center[1]],
+    radius: biome.radius,
+  }));
   const noise = createSeededNoise(seed);
   const heightAt = (x: number, z: number): number => {
     requireFiniteNumber('heightAt', 'x', x);
     requireFiniteNumber('heightAt', 'z', z);
-    const biome = closestBiome(x, z, options.biomes);
+    const biome = closestBiome(x, z, biomes);
     const base = fractalNoise(noise, x * 0.02, 0, z * 0.02, 4);
     const detail = fractalNoise(noise, x * 0.06, 19, z * 0.06, 3);
     switch (biome.type) {
@@ -144,6 +149,10 @@ export function createSeededTerrainField(options: SeededTerrainOptions): SeededT
       requirePositiveFiniteNumber('createHeightfield', 'cellSize', cellSize);
       if (!Number.isInteger(width) || !Number.isInteger(depth) || width < 2 || depth < 2) {
         throw new Error('createHeightfield: width and depth must be integers >= 2');
+      }
+      const maximumCoordinate = ((Math.max(width, depth) - 1) * cellSize) / 2;
+      if (!Number.isFinite(maximumCoordinate) || maximumCoordinate > 3.4028234663852886e38) {
+        throw new Error('createHeightfield: grid extent must fit finite Float32 positions');
       }
       const positions = new Float32Array(width * depth * 3);
       const normals = new Float32Array(width * depth * 3);
