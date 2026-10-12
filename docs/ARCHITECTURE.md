@@ -12,7 +12,7 @@ The package deliberately excludes game lifecycle, input, state, persistence, aud
 
 ## Analytic scalar relief
 
-`surface-fields` is a pure CPU/GLSL pair for a caller-owned scalar coordinate. It evaluates a clamped C1 cubic-Hermite profile, returns the scalar height and analytic derivative, and applies the chain rule only after the caller supplies the projection gradient. A caller then supplies the surface Jacobian (`dP/du`, `dP/dv`) in one explicitly chosen evaluation space. The relief frame is formed from:
+`surface-fields` is a pure CPU/GLSL pair for a caller-owned scalar coordinate. It evaluates a clamped C1 cubic-Hermite profile, returns the scalar height and analytic derivative, and applies the chain rule only after the caller supplies the projection gradient. A caller then supplies the surface Jacobian (`dP/du`, `dP/dv`) in one explicitly chosen evaluation space. Its local first-order shading frame is formed from:
 
 ```text
 N0 = normalize(cross(dP/du, dP/dv))
@@ -21,6 +21,6 @@ Tv = dP/dv + dH/dv * N0
 N  = normalize(cross(Tu, Tv))
 ```
 
-The CPU and GLSL implementations use the same bounded eight-knot calculation. The module does not inspect textures, read an atlas, select a coordinate projection, apply a skeleton, or compose normal maps. Consumers retain those operations and may use the returned orthonormal frame with their established normal-map logic.
+The CPU and GLSL implementations use the same bounded eight-knot calculation. The frame evaluates `dP + N0 * dH`; it intentionally omits `H * dN0`. It is therefore a local bump/relief shading frame, not an exact normal for physically offset curved geometry `P + HN0`. A geometry-displacing consumer needs its own curvature-aware differential path. The module does not inspect textures, read an atlas, select a coordinate projection, apply a skeleton, or compose normal maps. Consumers retain those operations and may use the returned orthonormal frame with their established normal-map logic.
 
 A rest-space caller may pass rest-space differentials. A world-space caller passes world-space differentials. A skinned or non-affinely deformed caller supplies a local posed Jacobian; transforming a normal with one global normal matrix is insufficient for that case.

@@ -8,6 +8,23 @@ import {
   surfaceFieldsGlsl,
 } from '../src/surfaceFields.ts';
 
+function cross(left: { x: number; y: number; z: number }, right: { x: number; y: number; z: number }) {
+  return {
+    x: left.y * right.z - left.z * right.y,
+    y: left.z * right.x - left.x * right.z,
+    z: left.x * right.y - left.y * right.x,
+  };
+}
+
+function normalize(vector: { x: number; y: number; z: number }) {
+  const length = Math.hypot(vector.x, vector.y, vector.z);
+  return { x: vector.x / length, y: vector.y / length, z: vector.z / length };
+}
+
+function dot(left: { x: number; y: number; z: number }, right: { x: number; y: number; z: number }) {
+  return left.x * right.x + left.y * right.y + left.z * right.z;
+}
+
 describe('surface fields', () => {
   const profile = createCubicHermiteProfile([
     { coordinate: 0, value: 0, derivative: 0 },
@@ -26,6 +43,22 @@ describe('surface fields', () => {
     expect(after.value).toBeCloseTo(0.03, 7);
     expect(before.derivative).toBeCloseTo(0.04, 5);
     expect(after.derivative).toBeCloseTo(0.04, 5);
+  });
+
+  it('owns an immutable snapshot instead of retaining caller-mutable knots', () => {
+    const input = [
+      { coordinate: 0, value: 0, derivative: 0 },
+      { coordinate: 0.5, value: 0.03, derivative: 0.04 },
+      { coordinate: 1, value: 0, derivative: 0 },
+    ];
+    const owned = createCubicHermiteProfile(input);
+    input[1].value = 99;
+
+    expect(sampleCubicHermiteProfile(owned, 0.5)).toEqual({ value: 0.03, derivative: 0.04 });
+    expect(Object.isFrozen(owned)).toBe(true);
+    expect(Object.isFrozen(owned.knots)).toBe(true);
+    expect(Object.isFrozen(owned.knots[1])).toBe(true);
+    expect(Reflect.set(owned.knots[1], 'value', 99)).toBe(false);
   });
 
   it('derives the relief normal from caller-provided surface differentials', () => {
@@ -64,6 +97,51 @@ describe('surface fields', () => {
       y: expect.closeTo(-0.1223725525, 8),
       z: expect.closeTo(0.9789804197, 8),
     });
+  });
+
+  it('is explicitly a first-order relief frame, not the exact normal of a curved offset surface', () => {
+    const radius = 2;
+    const angle = 0.7;
+    const height = 1.5;
+    const heightDerivative = 0.5;
+    const normal = { x: Math.cos(angle), y: Math.sin(angle), z: 0 };
+    const normalDerivative = { x: -Math.sin(angle), y: Math.cos(angle), z: 0 };
+    const dPdu = {
+      x: radius * normalDerivative.x,
+      y: radius * normalDerivative.y,
+      z: 0,
+    };
+    const dPdv = { x: 0, y: 0, z: 1 };
+
+    const firstOrder = deriveReliefFrame({ du: dPdu, dv: dPdv }, { du: heightDerivative, dv: 0 });
+    const independentFirstOrderNormal = normalize(
+      cross(
+        {
+          x: dPdu.x + heightDerivative * normal.x,
+          y: dPdu.y + heightDerivative * normal.y,
+          z: 0,
+        },
+        dPdv
+      )
+    );
+    const exactOffsetNormal = normalize(
+      cross(
+        {
+          // d(P + HN)/du = dP/du + dH/du * N + H * dN/du
+          x: dPdu.x + heightDerivative * normal.x + height * normalDerivative.x,
+          y: dPdu.y + heightDerivative * normal.y + height * normalDerivative.y,
+          z: 0,
+        },
+        dPdv
+      )
+    );
+
+    expect(firstOrder.normal).toMatchObject({
+      x: expect.closeTo(independentFirstOrderNormal.x, 12),
+      y: expect.closeTo(independentFirstOrderNormal.y, 12),
+      z: expect.closeTo(independentFirstOrderNormal.z, 12),
+    });
+    expect(dot(firstOrder.normal, exactOffsetNormal)).toBeLessThan(0.999);
   });
 
   it('emits a bounded GLSL profile and Jacobian-frame evaluator', () => {

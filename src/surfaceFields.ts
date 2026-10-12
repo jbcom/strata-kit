@@ -65,7 +65,7 @@ export interface ProjectedReliefSample {
   derivatives: ReliefDerivatives;
 }
 
-/** An orthonormal frame for a surface after scalar relief displaces it along its local normal. */
+/** An orthonormal first-order shading frame for local scalar relief. */
 export interface ReliefFrame {
   tangent: Vec3;
   bitangent: Vec3;
@@ -104,7 +104,8 @@ export function createCubicHermiteProfile(
       'createCubicHermiteProfile: endpoint derivatives must be zero for clamped C1 continuity'
     );
   }
-  return { knots };
+  const ownedKnots = Object.freeze(knots.map((knot) => Object.freeze(knot)));
+  return Object.freeze({ knots: ownedKnots });
 }
 
 function sampleSegment(
@@ -223,7 +224,12 @@ function normalize(operation: string, vector: Vec3): Vec3 {
 }
 
 /**
- * Builds an orthonormal tangent frame after height relief using the caller's surface Jacobian.
+ * Builds an orthonormal first-order relief frame using the caller's surface Jacobian.
+ *
+ * It uses dP + N * dH, the local bump/relief approximation. It does not model H * dN, so it is
+ * not the exact tangent frame of P + HN on curved geometry and must not be used to claim a
+ * physically displaced-surface normal. Consumers that displace curved geometry need their own
+ * curvature-aware differential path.
  *
  * Every input and the returned frame live in the same evaluation space. A caller may use rest
  * object space, posed space, or world space, but must pass dP/du and dP/dv for that exact space.
@@ -249,9 +255,10 @@ export function deriveReliefFrame(
 }
 
 /**
- * GLSL ES 3.00 implementation paired with this module's profile packer and relief-frame oracle.
+ * GLSL ES 3.00 implementation paired with this module's profile packer and first-order relief-frame oracle.
  * `coordinate` is unitless or caller-defined; values use caller-defined height units, and the
  * derivative is height units per coordinate unit. `dPdu`, `dPdv`, and the result share one space.
+ * Its relief frame uses dP + N * dH and intentionally omits H * dN on curved surfaces.
  */
 export const surfaceFieldsGlsl = /* glsl */ `
 const int STRATA_KIT_MAX_PROFILE_KNOTS = 8;
