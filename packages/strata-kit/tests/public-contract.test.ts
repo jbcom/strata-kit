@@ -5,8 +5,17 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 import { bakeSurface, createSurfaceBakeManifest, createSurfacePlan, sampleSurface } from '../src/materials.ts';
-import { createSeededNoise, fractalNoise } from '../src/noise.ts';
-import { opSmoothUnion, sdSphere } from '../src/sdf.ts';
+import { createSeededNoise, createSeededRandom, fractalNoise, seedToUint32 } from '../src/noise.ts';
+import {
+  opIntersection,
+  opSmoothSubtraction,
+  opSmoothUnion,
+  opSubtraction,
+  opUnion,
+  sdBox,
+  sdPlane,
+  sdSphere,
+} from '../src/sdf.ts';
 import { seededSurfaceNoiseGlsl } from '../src/shaders.ts';
 import { createSeededTerrainField } from '../src/terrain.ts';
 import { createThreeHeightfieldGeometry } from '../src/three.ts';
@@ -111,6 +120,9 @@ describe('strata-kit public contract', () => {
     expect(() => fractalNoise(createSeededNoise('finite'), 0, 0, 0, 0)).toThrow(
       'fractalNoise: octaves must be a positive integer'
     );
+    expect(() => seedToUint32(Number.POSITIVE_INFINITY)).toThrow(
+      'seedToUint32: seed must be a string or finite number'
+    );
     expect(() =>
       createSurfacePlan({ seed: 'finite', scale: Number.POSITIVE_INFINITY })
     ).toThrow('createSurfacePlan: scale must be a positive finite number');
@@ -130,6 +142,78 @@ describe('strata-kit public contract', () => {
     });
     expect(() => field.createHeightfield({ width: 2, depth: 2, cellSize: Number.POSITIVE_INFINITY })).toThrow(
       'createHeightfield: cellSize must be a positive finite number'
+    );
+  });
+
+  it('keeps all signed-distance operators finite and validates their geometric inputs', () => {
+    expect(opUnion(2, -3)).toBe(-3);
+    expect(opIntersection(2, -3)).toBe(2);
+    expect(opSubtraction(2, -3)).toBe(3);
+    expect(opSmoothUnion(2, -3, 1)).toBeLessThanOrEqual(-3);
+    expect(opSmoothSubtraction(2, -3, 1)).toBeGreaterThanOrEqual(3);
+    expect(sdPlane({ x: 1, y: 4, z: -2 }, 1)).toBe(3);
+    expect(sdBox({ x: 2, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }, { x: 1, y: 1, z: 1 })).toBe(1);
+    expect(() => sdBox({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }, { x: 0, y: 1, z: 1 })).toThrow(
+      'sdBox: halfExtents.x must be a positive finite number'
+    );
+    expect(() => sdPlane({ x: 0, y: Number.NaN, z: 0 })).toThrow('sdPlane: point.y must be finite');
+    expect(() =>
+      sdSphere(
+        { x: Number.MAX_VALUE, y: 0, z: 0 },
+        { x: -Number.MAX_VALUE, y: 0, z: 0 },
+        1
+      )
+    ).toThrow('sdSphere: result must be finite');
+    expect(() =>
+      sdBox(
+        { x: Number.MAX_VALUE, y: 0, z: 0 },
+        { x: -Number.MAX_VALUE, y: 0, z: 0 },
+        { x: 1, y: 1, z: 1 }
+      )
+    ).toThrow('sdBox: result must be finite');
+  });
+
+  it('generates finite terrain meshes and reproducible scatter across biome profiles', () => {
+    const biomes = ['marsh', 'forest', 'desert', 'tundra', 'savanna', 'mountain', 'scrubland'] as const;
+    for (const type of biomes) {
+      const field = createSeededTerrainField({
+        seed: type,
+        biomes: [{ type, center: [0, 0], radius: 8 }],
+      });
+      expect(Number.isFinite(field.heightAt(1, -1))).toBe(true);
+      expect(field.sample({ x: 1, y: -3, z: -1 }).caveDistance).toBeLessThanOrEqual(1000);
+    }
+
+    const field = createSeededTerrainField({
+      seed: 'mesh-and-scatter',
+      biomes: [
+        { type: 'forest', center: [0, 0], radius: 2 },
+        { type: 'desert', center: [10, 0], radius: 20 },
+      ],
+    });
+    const mesh = field.createHeightfield({ width: 3, depth: 3, cellSize: 1 });
+    expect([...mesh.positions, ...mesh.normals].every(Number.isFinite)).toBe(true);
+    expect(mesh.indices).toHaveLength(24);
+    expect(field.scatter({ count: 3, area: 4, seed: 'scatter' })).toEqual(
+      field.scatter({ count: 3, area: 4, seed: 'scatter' })
+    );
+    expect(() => field.scatter({ count: -1, area: 4 })).toThrow('scatter: count must be a non-negative integer');
+  });
+
+  it('keys random streams and bake provenance with every surface input', () => {
+    const first = createSeededRandom('random');
+    const second = createSeededRandom('random');
+    expect([first(), first(), first()]).toEqual([second(), second(), second()]);
+    expect(seedToUint32('random')).not.toBe(seedToUint32('other-random'));
+
+    const plan = createSurfacePlan({ seed: 'custom-color', scale: 2, baseColor: [0.1, 0.2, 0.3] });
+    const bake = bakeSurface(plan, { width: 2, height: 2 });
+    expect(createSurfaceBakeManifest(plan, bake).baseColor).toEqual([0.1, 0.2, 0.3]);
+    expect(() => bakeSurface(plan, { width: 0, height: 2 })).toThrow(
+      'bakeSurface: width and height must be positive integers'
+    );
+    expect(() => createSurfacePlan({ seed: 'color', baseColor: [0.1, 0.2] as never })).toThrow(
+      'createSurfacePlan: baseColor must contain exactly three channels'
     );
   });
 });

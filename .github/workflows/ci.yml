@@ -190,6 +190,8 @@ jobs:
         run: pnpm nx run @strata-game-library/core:build
       - name: Generate core coverage report
         run: pnpm nx run @strata-game-library/core:test:coverage
+      - name: Generate strata-kit coverage report
+        run: pnpm --filter strata-kit run test:coverage
       - name: Scan with SonarQube Cloud
         uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8.2.1
 
