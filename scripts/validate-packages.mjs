@@ -252,7 +252,7 @@ try {
       "console.log('core-consumer-node24-ok');",
     ].join('\n')
   );
-  run('mise', ['exec', 'node@24', '--', 'node', 'consumer.mjs'], {
+  run(process.execPath, ['consumer.mjs'], {
     cwd: coreConsumerDirectory,
     stdio: 'inherit',
   });
