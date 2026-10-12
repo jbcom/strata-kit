@@ -29,7 +29,7 @@ const manifest = JSON.parse(readFileSync(resolve(directory, '../package.json'), 
 
 describe('strata-kit public contract', () => {
   it('publishes only the procedural spine and optional renderer adapters', () => {
-    expect(manifest.name).toBe('strata-kit');
+    expect(manifest.name).toBe('strata-procedural');
     expect(Object.keys(manifest.exports).sort()).toEqual([
       '.',
       './materials',
