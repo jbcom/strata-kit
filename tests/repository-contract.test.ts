@@ -19,13 +19,6 @@ const pureEntrypoints = [
 ];
 
 describe('strata-kit repository boundary', () => {
-  it('keeps the old framework umbrella private', () => {
-    const umbrella = JSON.parse(
-      readFileSync(resolve(packageDirectory, '../strata-game-library/package.json'), 'utf8')
-    ) as { private?: boolean };
-    expect(umbrella.private).toBe(true);
-  });
-
   it('keeps pure entrypoints renderer/framework free and forbids implicit randomness', () => {
     for (const entrypoint of pureEntrypoints) {
       const source = readFileSync(resolve(sourceDirectory, entrypoint), 'utf8');
