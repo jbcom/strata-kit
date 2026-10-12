@@ -1,8 +1,9 @@
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join, relative } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { getPublishablePackages, workspaceRoot } from './workspace-packages.mjs';
 
 function run(command, args, options = {}) {
@@ -46,6 +47,117 @@ function metadataErrors(manifest, directory) {
   return errors;
 }
 
+function sha512(contents) {
+  return createHash('sha512').update(contents).digest('hex');
+}
+
+function parsePackResult(output) {
+  const start = output.lastIndexOf('\n{\n');
+  return JSON.parse(start === -1 ? output : output.slice(start + 1));
+}
+
+function builtModuleSpecifiers(source, displayPath) {
+  const specifiers = [];
+  const staticPattern = /\b(?:import|export)\s+(?:[^'";]*?\s+from\s+)?['"]([^'"]+)['"]/g;
+  for (const match of source.matchAll(staticPattern)) specifiers.push(match[1]);
+
+  for (const kind of ['import', 'require']) {
+    const callPattern = new RegExp(`\\b${kind}\\s*\\(([^)]*)\\)`, 'g');
+    for (const match of source.matchAll(callPattern)) {
+      const literal = match[1].trim().match(/^(['"])([^'"]+)\1$/);
+      if (!literal) {
+        throw new Error(`${displayPath}: ${kind} must use a literal specifier in published output`);
+      }
+      specifiers.push(literal[2]);
+    }
+  }
+  return specifiers;
+}
+
+async function assertPureBuiltGraph(directory) {
+  const distDirectory = resolve(directory, 'dist');
+  const visited = new Set();
+  const entries = ['index.js', 'noise.js', 'sdf.js', 'terrain.js', 'materials.js', 'shaders.js'];
+
+  async function visit(file) {
+    const resolvedFile = resolve(file);
+    if (!resolvedFile.startsWith(`${distDirectory}/`)) {
+      throw new Error(`Pure build graph escaped dist through ${relative(directory, resolvedFile)}.`);
+    }
+    if (visited.has(resolvedFile)) return;
+    visited.add(resolvedFile);
+    if (!existsSync(resolvedFile)) {
+      throw new Error(`Pure build graph points to missing file ${relative(directory, resolvedFile)}.`);
+    }
+    const source = await readFile(resolvedFile, 'utf8');
+    const displayPath = relative(directory, resolvedFile);
+    for (const specifier of builtModuleSpecifiers(source, displayPath)) {
+      if (!specifier.startsWith('.')) {
+        throw new Error(`${displayPath}: pure entry reaches external module ${specifier}.`);
+      }
+      const target = resolve(dirname(resolvedFile), specifier);
+      await visit(target);
+    }
+  }
+
+  await Promise.all(entries.map((entry) => visit(join(distDirectory, entry))));
+}
+
+async function assertBuiltGraphMutants(directory) {
+  const entry = join(directory, 'dist', 'index.js');
+  const original = await readFile(entry);
+  const originalHash = sha512(original);
+  const mutants = [
+    ['dynamic import', "\nvoid import('three');\n"],
+    ['CommonJS require', "\nvoid require('react');\n"],
+    ['local adapter reachability', "\nimport './three.js';\n"],
+  ];
+
+  for (const [label, mutation] of mutants) {
+    try {
+      await writeFile(entry, Buffer.concat([original, Buffer.from(mutation)]));
+      let rejected = false;
+      try {
+        await assertPureBuiltGraph(directory);
+      } catch {
+        rejected = true;
+      }
+      if (!rejected) throw new Error(`Pure build graph accepted ${label} mutant.`);
+    } finally {
+      await writeFile(entry, original);
+    }
+    if (sha512(await readFile(entry)) !== originalHash) {
+      throw new Error(`Pure build graph did not restore ${label} mutant bytes.`);
+    }
+  }
+}
+
+async function assertFreshPack(directory, packDirectory) {
+  const sourcePath = join(directory, 'src', 'noise.ts');
+  const original = await readFile(sourcePath);
+  const originalHash = sha512(original);
+  const marker = `strataKitFreshnessProbe${Date.now()}`;
+  await writeFile(
+    sourcePath,
+    Buffer.concat([original, Buffer.from(`\nexport const ${marker} = '${marker}';\n`)])
+  );
+  try {
+    const packed = parsePackResult(
+      run('pnpm', ['--dir', directory, 'pack', '--json', '--pack-destination', packDirectory])
+    );
+    const emitted = run('tar', ['-xOf', packed.filename, 'package/dist/noise.js']);
+    if (!emitted.includes(marker)) {
+      throw new Error(`${relative(workspaceRoot, directory)}: packed artifact used stale dist output.`);
+    }
+  } finally {
+    await writeFile(sourcePath, original);
+    run('pnpm', ['--dir', directory, 'run', 'build'], { stdio: 'inherit' });
+  }
+  if (sha512(await readFile(sourcePath)) !== originalHash) {
+    throw new Error(`${relative(workspaceRoot, directory)}: freshness probe did not restore source bytes.`);
+  }
+}
+
 const temporaryDirectory = await mkdtemp(join(tmpdir(), 'strata-pack-'));
 
 try {
@@ -61,11 +173,17 @@ try {
     const displayDirectory = relative(workspaceRoot, directory);
     errors.push(...metadataErrors(manifest, displayDirectory));
 
-    const packed = JSON.parse(
+    const freshnessDirectory = join(temporaryDirectory, 'freshness');
+    await mkdir(freshnessDirectory, { recursive: true });
+    await assertFreshPack(directory, freshnessDirectory);
+
+    const packed = parsePackResult(
       run('pnpm', ['--dir', directory, 'pack', '--json', '--pack-destination', temporaryDirectory])
     );
     const files = new Set(packed.files.map((file) => file.path));
     tarballs.push(packed.filename);
+    await assertPureBuiltGraph(directory);
+    await assertBuiltGraphMutants(directory);
 
     for (const requiredFile of ['LICENSE', 'README.md', 'docs/API.md', 'docs/ARCHITECTURE.md', 'package.json']) {
       if (!files.has(requiredFile)) {
@@ -119,13 +237,18 @@ try {
   await writeFile(
     join(coreConsumerDirectory, 'consumer.mjs'),
     [
-      "import { bakeSurface, createSeededTerrainField, createSurfacePlan } from 'strata-kit';",
+      "import { bakeSurface, createSeededTerrainField, createSurfaceBakeManifest, createSurfacePlan } from 'strata-kit';",
       "const field = createSeededTerrainField({ seed: 'node-24', biomes: [{ type: 'forest', center: [0, 0], radius: 10 }] });",
       "const first = field.sample({ x: 1, y: 0, z: -2 });",
       "const second = field.sample({ x: 1, y: 0, z: -2 });",
       "if (JSON.stringify(first) !== JSON.stringify(second)) throw new Error('pure terrain is not deterministic');",
-      "const bake = bakeSurface(createSurfacePlan({ seed: 'node-24' }), { width: 2, height: 2 });",
+      "const plan = createSurfacePlan({ seed: 'node-24' });",
+      "const bake = bakeSurface(plan, { width: 2, height: 2 });",
       "if (bake.color.length !== 16) throw new Error('pure material bake is unavailable');",
+      "const maps = createSurfaceBakeManifest(plan, bake).maps;",
+      "if (maps[0].name !== 'color' || maps[0].format !== 'rgba8' || maps[0].byteStride !== 4) throw new Error('color map is not decodable');",
+      "if (maps[1].name !== 'roughness' || maps[1].format !== 'r8' || maps[1].byteStride !== 1) throw new Error('roughness map is not decodable');",
+      "if (maps[2].name !== 'bump' || maps[2].format !== 'r8' || maps[2].byteStride !== 1) throw new Error('bump map is not decodable');",
       "console.log('core-consumer-node24-ok');",
     ].join('\n')
   );

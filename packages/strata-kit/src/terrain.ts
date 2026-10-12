@@ -47,8 +47,42 @@ export interface SeededTerrainField {
   scatter(options: { count: number; area: number; seed?: Seed }): ScatterPoint[];
 }
 
+const biomeKinds = new Set<BiomeKind>([
+  'marsh',
+  'forest',
+  'desert',
+  'tundra',
+  'savanna',
+  'mountain',
+  'scrubland',
+]);
+
+function requireFinite(operation: string, name: string, value: number): void {
+  if (!Number.isFinite(value)) throw new Error(`${operation}: ${name} must be finite`);
+}
+
+function requirePositiveFinite(operation: string, name: string, value: number): void {
+  if (!Number.isFinite(value) || value <= 0) {
+    throw new Error(`${operation}: ${name} must be a positive finite number`);
+  }
+}
+
+function requireVec3(operation: string, name: string, value: Vec3): void {
+  requireFinite(operation, `${name}.x`, value.x);
+  requireFinite(operation, `${name}.y`, value.y);
+  requireFinite(operation, `${name}.z`, value.z);
+}
+
 function requireBiomes(biomes: readonly Biome[]): void {
   if (biomes.length === 0) throw new Error('createSeededTerrainField: biomes cannot be empty');
+  biomes.forEach((biome, index) => {
+    if (!biomeKinds.has(biome.type)) {
+      throw new Error(`createSeededTerrainField: biomes[${index}].type is not supported`);
+    }
+    requireFinite('createSeededTerrainField', `biomes[${index}].center[0]`, biome.center[0]);
+    requireFinite('createSeededTerrainField', `biomes[${index}].center[1]`, biome.center[1]);
+    requirePositiveFinite('createSeededTerrainField', `biomes[${index}].radius`, biome.radius);
+  });
 }
 
 function closestBiome(x: number, z: number, biomes: readonly Biome[]): Biome {
@@ -61,9 +95,14 @@ function closestBiome(x: number, z: number, biomes: readonly Biome[]): Biome {
 }
 
 export function createSeededTerrainField(options: SeededTerrainOptions): SeededTerrainField {
+  if (typeof options.seed === 'number') {
+    requireFinite('createSeededTerrainField', 'seed', options.seed);
+  }
   requireBiomes(options.biomes);
   const noise = createSeededNoise(options.seed);
   const heightAt = (x: number, z: number): number => {
+    requireFinite('heightAt', 'x', x);
+    requireFinite('heightAt', 'z', z);
     const biome = closestBiome(x, z, options.biomes);
     const base = fractalNoise(noise, x * 0.02, 0, z * 0.02, 4);
     const detail = fractalNoise(noise, x * 0.06, 19, z * 0.06, 3);
@@ -85,11 +124,13 @@ export function createSeededTerrainField(options: SeededTerrainOptions): SeededT
     }
   };
   const caveDistance = (point: Vec3): number => {
+    requireVec3('sample', 'point', point);
     const signal = noise(point.x * 0.05, point.y * 0.05, point.z * 0.05);
     const deepEnough = point.y < -2;
     return deepEnough && signal > 0.36 ? (0.36 - signal) * 8 : 1000;
   };
   const sample = (point: Vec3): TerrainSample => {
+    requireVec3('sample', 'point', point);
     const height = heightAt(point.x, point.z);
     const cave = caveDistance(point);
     return { height, caveDistance: cave, distance: opSmoothSubtraction(point.y - height, cave, 2) };
@@ -98,16 +139,9 @@ export function createSeededTerrainField(options: SeededTerrainOptions): SeededT
     heightAt,
     sample,
     createHeightfield({ width, depth, cellSize }) {
-      if (
-        !Number.isInteger(width) ||
-        !Number.isInteger(depth) ||
-        width < 2 ||
-        depth < 2 ||
-        cellSize <= 0
-      ) {
-        throw new Error(
-          'createHeightfield: width/depth must be integers >= 2 and cellSize must be positive'
-        );
+      requirePositiveFinite('createHeightfield', 'cellSize', cellSize);
+      if (!Number.isInteger(width) || !Number.isInteger(depth) || width < 2 || depth < 2) {
+        throw new Error('createHeightfield: width and depth must be integers >= 2');
       }
       const positions = new Float32Array(width * depth * 3);
       const normals = new Float32Array(width * depth * 3);
@@ -149,9 +183,12 @@ export function createSeededTerrainField(options: SeededTerrainOptions): SeededT
       return { positions, normals, indices, width, depth };
     },
     scatter({ count, area, seed = options.seed }) {
-      if (!Number.isInteger(count) || count < 0 || area <= 0) {
-        throw new Error('scatter: count must be a non-negative integer and area must be positive');
+      if (!Number.isInteger(count) || count < 0 || !Number.isFinite(area) || area <= 0) {
+        throw new Error(
+          'scatter: count must be a non-negative integer and area must be a positive finite number'
+        );
       }
+      if (typeof seed === 'number') requireFinite('scatter', 'seed', seed);
       const random = createSeededRandom(seed);
       return Array.from({ length: count }, () => {
         const x = (random() - 0.5) * area;

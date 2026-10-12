@@ -51,6 +51,21 @@
         "roughness": "Uint8Array",
         "bump": "Uint8Array"
       },
+      "SurfaceBakeManifest": {
+        "seed": "number",
+        "scale": "number",
+        "width": "number",
+        "height": "number",
+        "maps": "readonly SurfaceBakeMap[]"
+      },
+      "SurfaceBakeMap": {
+        "name": "SurfaceBakeMapName",
+        "format": "SurfaceBakeMapFormat",
+        "channels": "1 | 4",
+        "byteStride": "1 | 4"
+      },
+      "SurfaceBakeMapFormat": "type",
+      "SurfaceBakeMapName": "type",
       "SurfacePlan": {
         "seed": "number",
         "scale": "number",
@@ -89,6 +104,21 @@
         "roughness": "Uint8Array",
         "bump": "Uint8Array"
       },
+      "SurfaceBakeManifest": {
+        "seed": "number",
+        "scale": "number",
+        "width": "number",
+        "height": "number",
+        "maps": "readonly SurfaceBakeMap[]"
+      },
+      "SurfaceBakeMap": {
+        "name": "SurfaceBakeMapName",
+        "format": "SurfaceBakeMapFormat",
+        "channels": "1 | 4",
+        "byteStride": "1 | 4"
+      },
+      "SurfaceBakeMapFormat": "type",
+      "SurfaceBakeMapName": "type",
       "SurfacePlan": {
         "seed": "number",
         "scale": "number",
