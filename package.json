@@ -24,7 +24,8 @@
     "prepack": "pnpm run build",
     "prepublishOnly": "pnpm run build && pnpm run lint && pnpm run typecheck && pnpm run test",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage --coverage.reporter=lcov --coverage.reporter=text && node scripts/normalize-lcov.mjs"
   },
   "keywords": ["procedural", "seeded", "terrain", "materials", "bake", "three"],
   "author": "Jon Bogaty <jon@jonbogaty.com>",
@@ -49,6 +50,7 @@
     "@types/react": "^19.3.0",
     "@types/node": "^26.6.4",
     "@types/three": "^0.185.4",
+    "@vitest/coverage-v8": "^4.1.11",
     "react": "^19.3.0",
     "three": "^0.186.1",
     "tsup": "^8.5.1",
