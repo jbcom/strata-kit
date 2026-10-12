@@ -73,13 +73,17 @@ function requirePlan(operation: string, plan: SurfacePlan, prefix = 'plan.'): vo
 export function createSurfacePlan(options: SurfacePlanOptions): SurfacePlan {
   if (typeof options.seed === 'number')
     requireFiniteNumber('createSurfacePlan', 'seed', options.seed);
-  const plan = {
+  const baseColor = options.baseColor ?? [0.5, 0.5, 0.5];
+  const inputPlan = {
     seed: seedToUint32(options.seed),
     scale: options.scale ?? 1,
-    baseColor: options.baseColor ?? [0.5, 0.5, 0.5],
+    baseColor,
   };
-  requirePlan('createSurfacePlan', plan, '');
-  return plan;
+  requirePlan('createSurfacePlan', inputPlan, '');
+  return {
+    ...inputPlan,
+    baseColor: [baseColor[0], baseColor[1], baseColor[2]] as const,
+  };
 }
 
 /** Samples a surface plan at finite UV coordinates without allocating a bake. */
@@ -162,7 +166,7 @@ export function createSurfaceBakeManifest(
   return {
     seed: plan.seed,
     scale: plan.scale,
-    baseColor: plan.baseColor,
+    baseColor: [...plan.baseColor] as [number, number, number],
     width: bake.width,
     height: bake.height,
     maps: [
