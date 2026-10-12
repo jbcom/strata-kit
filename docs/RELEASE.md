@@ -36,8 +36,8 @@ Use a new temporary directory with no workspace configuration:
 
 ```sh
 npm init -y
-npm install --userconfig /dev/null strata-kit@0.1.0
-node --input-type=module --eval "await import('strata-kit'); await import('strata-kit/surface-fields')"
+npm install --userconfig /dev/null strata-procedural@0.1.0
+node --input-type=module --eval "await import('strata-procedural'); await import('strata-procedural/surface-fields')"
 ```
 
 Then install `three`, `react`, `react-dom`, and `@react-three/fiber` in a separate clean directory and import every public subpath. A local tarball verifies artifact contents before publication; only this second registry installation proves the public consumer boundary.
