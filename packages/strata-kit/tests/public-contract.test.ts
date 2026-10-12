@@ -206,8 +206,11 @@ describe('strata-kit public contract', () => {
     expect([first(), first(), first()]).toEqual([second(), second(), second()]);
     expect(seedToUint32('random')).not.toBe(seedToUint32('other-random'));
 
-    const plan = createSurfacePlan({ seed: 'custom-color', scale: 2, baseColor: [0.1, 0.2, 0.3] });
+    const callerColor: [number, number, number] = [0.1, 0.2, 0.3];
+    const plan = createSurfacePlan({ seed: 'custom-color', scale: 2, baseColor: callerColor });
     const bake = bakeSurface(plan, { width: 2, height: 2 });
+    callerColor[0] = 0.9;
+    expect(plan.baseColor).toEqual([0.1, 0.2, 0.3]);
     expect(createSurfaceBakeManifest(plan, bake).baseColor).toEqual([0.1, 0.2, 0.3]);
     expect(() => bakeSurface(plan, { width: 0, height: 2 })).toThrow(
       'bakeSurface: width and height must be positive integers'
