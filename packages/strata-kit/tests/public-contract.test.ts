@@ -5,9 +5,11 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 import { bakeSurface, createSurfaceBakeManifest, createSurfacePlan, sampleSurface } from '../src/materials.ts';
-import { createSeededNoise } from '../src/noise.ts';
+import { createSeededNoise, fractalNoise } from '../src/noise.ts';
 import { opSmoothUnion, sdSphere } from '../src/sdf.ts';
+import { seededSurfaceNoiseGlsl } from '../src/shaders.ts';
 import { createSeededTerrainField } from '../src/terrain.ts';
+import { createThreeHeightfieldGeometry } from '../src/three.ts';
 
 const directory = dirname(fileURLToPath(import.meta.url));
 const manifest = JSON.parse(readFileSync(resolve(directory, '../package.json'), 'utf8')) as {
@@ -34,6 +36,7 @@ describe('strata-kit public contract', () => {
       react: expect.any(String),
       three: expect.any(String),
     });
+    expect(manifest).toMatchObject({ engines: { node: '>=22' } });
   });
 
   it('makes terrain and surface bakes deterministic for an explicit seed', () => {
@@ -76,6 +79,7 @@ describe('strata-kit public contract', () => {
     );
 
     const manifest = createSurfaceBakeManifest(plan, bake);
+    expect(manifest.baseColor).toEqual([0.5, 0.5, 0.5]);
     expect(manifest.maps).toEqual([
       { name: 'color', format: 'rgba8', channels: 4, byteStride: 4 },
       { name: 'roughness', format: 'r8', channels: 1, byteStride: 1 },
@@ -85,6 +89,13 @@ describe('strata-kit public contract', () => {
     expect(color).toEqual(sampleSurface(plan, 0.5 / 8, 0.5 / 8).color);
     expect(bake.roughness[0]).toBeGreaterThanOrEqual(0);
     expect(bake.bump[0]).toBeGreaterThanOrEqual(0);
+
+    const geometry = createThreeHeightfieldGeometry(
+      field.createHeightfield({ width: 3, depth: 2, cellSize: 1 })
+    );
+    expect(Array.from(geometry.getAttribute('uv').array)).toEqual([0, 0, 0.5, 0, 1, 0, 0, 1, 0.5, 1, 1, 1]);
+    expect(seededSurfaceNoiseGlsl).toContain('float strataKitNoise(vec3 point, float seed)');
+    expect(seededSurfaceNoiseGlsl).toContain('return mix(lower, upper, local.z);');
   });
 
   it('rejects non-finite public inputs before they contaminate generated data', () => {
@@ -96,6 +107,9 @@ describe('strata-kit public contract', () => {
     );
     expect(() => createSeededNoise('finite')(Number.NaN, 0)).toThrow(
       'createSeededNoise: x must be finite'
+    );
+    expect(() => fractalNoise(createSeededNoise('finite'), 0, 0, 0, 0)).toThrow(
+      'fractalNoise: octaves must be a positive integer'
     );
     expect(() =>
       createSurfacePlan({ seed: 'finite', scale: Number.POSITIVE_INFINITY })

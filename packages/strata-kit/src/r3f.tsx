@@ -5,6 +5,7 @@ import type { Material } from 'three';
 import type { HeightfieldMesh } from './terrain.js';
 import { createThreeHeightfieldGeometry } from './three.js';
 
+/** Props for the opt-in React Three Fiber heightfield view. */
 export interface StrataHeightfieldProps {
   mesh: HeightfieldMesh;
   material?: Material;

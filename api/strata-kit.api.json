@@ -54,6 +54,7 @@
       "SurfaceBakeManifest": {
         "seed": "number",
         "scale": "number",
+        "baseColor": "readonly [number, number, number]",
         "width": "number",
         "height": "number",
         "maps": "readonly SurfaceBakeMap[]"
@@ -107,6 +108,7 @@
       "SurfaceBakeManifest": {
         "seed": "number",
         "scale": "number",
+        "baseColor": "readonly [number, number, number]",
         "width": "number",
         "height": "number",
         "maps": "readonly SurfaceBakeMap[]"

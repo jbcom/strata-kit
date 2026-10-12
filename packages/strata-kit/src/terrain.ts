@@ -1,6 +1,7 @@
 import { createSeededNoise, createSeededRandom, fractalNoise, type Seed } from './noise.js';
 import { opSmoothSubtraction, type Vec3 } from './sdf.js';
 
+/** Supported deterministic terrain profiles. */
 export type BiomeKind =
   | 'marsh'
   | 'forest'
@@ -10,23 +11,27 @@ export type BiomeKind =
   | 'mountain'
   | 'scrubland';
 
+/** A weighted terrain region; larger radii exert influence farther from the center. */
 export interface Biome {
   type: BiomeKind;
   center: readonly [number, number];
   radius: number;
 }
 
+/** Inputs required to construct a deterministic terrain field. */
 export interface SeededTerrainOptions {
   seed: Seed;
   biomes: readonly Biome[];
 }
 
+/** Height and signed-distance values sampled from a terrain field. */
 export interface TerrainSample {
   height: number;
   distance: number;
   caveDistance: number;
 }
 
+/** Renderer-neutral indexed heightfield attributes. */
 export interface HeightfieldMesh {
   positions: Float32Array;
   normals: Float32Array;
@@ -35,11 +40,13 @@ export interface HeightfieldMesh {
   depth: number;
 }
 
+/** A deterministic placement point aligned to the terrain surface. */
 export interface ScatterPoint extends Vec3 {
   rotation: number;
   scale: number;
 }
 
+/** Operations exposed by one validated, seeded terrain field. */
 export interface SeededTerrainField {
   heightAt(x: number, z: number): number;
   sample(point: Vec3): TerrainSample;
@@ -88,12 +95,14 @@ function requireBiomes(biomes: readonly Biome[]): void {
 function closestBiome(x: number, z: number, biomes: readonly Biome[]): Biome {
   requireBiomes(biomes);
   return biomes.reduce((closest, biome) => {
-    const closestDistance = (x - closest.center[0]) ** 2 + (z - closest.center[1]) ** 2;
-    const distance = (x - biome.center[0]) ** 2 + (z - biome.center[1]) ** 2;
+    const closestDistance =
+      ((x - closest.center[0]) ** 2 + (z - closest.center[1]) ** 2) / closest.radius ** 2;
+    const distance = ((x - biome.center[0]) ** 2 + (z - biome.center[1]) ** 2) / biome.radius ** 2;
     return distance < closestDistance ? biome : closest;
   });
 }
 
+/** Creates a finite, seeded terrain and continuous cave distance field. */
 export function createSeededTerrainField(options: SeededTerrainOptions): SeededTerrainField {
   if (typeof options.seed === 'number') {
     requireFinite('createSeededTerrainField', 'seed', options.seed);
@@ -126,8 +135,7 @@ export function createSeededTerrainField(options: SeededTerrainOptions): SeededT
   const caveDistance = (point: Vec3): number => {
     requireVec3('sample', 'point', point);
     const signal = noise(point.x * 0.05, point.y * 0.05, point.z * 0.05);
-    const deepEnough = point.y < -2;
-    return deepEnough && signal > 0.36 ? (0.36 - signal) * 8 : 1000;
+    return Math.max((0.36 - signal) * 8, point.y + 2);
   };
   const sample = (point: Vec3): TerrainSample => {
     requireVec3('sample', 'point', point);
@@ -154,7 +162,11 @@ export function createSeededTerrainField(options: SeededTerrainOptions): SeededT
           const heightValue = heightAt(worldX, worldZ);
           const slopeX = heightAt(worldX + cellSize, worldZ) - heightAt(worldX - cellSize, worldZ);
           const slopeZ = heightAt(worldX, worldZ + cellSize) - heightAt(worldX, worldZ - cellSize);
-          const inverseLength = 1 / Math.hypot(-slopeX, 2 * cellSize, -slopeZ);
+          const magnitude = Math.hypot(-slopeX, 2 * cellSize, -slopeZ);
+          if (!Number.isFinite(magnitude) || magnitude === 0) {
+            throw new Error('createHeightfield: normal magnitude must be finite and non-zero');
+          }
+          const inverseLength = 1 / magnitude;
           positions.set([worldX, heightValue, worldZ], offset);
           normals.set(
             [-slopeX * inverseLength, 2 * cellSize * inverseLength, -slopeZ * inverseLength],
