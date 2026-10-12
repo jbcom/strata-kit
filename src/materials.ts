@@ -1,23 +1,27 @@
 import { createSeededNoise, type Seed, seedToUint32 } from './noise.js';
 
+/** Inputs that deterministically define a procedural surface. */
 export interface SurfacePlanOptions {
   seed: Seed;
   scale?: number;
   baseColor?: readonly [number, number, number];
 }
 
+/** Normalized surface parameters reused for sampling and baking. */
 export interface SurfacePlan {
   seed: number;
   scale: number;
   baseColor: readonly [number, number, number];
 }
 
+/** One uncompressed surface sample. Color channels are in the 0..255 range. */
 export interface SurfaceSample {
   color: readonly [number, number, number, number];
   roughness: number;
   bump: number;
 }
 
+/** Packed RGBA8 color, R8 roughness, and R8 bump image data. */
 export interface SurfaceBake {
   width: number;
   height: number;
@@ -26,9 +30,12 @@ export interface SurfaceBake {
   bump: Uint8Array;
 }
 
+/** Stable map names in a {@link SurfaceBakeManifest}. */
 export type SurfaceBakeMapName = 'color' | 'roughness' | 'bump';
+/** Encodings used by the packed bake maps. */
 export type SurfaceBakeMapFormat = 'rgba8' | 'r8';
 
+/** Decoding metadata for one packed bake map. */
 export interface SurfaceBakeMap {
   name: SurfaceBakeMapName;
   format: SurfaceBakeMapFormat;
@@ -36,9 +43,11 @@ export interface SurfaceBakeMap {
   byteStride: 1 | 4;
 }
 
+/** Provenance and byte layout required to decode a {@link SurfaceBake}. */
 export interface SurfaceBakeManifest {
   seed: number;
   scale: number;
+  baseColor: readonly [number, number, number];
   width: number;
   height: number;
   maps: readonly SurfaceBakeMap[];
@@ -69,6 +78,7 @@ function requirePlan(operation: string, plan: SurfacePlan, prefix = 'plan.'): vo
   });
 }
 
+/** Validates and normalizes a seeded surface plan. */
 export function createSurfacePlan(options: SurfacePlanOptions): SurfacePlan {
   if (typeof options.seed === 'number') requireFinite('createSurfacePlan', 'seed', options.seed);
   const plan = {
@@ -80,11 +90,20 @@ export function createSurfacePlan(options: SurfacePlanOptions): SurfacePlan {
   return plan;
 }
 
+/** Samples a surface plan at finite UV coordinates without allocating a bake. */
 export function sampleSurface(plan: SurfacePlan, u: number, v: number): SurfaceSample {
   requirePlan('sampleSurface', plan);
   requireFinite('sampleSurface', 'u', u);
   requireFinite('sampleSurface', 'v', v);
-  const noise = createSeededNoise(plan.seed);
+  return sampleSurfaceWithNoise(plan, createSeededNoise(plan.seed), u, v);
+}
+
+function sampleSurfaceWithNoise(
+  plan: SurfacePlan,
+  noise: ReturnType<typeof createSeededNoise>,
+  u: number,
+  v: number
+): SurfaceSample {
   const grain = noise(u * plan.scale * 24, v * plan.scale * 24, plan.seed * 0.0001) * 0.5 + 0.5;
   const wear = noise(u * plan.scale * 5, v * plan.scale * 5, 17) * 0.5 + 0.5;
   const color = plan.baseColor.map((channel) =>
@@ -97,6 +116,7 @@ export function sampleSurface(plan: SurfacePlan, u: number, v: number): SurfaceS
   };
 }
 
+/** Bakes a validated plan into deterministic, tightly packed image buffers. */
 export function bakeSurface(
   plan: SurfacePlan,
   options: { width: number; height: number }
@@ -109,10 +129,11 @@ export function bakeSurface(
   const color = new Uint8Array(width * height * 4);
   const roughness = new Uint8Array(width * height);
   const bump = new Uint8Array(width * height);
+  const noise = createSeededNoise(plan.seed);
   for (let y = 0; y < height; y += 1) {
     for (let x = 0; x < width; x += 1) {
       const pixel = y * width + x;
-      const sample = sampleSurface(plan, (x + 0.5) / width, (y + 0.5) / height);
+      const sample = sampleSurfaceWithNoise(plan, noise, (x + 0.5) / width, (y + 0.5) / height);
       color.set(sample.color, pixel * 4);
       roughness[pixel] = Math.round(sample.roughness * 255);
       bump[pixel] = Math.round((sample.bump * 0.5 + 0.5) * 255);
@@ -121,6 +142,7 @@ export function bakeSurface(
   return { width, height, color, roughness, bump };
 }
 
+/** Describes the maps and provenance emitted by {@link bakeSurface}. */
 export function createSurfaceBakeManifest(
   plan: SurfacePlan,
   bake: SurfaceBake
@@ -148,6 +170,7 @@ export function createSurfaceBakeManifest(
   return {
     seed: plan.seed,
     scale: plan.scale,
+    baseColor: plan.baseColor,
     width: bake.width,
     height: bake.height,
     maps: [

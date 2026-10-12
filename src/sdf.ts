@@ -1,5 +1,6 @@
 /** Renderer-neutral signed-distance primitives and field operations. */
 
+/** A finite three-dimensional coordinate. */
 export interface Vec3 {
   x: number;
   y: number;
@@ -27,21 +28,25 @@ function requirePair(operation: string, left: number, right: number): void {
   requireFinite(operation, 'right', right);
 }
 
+/** Returns the minimum signed distance from two finite fields. */
 export function opUnion(left: number, right: number): number {
   requirePair('opUnion', left, right);
   return Math.min(left, right);
 }
 
+/** Returns the intersection of two finite signed-distance fields. */
 export function opIntersection(left: number, right: number): number {
   requirePair('opIntersection', left, right);
   return Math.max(left, right);
 }
 
+/** Subtracts the right finite signed-distance field from the left. */
 export function opSubtraction(left: number, right: number): number {
   requirePair('opSubtraction', left, right);
   return Math.max(left, -right);
 }
 
+/** Smoothly unions finite fields using a positive finite blend radius. */
 export function opSmoothUnion(left: number, right: number, radius: number): number {
   requirePair('opSmoothUnion', left, right);
   requirePositiveFinite('opSmoothUnion', 'radius', radius);
@@ -49,6 +54,7 @@ export function opSmoothUnion(left: number, right: number, radius: number): numb
   return Math.min(left, right) - blend * blend * radius * 0.25;
 }
 
+/** Smoothly subtracts finite fields using a positive finite blend radius. */
 export function opSmoothSubtraction(left: number, right: number, radius: number): number {
   requirePair('opSmoothSubtraction', left, right);
   requirePositiveFinite('opSmoothSubtraction', 'radius', radius);
@@ -56,6 +62,7 @@ export function opSmoothSubtraction(left: number, right: number, radius: number)
   return Math.max(left, -right) + blend * blend * radius * 0.25;
 }
 
+/** Measures signed distance from a finite point to a positive-radius sphere. */
 export function sdSphere(point: Vec3, center: Vec3, radius: number): number {
   requireVec3('sdSphere', 'point', point);
   requireVec3('sdSphere', 'center', center);
@@ -63,12 +70,14 @@ export function sdSphere(point: Vec3, center: Vec3, radius: number): number {
   return Math.hypot(point.x - center.x, point.y - center.y, point.z - center.z) - radius;
 }
 
+/** Measures signed distance from a finite point to a horizontal plane. */
 export function sdPlane(point: Vec3, height = 0): number {
   requireVec3('sdPlane', 'point', point);
   requireFinite('sdPlane', 'height', height);
   return point.y - height;
 }
 
+/** Measures signed distance from a point to an axis-aligned finite box. */
 export function sdBox(point: Vec3, center: Vec3, halfExtents: Vec3): number {
   requireVec3('sdBox', 'point', point);
   requireVec3('sdBox', 'center', center);

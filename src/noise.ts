@@ -1,6 +1,8 @@
 /** Seeded, renderer-neutral noise fields. */
 
+/** A stable string or finite numeric key for deterministic generation. */
 export type Seed = number | string;
+/** A deterministic random-number function returning values in [0, 1). */
 export type Random = () => number;
 
 function requireSeed(operation: string, seed: Seed): void {
@@ -16,6 +18,7 @@ function requireFinite(operation: string, name: string, value: number): void {
   if (!Number.isFinite(value)) throw new Error(`${operation}: ${name} must be finite`);
 }
 
+/** Converts a validated seed into a stable unsigned 32-bit key. */
 export function seedToUint32(seed: Seed): number {
   requireSeed('seedToUint32', seed);
   const text = String(seed);
@@ -27,6 +30,7 @@ export function seedToUint32(seed: Seed): number {
   return hash >>> 0;
 }
 
+/** Creates a deterministic pseudo-random stream for one seed. */
 export function createSeededRandom(seed: Seed): Random {
   requireSeed('createSeededRandom', seed);
   let state = seedToUint32(seed) || 0x6d2b79f5;
@@ -49,6 +53,7 @@ function lattice(seed: number, x: number, y: number, z: number): number {
   return (((hash ^ (hash >>> 16)) >>> 0) / 4294967295) * 2 - 1;
 }
 
+/** Creates a finite-coordinate 3D value-noise sampler for one seed. */
 export function createSeededNoise(seed: Seed): (x: number, y: number, z?: number) => number {
   requireSeed('createSeededNoise', seed);
   const key = seedToUint32(seed);
@@ -71,6 +76,7 @@ export function createSeededNoise(seed: Seed): (x: number, y: number, z?: number
   };
 }
 
+/** Sums positive integer octaves of a finite-coordinate noise sampler. */
 export function fractalNoise(
   noise: (x: number, y: number, z?: number) => number,
   x: number,
