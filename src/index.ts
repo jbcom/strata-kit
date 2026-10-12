@@ -1,6 +1,15 @@
 /** Pure, seeded procedural fields and surface bakes. Renderer adapters are explicit subpaths. */
 
-export type { SurfaceBake, SurfacePlan, SurfacePlanOptions, SurfaceSample } from './materials.js';
+export type {
+  SurfaceBake,
+  SurfaceBakeManifest,
+  SurfaceBakeMap,
+  SurfaceBakeMapFormat,
+  SurfaceBakeMapName,
+  SurfacePlan,
+  SurfacePlanOptions,
+  SurfaceSample,
+} from './materials.js';
 export {
   bakeSurface,
   createSurfaceBakeManifest,

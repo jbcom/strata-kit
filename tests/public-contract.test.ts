@@ -4,8 +4,10 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
+import { bakeSurface, createSurfaceBakeManifest, createSurfacePlan, sampleSurface } from '../src/materials.ts';
+import { createSeededNoise } from '../src/noise.ts';
+import { opSmoothUnion, sdSphere } from '../src/sdf.ts';
 import { createSeededTerrainField } from '../src/terrain.ts';
-import { bakeSurface, createSurfacePlan } from '../src/materials.ts';
 
 const directory = dirname(fileURLToPath(import.meta.url));
 const manifest = JSON.parse(readFileSync(resolve(directory, '../package.json'), 'utf8')) as {
@@ -64,8 +66,56 @@ describe('strata-kit public contract', () => {
     expect(carvedCave?.sample.distance).toBeGreaterThan(0);
 
     const plan = createSurfacePlan({ seed: 'surface-contract', scale: 1.5 });
-    expect(bakeSurface(plan, { width: 8, height: 8 })).toEqual(
-      bakeSurface(plan, { width: 8, height: 8 })
+    const bake = bakeSurface(plan, { width: 8, height: 8 });
+    expect(bake).toEqual(bakeSurface(plan, { width: 8, height: 8 }));
+    expect(bake).not.toEqual(
+      bakeSurface(createSurfacePlan({ seed: 'other-surface-contract', scale: 1.5 }), {
+        width: 8,
+        height: 8,
+      })
+    );
+
+    const manifest = createSurfaceBakeManifest(plan, bake);
+    expect(manifest.maps).toEqual([
+      { name: 'color', format: 'rgba8', channels: 4, byteStride: 4 },
+      { name: 'roughness', format: 'r8', channels: 1, byteStride: 1 },
+      { name: 'bump', format: 'r8', channels: 1, byteStride: 1 },
+    ]);
+    const color = Array.from(bake.color.slice(0, manifest.maps[0].byteStride));
+    expect(color).toEqual(sampleSurface(plan, 0.5 / 8, 0.5 / 8).color);
+    expect(bake.roughness[0]).toBeGreaterThanOrEqual(0);
+    expect(bake.bump[0]).toBeGreaterThanOrEqual(0);
+  });
+
+  it('rejects non-finite public inputs before they contaminate generated data', () => {
+    expect(() => sdSphere({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }, Number.NaN)).toThrow(
+      'sdSphere: radius must be a positive finite number'
+    );
+    expect(() => opSmoothUnion(0, 1, Number.NaN)).toThrow(
+      'opSmoothUnion: radius must be a positive finite number'
+    );
+    expect(() => createSeededNoise('finite')(Number.NaN, 0)).toThrow(
+      'createSeededNoise: x must be finite'
+    );
+    expect(() =>
+      createSurfacePlan({ seed: 'finite', scale: Number.POSITIVE_INFINITY })
+    ).toThrow('createSurfacePlan: scale must be a positive finite number');
+    expect(() => createSurfacePlan({ seed: 'finite', baseColor: [0, Number.NaN, 0] })).toThrow(
+      'createSurfacePlan: baseColor[1] must be a finite number between 0 and 1'
+    );
+    expect(() =>
+      createSeededTerrainField({
+        seed: 'finite',
+        biomes: [{ type: 'forest', center: [Number.NaN, 0], radius: 10 }],
+      })
+    ).toThrow('createSeededTerrainField: biomes[0].center[0] must be finite');
+
+    const field = createSeededTerrainField({
+      seed: 'finite',
+      biomes: [{ type: 'forest', center: [0, 0], radius: 10 }],
+    });
+    expect(() => field.createHeightfield({ width: 2, depth: 2, cellSize: Number.POSITIVE_INFINITY })).toThrow(
+      'createHeightfield: cellSize must be a positive finite number'
     );
   });
 });

@@ -26,17 +26,64 @@ export interface SurfaceBake {
   bump: Uint8Array;
 }
 
+export type SurfaceBakeMapName = 'color' | 'roughness' | 'bump';
+export type SurfaceBakeMapFormat = 'rgba8' | 'r8';
+
+export interface SurfaceBakeMap {
+  name: SurfaceBakeMapName;
+  format: SurfaceBakeMapFormat;
+  channels: 1 | 4;
+  byteStride: 1 | 4;
+}
+
+export interface SurfaceBakeManifest {
+  seed: number;
+  scale: number;
+  width: number;
+  height: number;
+  maps: readonly SurfaceBakeMap[];
+}
+
+function requireFinite(operation: string, name: string, value: number): void {
+  if (!Number.isFinite(value)) throw new Error(`${operation}: ${name} must be finite`);
+}
+
+function requirePositiveFinite(operation: string, name: string, value: number): void {
+  if (!Number.isFinite(value) || value <= 0) {
+    throw new Error(`${operation}: ${name} must be a positive finite number`);
+  }
+}
+
+function requirePlan(operation: string, plan: SurfacePlan, prefix = 'plan.'): void {
+  requireFinite(operation, `${prefix}seed`, plan.seed);
+  requirePositiveFinite(operation, `${prefix}scale`, plan.scale);
+  if (plan.baseColor.length !== 3) {
+    throw new Error(`${operation}: ${prefix}baseColor must contain exactly three channels`);
+  }
+  plan.baseColor.forEach((channel, index) => {
+    if (!Number.isFinite(channel) || channel < 0 || channel > 1) {
+      throw new Error(
+        `${operation}: ${prefix}baseColor[${index}] must be a finite number between 0 and 1`
+      );
+    }
+  });
+}
+
 export function createSurfacePlan(options: SurfacePlanOptions): SurfacePlan {
-  if (options.scale !== undefined && options.scale <= 0)
-    throw new Error('createSurfacePlan: scale must be positive');
-  return {
+  if (typeof options.seed === 'number') requireFinite('createSurfacePlan', 'seed', options.seed);
+  const plan = {
     seed: seedToUint32(options.seed),
     scale: options.scale ?? 1,
     baseColor: options.baseColor ?? [0.5, 0.5, 0.5],
   };
+  requirePlan('createSurfacePlan', plan, '');
+  return plan;
 }
 
 export function sampleSurface(plan: SurfacePlan, u: number, v: number): SurfaceSample {
+  requirePlan('sampleSurface', plan);
+  requireFinite('sampleSurface', 'u', u);
+  requireFinite('sampleSurface', 'v', v);
   const noise = createSeededNoise(plan.seed);
   const grain = noise(u * plan.scale * 24, v * plan.scale * 24, plan.seed * 0.0001) * 0.5 + 0.5;
   const wear = noise(u * plan.scale * 5, v * plan.scale * 5, 17) * 0.5 + 0.5;
@@ -55,6 +102,7 @@ export function bakeSurface(
   options: { width: number; height: number }
 ): SurfaceBake {
   const { width, height } = options;
+  requirePlan('bakeSurface', plan);
   if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) {
     throw new Error('bakeSurface: width and height must be positive integers');
   }
@@ -76,12 +124,36 @@ export function bakeSurface(
 export function createSurfaceBakeManifest(
   plan: SurfacePlan,
   bake: SurfaceBake
-): Readonly<Record<string, number>> {
+): SurfaceBakeManifest {
+  requirePlan('createSurfaceBakeManifest', plan);
+  if (
+    !Number.isInteger(bake.width) ||
+    !Number.isInteger(bake.height) ||
+    bake.width <= 0 ||
+    bake.height <= 0
+  ) {
+    throw new Error('createSurfaceBakeManifest: bake width and height must be positive integers');
+  }
+  if (bake.color.length !== bake.width * bake.height * 4) {
+    throw new Error('createSurfaceBakeManifest: color must have RGBA8 data for every pixel');
+  }
+  if (
+    bake.roughness.length !== bake.width * bake.height ||
+    bake.bump.length !== bake.width * bake.height
+  ) {
+    throw new Error(
+      'createSurfaceBakeManifest: roughness and bump must have R8 data for every pixel'
+    );
+  }
   return {
     seed: plan.seed,
     scale: plan.scale,
     width: bake.width,
     height: bake.height,
-    channels: 3,
+    maps: [
+      { name: 'color', format: 'rgba8', channels: 4, byteStride: 4 },
+      { name: 'roughness', format: 'r8', channels: 1, byteStride: 1 },
+      { name: 'bump', format: 'r8', channels: 1, byteStride: 1 },
+    ],
   };
 }
