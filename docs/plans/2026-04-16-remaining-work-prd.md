@@ -1,7 +1,7 @@
 ---
 title: "Remaining Work Product Requirements"
 description: "Canonical PRD for the post-session work still required after the April 2026 consolidation push"
-status: proposed
+status: superseded
 implementation: 0
 last_updated: 2026-04-16
 area: plans
@@ -9,7 +9,9 @@ area: plans
 
 # Remaining Work Product Requirements
 
-This PRD defines the work intentionally left unfinished after the April 16, 2026 consolidation session. It is the canonical planning document for the post-merge backlog and should be used to prioritize, scope, and accept the next wave of implementation work.
+> **Superseded 2026-10-11.** The active [trim to procedural kit plan](2026-10-11-trim-to-procedural-kit.md) replaces this framework backlog. The rebrand and bounded package direction are owner-approved; retain this document only as historical context and do not use it to prioritize, scope, or accept new work.
+
+This PRD records the work intentionally left unfinished after the April 16, 2026 consolidation session.
 
 ## Executive Summary
 
