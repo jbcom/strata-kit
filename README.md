@@ -1,6 +1,6 @@
 # strata-kit
 
-Seeded procedural terrain, surfaces and materials, baked. The root package is pure TypeScript. Three.js and React Three Fiber are optional subpaths.
+`strata-kit` provides deterministic procedural terrain, surface bakes, signed-distance primitives, and analytic scalar relief. The root package is pure TypeScript. Three.js and React Three Fiber are opt-in subpaths.
 
 ```ts
 import { bakeSurface, createSeededTerrainField, createSurfacePlan } from 'strata-kit';
@@ -45,12 +45,24 @@ This is a local shading approximation: it evaluates `dP + N * dH`. It intentiona
 
 The GLSL evaluator has an explicit eight-knot ceiling, so its profile work remains bounded per fragment. `toCubicHermiteProfileUniforms` creates the matching fixed-width uniform arrays.
 
-## Public package path
+## Install
 
-The rebranded public package is `strata-kit`; the former `@strata-game-library/shaders` package is not its install path. Before release, extract the bounded package source, license, tests, and public documentation into the public `jbcom/strata-kit` repository, preserve the unscoped package name, and validate a packed artifact. A game consumes a released version through the registry:
+Install a released package from npm:
 
 ```sh
 pnpm add strata-kit@<released-version>
 ```
 
-Then it imports `strata-kit/surface-fields` from that installed package. A workspace link, a donor-checkout path, and a local tarball are useful development checks but do not establish the game/package boundary.
+Then import `strata-kit/surface-fields` or another documented public subpath. The package publishes ESM entrypoints. `three`, `react`, and `@react-three/fiber` are optional peers and are loaded only by `strata-kit/three` or `strata-kit/r3f`.
+
+## Development
+
+Use Node 22 or newer and the pnpm version pinned in `package.json`:
+
+```sh
+corepack enable
+pnpm install
+pnpm verify
+```
+
+`pnpm verify` lints, type-checks, runs the renderer-free suite, builds every public entrypoint, and installs the packed artifact into clean pure and adapter consumers. The GPU evaluator is a separate hardware proof run through the render pool; see `docs/RELEASE.md`.
