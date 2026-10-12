@@ -242,11 +242,13 @@ function shapeOf(statement) {
 
   const shape = {};
   for (const member of members) {
-    if (!member.name || !ts.isPropertySignature(member)) continue;
+    if (!member.name || (!ts.isPropertySignature(member) && !ts.isMethodSignature(member))) continue;
     const key = member.name.getText?.() ?? String(member.name.text ?? '');
     if (!key) continue;
     const optional = member.questionToken ? '?' : '';
-    const type = member.type?.getText?.().replace(/\s+/g, ' ') ?? 'unknown';
+    const type = ts.isMethodSignature(member)
+      ? member.getText?.().replace(/\s+/g, ' ') ?? 'unknown'
+      : member.type?.getText?.().replace(/\s+/g, ' ') ?? 'unknown';
     shape[`${key}${optional}`] = type;
   }
   return Object.keys(shape).length ? shape : null;

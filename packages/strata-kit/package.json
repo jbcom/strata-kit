@@ -1,0 +1,62 @@
+{
+  "name": "strata-kit",
+  "version": "0.1.0",
+  "description": "Seeded procedural terrain, surfaces and materials, baked",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./noise": { "types": "./dist/noise.d.ts", "import": "./dist/noise.js" },
+    "./sdf": { "types": "./dist/sdf.d.ts", "import": "./dist/sdf.js" },
+    "./terrain": { "types": "./dist/terrain.d.ts", "import": "./dist/terrain.js" },
+    "./materials": { "types": "./dist/materials.d.ts", "import": "./dist/materials.js" },
+    "./shaders": { "types": "./dist/shaders.d.ts", "import": "./dist/shaders.js" },
+    "./three": { "types": "./dist/three.d.ts", "import": "./dist/three.js" },
+    "./r3f": { "types": "./dist/r3f.d.ts", "import": "./dist/r3f.js" }
+  },
+  "files": ["dist", "docs", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsup",
+    "lint": "biome lint src/ tests/",
+    "prepack": "pnpm run build",
+    "prepublishOnly": "pnpm run build && pnpm run lint && pnpm run typecheck && pnpm run test",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage --coverage.reporter=lcov --coverage.reporter=text && node scripts/normalize-lcov.mjs"
+  },
+  "keywords": ["procedural", "seeded", "terrain", "materials", "bake", "three"],
+  "author": "Jon Bogaty <jon@jonbogaty.com>",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/jbcom/strata-game-library.git", "directory": "packages/strata-kit" },
+  "homepage": "https://github.com/jbcom/strata-game-library#readme",
+  "bugs": { "url": "https://github.com/jbcom/strata-game-library/issues" },
+  "publishConfig": { "access": "public", "provenance": true },
+  "peerDependencies": {
+    "@react-three/fiber": ">=8.0.0",
+    "react": ">=18.0.0",
+    "three": ">=0.150.0"
+  },
+  "peerDependenciesMeta": {
+    "@react-three/fiber": { "optional": true },
+    "react": { "optional": true },
+    "three": { "optional": true }
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.15",
+    "@react-three/fiber": "^9.8.1",
+    "@types/react": "^19.3.0",
+    "@types/react-test-renderer": "^19.3.0",
+    "@types/node": "^26.6.4",
+    "@types/three": "^0.185.4",
+    "@vitest/coverage-v8": "^4.1.11",
+    "react": "^19.3.0",
+    "react-test-renderer": "^19.3.0",
+    "three": "^0.186.1",
+    "tsup": "^8.5.1",
+    "typescript": "5.9.3",
+    "vitest": "^4.1.11"
+  }
+}

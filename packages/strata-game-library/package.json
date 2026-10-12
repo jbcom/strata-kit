@@ -1,5 +1,6 @@
 {
   "name": "strata-game-library",
+  "private": true,
   "version": "0.3.1",
   "description": "Single-package entrypoint for Strata - declarative game APIs, React Three Fiber components, presets, shaders, and integrations",
   "type": "module",

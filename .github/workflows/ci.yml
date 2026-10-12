@@ -53,7 +53,7 @@ jobs:
         shell: bash
         run: |
           floor=$(jq -r '.engines.node' package.json | grep -Eo '[0-9]+' | head -1)
-          echo "node-versions=[\"${floor}\",\"latest\"]" >> "$GITHUB_OUTPUT"
+          echo "node-versions=[\"${floor}\",\"24\",\"latest\"]" >> "$GITHUB_OUTPUT"
 
   compatibility:
     name: Node ${{ matrix.node }} compatibility
@@ -75,6 +75,8 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: Test the renderer-agnostic core
         run: pnpm nx run @strata-game-library/core:test
+      - name: Test and pack strata-kit
+        run: pnpm --filter strata-kit run test && pnpm run package:inspect
 
   quality:
     name: ${{ matrix.task }}
@@ -120,6 +122,8 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-toolchain
+        with:
+          node-version: 24
       - run: pnpm run package:validate
 
   docs:
@@ -188,6 +192,8 @@ jobs:
         run: pnpm nx run @strata-game-library/core:build
       - name: Generate core coverage report
         run: pnpm nx run @strata-game-library/core:test:coverage
+      - name: Generate strata-kit coverage report
+        run: pnpm --filter strata-kit run test:coverage
       - name: Scan with SonarQube Cloud
         uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8.2.1
 
