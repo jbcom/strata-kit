@@ -1,5 +1,7 @@
 /** Seeded, renderer-neutral noise fields. */
 
+import { requireFiniteNumber } from './validation.js';
+
 /** A stable string or finite numeric key for deterministic generation. */
 export type Seed = number | string;
 /** A deterministic random-number function returning values in [0, 1). */
@@ -12,10 +14,6 @@ function requireSeed(operation: string, seed: Seed): void {
   if (typeof seed === 'number' && !Number.isFinite(seed)) {
     throw new Error(`${operation}: seed must be a string or finite number`);
   }
-}
-
-function requireFinite(operation: string, name: string, value: number): void {
-  if (!Number.isFinite(value)) throw new Error(`${operation}: ${name} must be finite`);
 }
 
 /** Converts a validated seed into a stable unsigned 32-bit key. */
@@ -58,9 +56,9 @@ export function createSeededNoise(seed: Seed): (x: number, y: number, z?: number
   requireSeed('createSeededNoise', seed);
   const key = seedToUint32(seed);
   return (x, y, z = 0) => {
-    requireFinite('createSeededNoise', 'x', x);
-    requireFinite('createSeededNoise', 'y', y);
-    requireFinite('createSeededNoise', 'z', z);
+    requireFiniteNumber('createSeededNoise', 'x', x);
+    requireFiniteNumber('createSeededNoise', 'y', y);
+    requireFiniteNumber('createSeededNoise', 'z', z);
     const x0 = Math.floor(x);
     const y0 = Math.floor(y);
     const z0 = Math.floor(z);
@@ -84,9 +82,9 @@ export function fractalNoise(
   z: number,
   octaves = 4
 ): number {
-  requireFinite('fractalNoise', 'x', x);
-  requireFinite('fractalNoise', 'y', y);
-  requireFinite('fractalNoise', 'z', z);
+  requireFiniteNumber('fractalNoise', 'x', x);
+  requireFiniteNumber('fractalNoise', 'y', y);
+  requireFiniteNumber('fractalNoise', 'z', z);
   if (!Number.isInteger(octaves) || octaves <= 0) {
     throw new Error('fractalNoise: octaves must be a positive integer');
   }

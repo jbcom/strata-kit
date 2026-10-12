@@ -1,4 +1,5 @@
 import { createSeededNoise, type Seed, seedToUint32 } from './noise.js';
+import { requireFiniteNumber, requirePositiveFiniteNumber } from './validation.js';
 
 /** Inputs that deterministically define a procedural surface. */
 export interface SurfacePlanOptions {
@@ -53,19 +54,9 @@ export interface SurfaceBakeManifest {
   maps: readonly SurfaceBakeMap[];
 }
 
-function requireFinite(operation: string, name: string, value: number): void {
-  if (!Number.isFinite(value)) throw new Error(`${operation}: ${name} must be finite`);
-}
-
-function requirePositiveFinite(operation: string, name: string, value: number): void {
-  if (!Number.isFinite(value) || value <= 0) {
-    throw new Error(`${operation}: ${name} must be a positive finite number`);
-  }
-}
-
 function requirePlan(operation: string, plan: SurfacePlan, prefix = 'plan.'): void {
-  requireFinite(operation, `${prefix}seed`, plan.seed);
-  requirePositiveFinite(operation, `${prefix}scale`, plan.scale);
+  requireFiniteNumber(operation, `${prefix}seed`, plan.seed);
+  requirePositiveFiniteNumber(operation, `${prefix}scale`, plan.scale);
   if (plan.baseColor.length !== 3) {
     throw new Error(`${operation}: ${prefix}baseColor must contain exactly three channels`);
   }
@@ -80,7 +71,8 @@ function requirePlan(operation: string, plan: SurfacePlan, prefix = 'plan.'): vo
 
 /** Validates and normalizes a seeded surface plan. */
 export function createSurfacePlan(options: SurfacePlanOptions): SurfacePlan {
-  if (typeof options.seed === 'number') requireFinite('createSurfacePlan', 'seed', options.seed);
+  if (typeof options.seed === 'number')
+    requireFiniteNumber('createSurfacePlan', 'seed', options.seed);
   const plan = {
     seed: seedToUint32(options.seed),
     scale: options.scale ?? 1,
@@ -93,8 +85,8 @@ export function createSurfacePlan(options: SurfacePlanOptions): SurfacePlan {
 /** Samples a surface plan at finite UV coordinates without allocating a bake. */
 export function sampleSurface(plan: SurfacePlan, u: number, v: number): SurfaceSample {
   requirePlan('sampleSurface', plan);
-  requireFinite('sampleSurface', 'u', u);
-  requireFinite('sampleSurface', 'v', v);
+  requireFiniteNumber('sampleSurface', 'u', u);
+  requireFiniteNumber('sampleSurface', 'v', v);
   return sampleSurfaceWithNoise(plan, createSeededNoise(plan.seed), u, v);
 }
 
