@@ -8,6 +8,7 @@ export default defineConfig({
     terrain: 'src/terrain.ts',
     materials: 'src/materials.ts',
     shaders: 'src/shaders.ts',
+    'surface-fields': 'src/surfaceFields.ts',
     three: 'src/three.ts',
     r3f: 'src/r3f.tsx',
   },

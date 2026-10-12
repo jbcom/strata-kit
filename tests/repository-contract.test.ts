@@ -14,6 +14,7 @@ const pureEntrypoints = [
   'terrain.ts',
   'materials.ts',
   'shaders.ts',
+  'surfaceFields.ts',
   'validation.ts',
 ];
 
@@ -41,6 +42,7 @@ describe('strata-kit repository boundary', () => {
       'terrain.ts',
       'materials.ts',
       'shaders.ts',
+      'surfaceFields.ts',
       'three.ts',
       'r3f.tsx',
       'validation.ts',

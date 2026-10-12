@@ -30,6 +30,26 @@ export {
   sdSphere,
 } from './sdf.js';
 export type {
+  CubicHermiteProfile,
+  CubicHermiteProfileKnot,
+  CubicHermiteProfileUniforms,
+  ProjectedReliefSample,
+  ReliefDerivatives,
+  ReliefFrame,
+  ScalarCoordinateDerivatives,
+  ScalarFieldSample,
+  SurfaceDifferentials,
+} from './surfaceFields.js';
+export {
+  createCubicHermiteProfile,
+  deriveReliefFrame,
+  MAX_CUBIC_HERMITE_PROFILE_KNOTS,
+  projectScalarProfileDerivative,
+  sampleCubicHermiteProfile,
+  surfaceFieldsGlsl,
+  toCubicHermiteProfileUniforms,
+} from './surfaceFields.js';
+export type {
   Biome,
   BiomeKind,
   HeightfieldMesh,

@@ -37,6 +37,7 @@ describe('strata-kit public contract', () => {
       './r3f',
       './sdf',
       './shaders',
+      './surface-fields',
       './terrain',
       './three',
     ]);
