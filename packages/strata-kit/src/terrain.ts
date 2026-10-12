@@ -101,7 +101,8 @@ export function createSeededTerrainField(options: SeededTerrainOptions): SeededT
     requireFiniteNumber('createSeededTerrainField', 'seed', options.seed);
   }
   requireBiomes(options.biomes);
-  const noise = createSeededNoise(options.seed);
+  const seed = options.seed;
+  const noise = createSeededNoise(seed);
   const heightAt = (x: number, z: number): number => {
     requireFiniteNumber('heightAt', 'x', x);
     requireFiniteNumber('heightAt', 'z', z);
@@ -187,14 +188,14 @@ export function createSeededTerrainField(options: SeededTerrainOptions): SeededT
       }
       return { positions, normals, indices, width, depth };
     },
-    scatter({ count, area, seed = options.seed }) {
+    scatter({ count, area, seed: scatterSeed = seed }) {
       if (!Number.isInteger(count) || count < 0 || !Number.isFinite(area) || area <= 0) {
         throw new Error(
           'scatter: count must be a non-negative integer and area must be a positive finite number'
         );
       }
-      if (typeof seed === 'number') requireFiniteNumber('scatter', 'seed', seed);
-      const random = createSeededRandom(seed);
+      if (typeof scatterSeed === 'number') requireFiniteNumber('scatter', 'seed', scatterSeed);
+      const random = createSeededRandom(scatterSeed);
       return Array.from({ length: count }, () => {
         const x = (random() - 0.5) * area;
         const z = (random() - 0.5) * area;

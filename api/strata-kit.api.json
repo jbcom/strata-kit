@@ -38,7 +38,12 @@
       "sdPlane": "value",
       "sdSphere": "value",
       "Seed": "type",
-      "SeededTerrainField": "type",
+      "SeededTerrainField": {
+        "heightAt": "heightAt(x: number, z: number): number;",
+        "sample": "sample(point: Vec3): TerrainSample;",
+        "createHeightfield": "createHeightfield(options: { width: number; depth: number; cellSize: number; }): HeightfieldMesh;",
+        "scatter": "scatter(options: { count: number; area: number; seed?: Seed; }): ScatterPoint[];"
+      },
       "SeededTerrainOptions": {
         "seed": "Seed",
         "biomes": "readonly Biome[]"
@@ -189,7 +194,12 @@
         "rotation": "number",
         "scale": "number"
       },
-      "SeededTerrainField": "type",
+      "SeededTerrainField": {
+        "heightAt": "heightAt(x: number, z: number): number;",
+        "sample": "sample(point: Vec3): TerrainSample;",
+        "createHeightfield": "createHeightfield(options: { width: number; depth: number; cellSize: number; }): HeightfieldMesh;",
+        "scatter": "scatter(options: { count: number; area: number; seed?: Seed; }): ScatterPoint[];"
+      },
       "SeededTerrainOptions": {
         "seed": "Seed",
         "biomes": "readonly Biome[]"

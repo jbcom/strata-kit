@@ -61,6 +61,11 @@ describe('strata-kit public contract', () => {
     }).sample({ x: 3.5, y: 2, z: -7.25 });
 
     expect(first).toEqual(second);
+    expect(first).toEqual({
+      height: -12.613173602975714,
+      caveDistance: 5.953289595456592,
+      distance: 14.613173602975714,
+    });
     expect(first.height).not.toBe(changed.height);
 
     const aboveGround = field.sample({ x: 3.5, y: first.height + 2, z: -7.25 });
@@ -80,6 +85,11 @@ describe('strata-kit public contract', () => {
     const plan = createSurfacePlan({ seed: 'surface-contract', scale: 1.5 });
     const bake = bakeSurface(plan, { width: 8, height: 8 });
     expect(bake).toEqual(bakeSurface(plan, { width: 8, height: 8 }));
+    expect(Array.from(bake.color.slice(0, 16))).toEqual([
+      122, 122, 122, 255, 114, 114, 114, 255, 127, 127, 127, 255, 114, 114, 114, 255,
+    ]);
+    expect(Array.from(bake.roughness.slice(0, 4))).toEqual([111, 135, 156, 196]);
+    expect(Array.from(bake.bump.slice(0, 4))).toEqual([163, 101, 198, 106]);
     expect(bake).not.toEqual(
       bakeSurface(createSurfacePlan({ seed: 'other-surface-contract', scale: 1.5 }), {
         width: 8,
@@ -198,6 +208,16 @@ describe('strata-kit public contract', () => {
       field.scatter({ count: 3, area: 4, seed: 'scatter' })
     );
     expect(() => field.scatter({ count: -1, area: 4 })).toThrow('scatter: count must be a non-negative integer');
+
+    const mutableOptions = {
+      seed: 'captured-seed',
+      biomes: [{ type: 'forest' as const, center: [0, 0] as const, radius: 8 }],
+    };
+    const captured = createSeededTerrainField(mutableOptions);
+    mutableOptions.seed = 'mutated-after-construction';
+    expect(captured.scatter({ count: 3, area: 4 })).toEqual(
+      captured.scatter({ count: 3, area: 4, seed: 'captured-seed' })
+    );
   });
 
   it('keys random streams and bake provenance with every surface input', () => {
