@@ -31,7 +31,7 @@ export function seedToUint32(seed: Seed): number {
 /** Creates a deterministic pseudo-random stream for one seed. */
 export function createSeededRandom(seed: Seed): Random {
   requireSeed('createSeededRandom', seed);
-  let state = seedToUint32(seed) || 0x6d2b79f5;
+  let state = seedToUint32(seed);
   return () => {
     state |= 0;
     state = (state + 0x6d2b79f5) | 0;
