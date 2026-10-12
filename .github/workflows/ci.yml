@@ -53,7 +53,7 @@ jobs:
         shell: bash
         run: |
           floor=$(jq -r '.engines.node' package.json | grep -Eo '[0-9]+' | head -1)
-          echo "node-versions=[\"${floor}\",\"latest\"]" >> "$GITHUB_OUTPUT"
+          echo "node-versions=[\"${floor}\",\"24\",\"latest\"]" >> "$GITHUB_OUTPUT"
 
   compatibility:
     name: Node ${{ matrix.node }} compatibility
@@ -75,6 +75,8 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: Test the renderer-agnostic core
         run: pnpm nx run @strata-game-library/core:test
+      - name: Test and pack strata-kit
+        run: pnpm --filter strata-kit run test && pnpm run package:inspect
 
   quality:
     name: ${{ matrix.task }}
