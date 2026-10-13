@@ -4,7 +4,6 @@ import {
   DataTexture,
   LinearFilter,
   NoColorSpace,
-  RedFormat,
   RGBAFormat,
   SRGBColorSpace,
 } from "three";
@@ -198,12 +197,7 @@ export function createThreeSurfaceTextures(
     color: boolean,
   ): DataTexture => {
     const bytes = copyTextureBytes(data, bake.width, bake.height, stride, flipY, grayscale);
-    const out = new DataTexture(
-      bytes,
-      bake.width,
-      bake.height,
-      grayscale || stride === 4 ? RGBAFormat : RedFormat,
-    );
+    const out = new DataTexture(bytes, bake.width, bake.height, RGBAFormat);
     out.colorSpace = color ? SRGBColorSpace : NoColorSpace;
     out.minFilter = LinearFilter;
     out.magFilter = LinearFilter;
@@ -213,7 +207,7 @@ export function createThreeSurfaceTextures(
   };
   const map = texture(bake.color, 4, false, true);
   const roughnessMap = texture(bake.roughness, 1, true, false);
-  const bumpMap = texture(bake.bump, 1, false, false);
+  const bumpMap = texture(bake.bump, 1, true, false);
   const metalnessMap = bake.metalness ? texture(bake.metalness, 1, true, false) : undefined;
   let disposed = false;
   return {

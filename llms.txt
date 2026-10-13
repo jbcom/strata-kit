@@ -21,6 +21,8 @@
 - Surface composition uses linear-sRGB source-over and shared scalar alpha weights.
 - Wear is palette-free; UV reskinning receives portable indexed arrays.
 - Mesh generators produce typed arrays; Three textures expose explicit disposal.
+- Three scalar textures use linear grayscale RGBA, including bump, for WebGL1
+  compatibility at the r152 peer floor; expansion uses four bytes per texel.
 - Swept radius cusps may add coincident rings with separate shading normals;
   vertex indices are not stable across profile changes.
 - Positive biome blends use overflow-safe relative weights; coordinate precision

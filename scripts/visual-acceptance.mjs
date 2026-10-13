@@ -195,13 +195,7 @@ export function expectedAdapterTextures(bake) {
       flipY: false,
     },
     roughness: { bytes: adapterBytes(bake.roughness, bake.width, bake.height, 1, true), ...scalar },
-    bump: {
-      bytes: adapterBytes(bake.bump, bake.width, bake.height, 1, false),
-      channels: 1,
-      format: "RedFormat",
-      colorSpace: "",
-      flipY: false,
-    },
+    bump: { bytes: adapterBytes(bake.bump, bake.width, bake.height, 1, true), ...scalar },
     ...(bake.metalness
       ? {
           metalness: {
@@ -444,9 +438,9 @@ export function assertGeometryAcceptance(state) {
   assert.equal(state.mode, "geometry", "geometry acceptance requires geometry mode");
   const meshes = galleryGeometry();
   const expected = meshes.map((mesh, index) => meshInvariants(mesh, `geometry[${index}]`));
-  ["revolved", "swept", "sheet"].forEach((key, index) =>
-    assertRenderedMesh(state, key, expected[index]),
-  );
+  ["revolved", "swept", "sheet"].forEach((key, index) => {
+    assertRenderedMesh(state, key, expected[index]);
+  });
   return expected;
 }
 

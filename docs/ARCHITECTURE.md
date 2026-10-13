@@ -65,7 +65,8 @@ Surface composition shares color and scalar alpha weights. Wear provides correla
 coordinate fields without selecting materials. UV analysis selects an admissible atlas
 or triplanar sampling policy without owning scene objects. Allocation and raster-work
 bounds reject oversized requests before output buffers are created. The Three adapter
-copies texture bytes, views mesh arrays, and exposes explicit texture disposal; it does
+copies texture bytes, expands scalar texels to linear grayscale RGBA for WebGL1
+compatibility, views mesh arrays, and exposes explicit texture disposal; it does
 not dispose caller materials. The gallery is a consumer application, separate from
 library imports, and owns its render loop and controls.
 

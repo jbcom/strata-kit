@@ -68,7 +68,12 @@ describe("explicit Three procedural resources", () => {
     expect(Array.from(textures.metalnessMap?.image.data ?? [])).toEqual([
       123, 123, 123, 255, 90, 90, 90, 255,
     ]);
-    expect(Array.from(textures.bumpMap.image.data)).toEqual([78, 56]);
+    // RGBA remains uploadable on WebGL1 at the declared Three r152 floor.
+    expect(textures.bumpMap.format).toBe(RGBAFormat);
+    expect(textures.bumpMap.colorSpace).toBe(NoColorSpace);
+    expect(Array.from(textures.bumpMap.image.data)).toEqual([
+      78, 78, 78, 255, 56, 56, 56, 255,
+    ]);
     expect(textures.map.minFilter).toBe(LinearFilter);
     expect(textures.map.magFilter).toBe(LinearFilter);
     expect(textures.map.flipY).toBe(false);

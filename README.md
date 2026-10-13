@@ -17,7 +17,9 @@ pnpm add strata-procedural
 
 The published package is ESM-only and supports Node.js 22 and newer. The core imports
 have no renderer dependency. `three`, `react`, and `@react-three/fiber` are optional
-peer dependencies used only by the adapter subpaths.
+peer dependencies used only by the adapter subpaths. The Three texture adapter
+packs scalar maps into linear grayscale RGBA, including bump, for WebGL1
+compatibility at the Three r152 peer floor.
 
 ## Start with a terrain field
 

@@ -185,8 +185,10 @@ The caller disposes the geometry.
 `createThreeSurfaceTextures(bake, { flipY? })` copies bake buffers and returns `map`,
 `roughnessMap`, `bumpMap`, optional `metalnessMap`, and idempotent `dispose()`.
 Default `flipY: true` reverses top-left/v-down bake rows in CPU memory for conventional
-Three UVs. Color uses sRGB; scalar maps remain linear. Roughness and metalness replicate
-grayscale into RGBA for Three's G/B channels. Disposal releases only these textures.
+Three UVs. Color uses sRGB; scalar maps remain linear. All scalar maps replicate
+grayscale into RGBA: roughness and metalness use Three's G/B channels, while bump
+uses R. This supports WebGL1 texture uploads at the r152 peer floor and uses four
+texture-buffer bytes per scalar texel. Disposal releases only these textures.
 The adapter requires Three r152 or newer for the `Texture.colorSpace` contract.
 
 `StrataHeightfield` is a React Three Fiber component with

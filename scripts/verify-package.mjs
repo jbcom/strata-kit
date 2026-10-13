@@ -200,6 +200,8 @@ try {
     });
     assert.equal(textures.map.colorSpace, 'srgb');
     assert.equal(textures.roughnessMap.colorSpace, '');
+    assert.equal(textures.bumpMap.format, 1023);
+    assert.deepEqual(Array.from(textures.bumpMap.image.data), [127, 127, 127, 255]);
     assert.equal(textures.metalnessMap.image.data[2], 255);
     textures.dispose();
   `,
