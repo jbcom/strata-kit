@@ -18,7 +18,7 @@ const pureEntrypoints = [
   'validation.ts',
 ];
 
-describe('strata-kit repository boundary', () => {
+describe('strata-procedural repository boundary', () => {
   it('keeps pure entrypoints renderer/framework free and forbids implicit randomness', () => {
     for (const entrypoint of pureEntrypoints) {
       const source = readFileSync(resolve(sourceDirectory, entrypoint), 'utf8');

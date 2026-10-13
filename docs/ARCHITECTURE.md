@@ -1,6 +1,6 @@
 # Architecture
 
-Strata Kit is a data-first procedural library, not a game framework. Its current
+Strata Procedural is a data-first procedural library, not a game framework. Its current
 pipeline composes deterministic numeric fields into portable data that a consumer can
 render, bake, serialize, or use to drive its own systems.
 

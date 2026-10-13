@@ -34,9 +34,9 @@
   "keywords": ["procedural-generation", "seeded", "layers", "terrain", "surface-fields", "materials", "bake", "three", "typescript"],
   "author": "Jon Bogaty <jon@jonbogaty.com>",
   "license": "MIT",
-  "repository": { "type": "git", "url": "git+https://github.com/jbcom/strata-kit.git" },
-  "homepage": "https://github.com/jbcom/strata-kit#readme",
-  "bugs": { "url": "https://github.com/jbcom/strata-kit/issues" },
+  "repository": { "type": "git", "url": "git+https://github.com/jbcom/strata-procedural.git" },
+  "homepage": "https://github.com/jbcom/strata-procedural#readme",
+  "bugs": { "url": "https://github.com/jbcom/strata-procedural/issues" },
   "publishConfig": { "access": "public", "provenance": true },
   "peerDependencies": {
     "@react-three/fiber": ">=8.0.0",

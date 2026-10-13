@@ -1,6 +1,6 @@
-# Contributing to Strata Kit
+# Contributing to Strata Procedural
 
-Strata Kit accepts focused improvements to its deterministic procedural APIs and
+Strata Procedural accepts focused improvements to its deterministic procedural APIs and
 their optional rendering adapters. Before beginning, read [AGENTS.md](AGENTS.md),
 [docs/API.md](docs/API.md), and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 

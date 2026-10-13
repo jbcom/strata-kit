@@ -1,13 +1,13 @@
 {
   "$schema": "https://context7.com/schema/context7.json",
-  "projectTitle": "Strata Kit",
+  "projectTitle": "Strata Procedural",
   "description": "Deterministic procedural layering for 3D space: seeded noise, SDF composition, terrain fields, surface-map bakes, scalar relief profiles, and optional Three.js adapters.",
   "branch": "main",
   "folders": ["src", "docs"],
   "excludeFolders": ["coverage", "dist", "node_modules", "test-results"],
   "excludeFiles": ["CHANGELOG.md"],
   "rules": [
-    "Install strata-procedural; Strata Kit is the project name, not the npm package name.",
+    "Install strata-procedural; Strata Procedural is the project name, not the npm package name.",
     "Import only from strata-procedural or its declared public subpaths; do not suggest deep imports.",
     "Keep noise, SDF, terrain, materials, shaders, and surface-fields renderer-neutral. Built-in random generators use explicit seeds; caller-supplied samplers must be deterministic and independent of call order.",
     "Treat three and r3f as optional adapters: they may convert supplied data but must not own generation, a render loop, or application state.",

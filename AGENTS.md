@@ -1,6 +1,6 @@
-# Strata Kit agent guide
+# Strata Procedural agent guide
 
-Strata Kit is a public ESM library for deterministic procedural layering in 3D space.
+Strata Procedural is a public ESM library for deterministic procedural layering in 3D space.
 Its npm distribution is `strata-procedural`; use that name in consumer imports and
 package-facing documentation.
 
