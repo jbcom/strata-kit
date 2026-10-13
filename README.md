@@ -1,4 +1,13 @@
-# Strata Game Library
+# Strata Game Library — historical monorepo
+
+> **Development has moved to [Strata Kit](https://github.com/jbcom/strata-kit).**
+> Strata now focuses on seeded procedural terrain, surface fields, material
+> bakes, and model-neutral layering, with optional renderer adapters.
+> Its published npm distribution is
+> [`strata-procedural`](https://www.npmjs.com/package/strata-procedural).
+> This monorepo is retained for history and selective technique migration.
+> The framework documentation below describes that historical implementation;
+> use the successor repository for current installation, API, and planning.
 
 ![A floating game world shown as geological layers: shaders, terrain, water, vegetation, and atmosphere](https://raw.githubusercontent.com/jbcom/strata-game-library/main/.github/assets/strata-hero.webp)
 
