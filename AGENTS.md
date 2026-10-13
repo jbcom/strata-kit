@@ -11,8 +11,9 @@ The package exports only the root API and the subpaths declared in `package.json
 `r3f`. Do not document, import, or depend on deep source paths.
 
 The root and the renderer-neutral subpaths must not import React, Three.js, browser
-APIs, game state, assets, or a global random source. Every random result derives from
-an explicit `Seed`. `three` and `r3f` are opt-in adapters with optional peers; they
+APIs, game state, assets, or a global random source. Built-in random generators use
+an explicit `Seed`; injected samplers must be deterministic and independent of call
+order to preserve that guarantee. `three` and `r3f` are opt-in adapters with optional peers; they
 receive precomputed data and must not create a game loop or simulation state.
 
 `surface-fields` is generic scalar-profile and local relief-frame math. It does not

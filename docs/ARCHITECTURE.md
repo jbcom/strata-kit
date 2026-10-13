@@ -26,7 +26,9 @@ renderer or React.
 
 ## Determinism and validation
 
-Every stochastic public operation begins from a string or finite numeric `Seed`.
+The built-in stochastic generators begin from a string or finite numeric `Seed`.
+`fractalNoise` accepts a caller-supplied noise function: its determinism depends
+on that function being deterministic and independent of call order.
 Fields capture normalized inputs before use, so later mutation of the caller's input
 does not alter an already-created terrain field or surface plan. The public seeded
 field, surface-plan, SDF, and scalar-profile APIs validate documented finite inputs

@@ -20,6 +20,8 @@ jobs:
         with:
           ref: ${{ github.event.release.tag_name }}
       - uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
+        with:
+          cache: false
       - run: mise exec -- pnpm install --frozen-lockfile
       - run: mise exec -- pnpm verify
       - name: Refuse an already published version
