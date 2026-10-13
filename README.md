@@ -1,13 +1,13 @@
-# Strata Kit
+# Strata Procedural
 
-Strata Kit is a small, renderer-neutral TypeScript library for deterministic
+Strata Procedural is a small, renderer-neutral TypeScript library for deterministic
 procedural layering in 3D space. It currently supplies seeded noise, signed-distance
 composition, biome-shaped terrain fields, surface-map bakes, scalar relief profiles,
 and optional Three.js and React Three Fiber views.
 
-The project is named **Strata Kit**. Install it from npm as
-[`strata-procedural`](https://www.npmjs.com/package/strata-procedural): npm rejected
-`strata-kit` because its name was too similar to an existing package.
+The repository, project, and npm distribution share the name **Strata Procedural**:
+[`strata-procedural`](https://www.npmjs.com/package/strata-procedural).
+The repository was previously named `strata-kit`; GitHub preserves its redirects.
 
 ## Install
 
@@ -84,7 +84,7 @@ does not extend the current API.
 
 `surface-fields` evaluates clamped C1 cubic-Hermite profiles and their analytic
 derivatives. A consumer chooses the scalar coordinate and supplies its derivatives
-over the surface; Strata Kit applies the chain rule and can derive a local
+over the surface; Strata Procedural applies the chain rule and can derive a local
 first-order relief frame from caller-supplied surface differentials.
 
 ```ts

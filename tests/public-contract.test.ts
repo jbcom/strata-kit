@@ -27,7 +27,7 @@ const manifest = JSON.parse(readFileSync(resolve(directory, '../package.json'), 
   peerDependencies?: Record<string, string>;
 };
 
-describe('strata-kit public contract', () => {
+describe('strata-procedural public contract', () => {
   it('publishes only the procedural spine and optional renderer adapters', () => {
     expect(manifest.name).toBe('strata-procedural');
     expect(Object.keys(manifest.exports).sort()).toEqual([

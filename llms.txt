@@ -1,6 +1,6 @@
-# Strata Kit
+# Strata Procedural
 
-> Strata Kit is a renderer-neutral TypeScript library for deterministic procedural
+> Strata Procedural is a renderer-neutral TypeScript library for deterministic procedural
 > layering in 3D space: seeded noise, signed-distance composition, terrain fields,
 > surface-map bakes, scalar relief profiles, and optional Three.js/R3F adapters.
 
@@ -20,17 +20,17 @@
 
 ## Read next
 
-- [README](https://github.com/jbcom/strata-kit/blob/main/README.md): installation and
+- [README](https://github.com/jbcom/strata-procedural/blob/main/README.md): installation and
   runnable terrain, surface-bake, and scalar-relief examples.
-- [API reference](https://github.com/jbcom/strata-kit/blob/main/docs/API.md): public
+- [API reference](https://github.com/jbcom/strata-procedural/blob/main/docs/API.md): public
   imports, exported symbols, output layouts, input rules, and adapter contracts.
-- [Architecture](https://github.com/jbcom/strata-kit/blob/main/docs/ARCHITECTURE.md):
+- [Architecture](https://github.com/jbcom/strata-procedural/blob/main/docs/ARCHITECTURE.md):
   module boundaries, determinism contract, data ownership, and intentional limits.
   a proposal for future extraction work and current source evidence; it is not an API
   reference and does not extend the current API.
   source and licensing evidence for the library's procedural work.
-- [Contributing](https://github.com/jbcom/strata-kit/blob/main/CONTRIBUTING.md): local
+- [Contributing](https://github.com/jbcom/strata-procedural/blob/main/CONTRIBUTING.md): local
   setup and verification.
-- [Agent guide](https://github.com/jbcom/strata-kit/blob/main/AGENTS.md): repository
+- [Agent guide](https://github.com/jbcom/strata-procedural/blob/main/AGENTS.md): repository
   invariants for automated contributors.
 

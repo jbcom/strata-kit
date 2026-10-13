@@ -25,6 +25,10 @@ gh release create v0.1.0 --draft --title "strata-kit 0.1.0" --notes-file CHANGEL
 
 ## Future trusted releases
 
+The canonical GitHub repository is now `jbcom/strata-procedural`, matching the
+npm package. Configure trusted publishing against that repository and `cd.yml`.
+The old title in the initial-release record above is historical, not a new release instruction.
+
 `.github/workflows/cd.yml` is the only publisher workflow. It runs only for a published GitHub release and is skipped unless the repository variable `NPM_TRUSTED_PUBLISHING_READY` is exactly `true`. Set that variable only after the owner has configured npm trusted publishing. The workflow validates the package, requires the release tag to match `package.json`, and refuses a version already present in npm before it reaches `npm publish --provenance`.
 
 This gate keeps the existing draft and any prematurely published release from issuing an npm publish before the trust relationship is ready. The next release remains pending that owner setup; do not merge or publish its Release Please PR yet.
