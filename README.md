@@ -101,6 +101,12 @@ const profile = createCubicHermiteProfile([
   { coordinate: 0.5, value: 0.012, derivative: 0.03 },
   { coordinate: 1, value: 0, derivative: 0 },
 ]);
+// A unit panel in the XY plane; the scalar coordinate runs along its u axis.
+const coordinate = 0.4;
+const dqDu = 1;
+const dqDv = 0;
+const dPDu = { x: 1, y: 0, z: 0 };
+const dPDv = { x: 0, y: 1, z: 0 };
 const sample = sampleCubicHermiteProfile(profile, coordinate);
 const relief = projectScalarProfileDerivative(sample, { du: dqDu, dv: dqDv });
 const frame = deriveReliefFrame({ du: dPDu, dv: dPDv }, relief.derivatives);
@@ -114,9 +120,17 @@ geometry need a curvature-aware path.
 ## Optional views
 
 ```ts
+import { createSeededTerrainField } from 'strata-procedural';
 import { createThreeHeightfieldGeometry } from 'strata-procedural/three';
 
+const terrain = createSeededTerrainField({
+  seed: 'view-01',
+  biomes: [{ type: 'forest', center: [0, 0], radius: 80 }],
+});
+const mesh = terrain.createHeightfield({ width: 16, depth: 16, cellSize: 2 });
 const geometry = createThreeHeightfieldGeometry(mesh);
+// Dispose the geometry when the consumer no longer uses it.
+geometry.dispose();
 ```
 
 `strata-procedural/r3f` exports `StrataHeightfield`, which receives a precomputed

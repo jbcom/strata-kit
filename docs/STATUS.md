@@ -24,7 +24,7 @@ candidate provenance table. No new sampler, wear, mesh, or layering API is
 claimed to exist in this change.
 
 Current change validation: `pnpm verify` passed on Node 22.23.1 and Node 26.7.0
-(latest stable at the check), including 16 tests and clean packed consumers.
+(the local tested runtime), including 16 tests and clean packed consumers.
 `actionlint` passed for CI/CD, and `git diff --check` passed. A read-only
 architecture review found and resolved scale/domain/provenance ambiguities.
 CodeRabbit's suggested tool pins were rejected because the owner's toolchain

@@ -12,7 +12,9 @@
   `terrain`, `materials`, `shaders`, `surface-fields`, `three`, and `r3f`.
 - The root through `surface-fields` are renderer-neutral. `three` and `r3f` require
   their optional peer dependencies.
-- Every random result derives from an explicit string or finite numeric seed. Do not
+- Built-in random generators derive from an explicit string or finite numeric seed.
+  `fractalNoise` is deterministic only when its caller-supplied sampler is deterministic
+  and independent of call order. Do not
   introduce `Math.random` or rely on random-draw order without treating it as a
   compatibility change.
 
