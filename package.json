@@ -1,10 +1,9 @@
 {
   "name": "strata-procedural",
   "version": "0.1.0",
-  "description": "Deterministic procedural terrain, surface fields, materials, and optional Three.js adapters",
+  "description": "Seeded procedural layers, terrain, surface fields and material bakes with optional Three.js adapters",
   "type": "module",
   "engines": { "node": ">=22" },
-  "packageManager": "pnpm@11.21.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "sideEffects": false,
@@ -19,7 +18,7 @@
     "./three": { "types": "./dist/three.d.ts", "import": "./dist/three.js" },
     "./r3f": { "types": "./dist/r3f.d.ts", "import": "./dist/r3f.js" }
   },
-  "files": ["dist", "docs", "README.md", "LICENSE", "CHANGELOG.md"],
+  "files": ["dist", "docs", "README.md", "LICENSE", "CHANGELOG.md", "llms.txt", "context7.json"],
   "scripts": {
     "build": "tsup",
     "lint": "biome lint src/ tests/ scripts/",
@@ -32,7 +31,7 @@
     "test:coverage": "vitest run --coverage --coverage.reporter=lcov --coverage.reporter=text && node scripts/normalize-lcov.mjs",
     "verify": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build && pnpm run package:check"
   },
-  "keywords": ["procedural", "seeded", "terrain", "materials", "bake", "three"],
+  "keywords": ["procedural-generation", "seeded", "layers", "terrain", "surface-fields", "materials", "bake", "three", "typescript"],
   "author": "Jon Bogaty <jon@jonbogaty.com>",
   "license": "MIT",
   "repository": { "type": "git", "url": "git+https://github.com/jbcom/strata-kit.git" },
