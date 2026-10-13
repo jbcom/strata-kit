@@ -1,7 +1,40 @@
-# Agent notes
+# Strata Kit agent guide
 
-`strata-kit` is a standalone public ESM package. Keep the root, noise, SDF, terrain, materials, shaders, and surface-fields imports free of renderer and framework dependencies. `three` and `r3f` remain opt-in exports with optional peer dependencies.
+Strata Kit is a public ESM library for deterministic procedural layering in 3D space.
+Its npm distribution is `strata-procedural`; use that name in consumer imports and
+package-facing documentation.
 
-Run `pnpm verify` after package changes. It tests the packed tarball in a clean consumer without React or Three, then in an explicit adapter consumer. Run `pnpm test:gpu` only through the approved muted render pool; it is the WebGL readback proof for the analytic relief module.
+## Public boundary
 
-Do not add application assets, game-specific coordinate projections, skeleton processing, or normal-map policy here. Consumers own those operations and pass local surface differentials to the generic relief API.
+The package exports only the root API and the subpaths declared in `package.json`:
+`noise`, `sdf`, `terrain`, `materials`, `shaders`, `surface-fields`, `three`, and
+`r3f`. Do not document, import, or depend on deep source paths.
+
+The root and the renderer-neutral subpaths must not import React, Three.js, browser
+APIs, game state, assets, or a global random source. Every random result derives from
+an explicit `Seed`. `three` and `r3f` are opt-in adapters with optional peers; they
+receive precomputed data and must not create a game loop or simulation state.
+
+`surface-fields` is generic scalar-profile and local relief-frame math. It does not
+choose a coordinate projection, own geometry deformation, encode maps, or decide a
+consumer's rendering policy. Preserve that boundary when changing it.
+
+## Working agreement
+
+Use the maintained toolchain from `mise.toml`:
+
+```sh
+mise trust
+mise install
+mise exec -- pnpm install --frozen-lockfile
+mise exec -- pnpm verify
+```
+
+Add focused tests for behavior or public-contract changes. Update `README.md`,
+`docs/API.md`, `docs/ARCHITECTURE.md`, and `llms.txt` whenever the public API or its
+limits change. Use Conventional Commits. Releases are prepared from `main`; do not
+manually edit versions or the changelog as part of ordinary feature work.
+
+`mise exec -- pnpm test:gpu` is the muted WebGL2 readback check for the paired
+CPU/GLSL scalar-relief implementation. Run it through the configured hardware test
+path when that module changes.

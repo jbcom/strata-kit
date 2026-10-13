@@ -102,6 +102,8 @@ try {
     'docs/API.md',
     'docs/ARCHITECTURE.md',
     'docs/RELEASE.md',
+    'llms.txt',
+    'context7.json',
     'package.json',
     'dist/index.js',
     'dist/noise.js',
