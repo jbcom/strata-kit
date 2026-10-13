@@ -136,6 +136,63 @@ describe("neutral procedural meshes", () => {
     expectFiniteUnitNormals(mesh);
   });
 
+  it("splits opposing revolution cusp normals so every adjacent side face is outward", () => {
+    const mesh = createRevolvedMesh({
+      profile: [
+        { radius: 1, height: 0 },
+        { radius: 0.1, height: 0.1 },
+        { radius: 10, height: 0.2 },
+      ],
+      segments: 8,
+      caps: false,
+    });
+
+    for (let triangle = 0; triangle < mesh.indices.length / 3; triangle += 1) {
+      const face = faceNormal(mesh, triangle);
+      for (let corner = 0; corner < 3; corner += 1) {
+        expect(dot(face, normal(mesh, mesh.indices[triangle * 3 + corner]!))).toBeGreaterThan(0);
+      }
+    }
+    expectFiniteUnitNormals(mesh);
+  });
+
+  it("derives sheet normals from quantized Float32 positions", () => {
+    const mesh = createSheetMesh({
+      width: 1,
+      height: 1,
+      columns: 2,
+      rows: 2,
+      heightAt: (u) => 1e20 + u * 1e10,
+    });
+
+    expect(position(mesh, 0)[1]).toBe(position(mesh, 1)[1]);
+    for (let vertex = 0; vertex < 4; vertex += 1) {
+      expect(Math.abs(normal(mesh, vertex)[0])).toBe(0);
+      expect(normal(mesh, vertex)[1]).toBe(1);
+      expect(Math.abs(normal(mesh, vertex)[2])).toBe(0);
+    }
+    expectFiniteUnitNormals(mesh);
+  });
+
+  it("rejects oversized revolutions before reading profile rows or allocating scratch data", () => {
+    let reads = 0;
+    const profile = new Proxy([{ radius: 1, height: 0 }], {
+      get(target, key, receiver) {
+        if (key === "length") return 250_001;
+        if (typeof key === "string" && /^\d+$/.test(key)) {
+          reads += 1;
+          return { radius: 1, height: Number(key) };
+        }
+        return Reflect.get(target, key, receiver);
+      },
+    });
+
+    expect(() => createRevolvedMesh({ profile, segments: 3 })).toThrow(
+      "vertex count exceeds 1000000",
+    );
+    expect(reads).toBe(0);
+  });
+
   it("selects Uint32 once a valid grid needs an index beyond Uint16", () => {
     const mesh = createSheetMesh({ width: 1, height: 1, columns: 257, rows: 257 });
     expect(mesh.positions.length / 3).toBe(66049);

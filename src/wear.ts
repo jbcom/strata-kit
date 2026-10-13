@@ -83,6 +83,9 @@ function fbm(x: number, y: number, seed: number, octaves = 5): number {
   let amplitude = 0.5;
   let weight = 0;
   for (let octave = 0; octave < octaves; octave += 1) {
+    if (!Number.isFinite(x) || !Number.isFinite(y)) {
+      throw new Error('createWearField: scaled noise coordinates must remain finite');
+    }
     total += amplitude * valueNoise(x, y, seed);
     weight += amplitude;
     x = x * 2.03 + 17.1;

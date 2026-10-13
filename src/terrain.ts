@@ -162,20 +162,24 @@ export function createSeededTerrainField(options: SeededTerrainOptions): SeededT
     if (biomeBlend === 0 || biomes.length === 1) {
       return biomeHeight(closestBiome(x, z, biomes), x, base, detail);
     }
-    const distances = biomes.map((biome) => normalizedBiomeDistanceSquared(x, z, biome));
-    const finiteDistances = distances.filter(Number.isFinite);
-    if (finiteDistances.length === 0) {
+    let minimumDistance = Infinity;
+    for (const biome of biomes) {
+      const distance = normalizedBiomeDistanceSquared(x, z, biome);
+      if (Number.isFinite(distance) && distance < minimumDistance) {
+        minimumDistance = distance;
+      }
+    }
+    if (!Number.isFinite(minimumDistance)) {
       throw new Error('heightAt: normalized biome distances must include a finite value');
     }
-    const minimumDistance = Math.min(...finiteDistances);
     let totalWeight = 0;
     let blendedHeight = 0;
-    for (let index = 0; index < biomes.length; index += 1) {
-      const distance = distances[index];
+    for (const biome of biomes) {
+      const distance = normalizedBiomeDistanceSquared(x, z, biome);
       if (!Number.isFinite(distance)) continue;
       const weight = Math.exp(-(distance - minimumDistance) / biomeBlend);
       totalWeight += weight;
-      blendedHeight += biomeHeight(biomes[index], x, base, detail) * weight;
+      blendedHeight += biomeHeight(biome, x, base, detail) * weight;
     }
     return blendedHeight / totalWeight;
   };

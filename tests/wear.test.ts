@@ -97,6 +97,17 @@ describe('wear-field-v1', () => {
       'createWearField: u must be finite'
     );
   });
+
+  it('rejects finite coordinates or options whose scaled fBm inputs overflow', () => {
+    const base = { seed: 'wear-overflow', scale: 1, amount: 1, edgeBias: 0, bottomBias: 0 };
+
+    expect(() =>
+      createWearField({ ...base, scale: Number.MAX_VALUE }).sample(1, 0)
+    ).toThrow('createWearField: scaled noise coordinates must remain finite');
+    expect(() => createWearField(base).sample(1e307, 0)).toThrow(
+      'createWearField: scaled noise coordinates must remain finite'
+    );
+  });
 });
 
 function average(

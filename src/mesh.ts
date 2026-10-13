@@ -201,6 +201,9 @@ export function createRevolvedMesh(options: RevolvedMeshOptions): ProceduralMesh
   if (profile.length < 2) throw new Error(`${operation}: profile must contain at least two points`);
   requirePositiveInteger(operation, "segments", segments, 3);
 
+  const ringSize = segments + 1;
+  checkedCount(operation, profile.length * ringSize, 0);
+  const segmentSlopes = new Float64Array(profile.length - 1);
   let sideIndices = 0;
   let hasPositiveRadius = false;
   for (let index = 0; index < profile.length; index += 1) {
@@ -220,27 +223,50 @@ export function createRevolvedMesh(options: RevolvedMeshOptions): ProceduralMesh
   for (let index = 0; index < profile.length - 1; index += 1) {
     const lower = profile[index]!;
     const upper = profile[index + 1]!;
+    segmentSlopes[index] = (upper.radius - lower.radius) / (upper.height - lower.height);
     if (lower.radius === 0 && upper.radius === 0) {
       throw new Error(`${operation}: profile cannot contain adjacent zero-radius points`);
     }
     sideIndices += (lower.radius === 0 || upper.radius === 0 ? 3 : 6) * segments;
   }
 
+  // A shared normal cannot point outward for both sides of a concave profile cusp.
+  // Split only those rings; ordinary profile rows retain their smoothed central normal.
+  const splitRows = new Array<boolean>(profile.length).fill(false);
+  let splitCount = 0;
+  for (let row = 1; row < profile.length - 1; row += 1) {
+    if (1 + segmentSlopes[row - 1]! * segmentSlopes[row]! < 0) {
+      splitRows[row] = true;
+      splitCount += 1;
+    }
+  }
+
   const firstCap = caps && profile[0]!.radius > 0;
   const lastCap = caps && profile[profile.length - 1]!.radius > 0;
   const capVertices = (firstCap ? segments + 2 : 0) + (lastCap ? segments + 2 : 0);
   const capIndices = (firstCap ? segments * 3 : 0) + (lastCap ? segments * 3 : 0);
-  const sideVertices = profile.length * (segments + 1);
+  const baseSideVertices = profile.length * ringSize;
+  const sideVertices = baseSideVertices + splitCount * ringSize;
   checkedCount(operation, sideVertices + capVertices, sideIndices + capIndices);
   const mesh = allocateMesh(sideVertices + capVertices, sideIndices + capIndices);
 
+  const incomingRings = new Uint32Array(profile.length);
+  const outgoingRings = new Uint32Array(profile.length);
+  let splitCursor = baseSideVertices;
   for (let row = 0; row < profile.length; row += 1) {
+    const sharedRing = row * ringSize;
+    incomingRings[row] = sharedRing;
+    outgoingRings[row] = sharedRing;
+    if (splitRows[row]) {
+      outgoingRings[row] = splitCursor;
+      splitCursor += ringSize;
+    }
+  }
+
+  const addSideRing = (row: number, ring: number, slope: number): void => {
     const point = profile[row]!;
-    const previous = profile[Math.max(0, row - 1)]!;
-    const next = profile[Math.min(profile.length - 1, row + 1)]!;
-    const slope = (next.radius - previous.radius) / (next.height - previous.height);
     for (let column = 0; column <= segments; column += 1) {
-      const vertex = row * (segments + 1) + column;
+      const vertex = ring + column;
       const theta = column === segments ? 0 : (column / segments) * TAU;
       const cosine = Math.cos(theta);
       const sine = Math.sin(theta);
@@ -255,6 +281,20 @@ export function createRevolvedMesh(options: RevolvedMeshOptions): ProceduralMesh
       setNormal(mesh.normals, vertex, cosine, -slope, sine);
       setUv(mesh.uvs, vertex, column / segments, row / (profile.length - 1));
     }
+  };
+  for (let row = 0; row < profile.length; row += 1) {
+    if (splitRows[row]) {
+      addSideRing(row, incomingRings[row]!, segmentSlopes[row - 1]!);
+      addSideRing(row, outgoingRings[row]!, segmentSlopes[row]!);
+      continue;
+    }
+    const previous = profile[Math.max(0, row - 1)]!;
+    const next = profile[Math.min(profile.length - 1, row + 1)]!;
+    addSideRing(
+      row,
+      incomingRings[row]!,
+      (next.radius - previous.radius) / (next.height - previous.height),
+    );
   }
 
   let indexCursor = 0;
@@ -262,9 +302,9 @@ export function createRevolvedMesh(options: RevolvedMeshOptions): ProceduralMesh
     const lower = profile[row]!;
     const upper = profile[row + 1]!;
     for (let column = 0; column < segments; column += 1) {
-      const lowerCurrent = row * (segments + 1) + column;
+      const lowerCurrent = outgoingRings[row]! + column;
       const lowerNext = lowerCurrent + 1;
-      const upperCurrent = lowerCurrent + segments + 1;
+      const upperCurrent = incomingRings[row + 1]! + column;
       const upperNext = upperCurrent + 1;
       if (lower.radius !== 0) {
         mesh.indices[indexCursor++] = lowerCurrent;
@@ -651,7 +691,6 @@ export function createSheetMesh(options: SheetMeshOptions): ProceduralMesh {
   const indices = (columns - 1) * (rows - 1) * 6;
   checkedCount(operation, vertices, indices);
   const mesh = allocateMesh(vertices, indices);
-  const heights = new Float64Array(vertices);
   for (let row = 0; row < rows; row += 1) {
     const v = row / (rows - 1);
     for (let column = 0; column < columns; column += 1) {
@@ -659,25 +698,26 @@ export function createSheetMesh(options: SheetMeshOptions): ProceduralMesh {
       const vertex = row * columns + column;
       const sample = heightAt(u, v);
       requireFloat32(operation, `heightAt(${u}, ${v})`, sample);
-      heights[vertex] = sample;
       setPosition(mesh.positions, vertex, (u - 0.5) * width, sample, (v - 0.5) * height, operation);
       setUv(mesh.uvs, vertex, u, v);
     }
   }
-  const horizontalStep = width / (columns - 1);
-  const verticalStep = height / (rows - 1);
   for (let row = 0; row < rows; row += 1) {
     const previousRow = Math.max(0, row - 1);
     const nextRow = Math.min(rows - 1, row + 1);
     for (let column = 0; column < columns; column += 1) {
       const previousColumn = Math.max(0, column - 1);
       const nextColumn = Math.min(columns - 1, column + 1);
-      const dx = (nextColumn - previousColumn) * horizontalStep;
-      const dz = (nextRow - previousRow) * verticalStep;
+      const left = (row * columns + previousColumn) * 3;
+      const right = (row * columns + nextColumn) * 3;
+      const before = (previousRow * columns + column) * 3;
+      const after = (nextRow * columns + column) * 3;
       const dhdx =
-        (heights[row * columns + nextColumn]! - heights[row * columns + previousColumn]!) / dx;
+        (mesh.positions[right + 1]! - mesh.positions[left + 1]!) /
+        (mesh.positions[right]! - mesh.positions[left]!);
       const dhdz =
-        (heights[nextRow * columns + column]! - heights[previousRow * columns + column]!) / dz;
+        (mesh.positions[after + 1]! - mesh.positions[before + 1]!) /
+        (mesh.positions[after + 2]! - mesh.positions[before + 2]!);
       setNormal(mesh.normals, row * columns + column, -dhdx, 1, -dhdz);
     }
   }

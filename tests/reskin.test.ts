@@ -123,6 +123,24 @@ describe("model-neutral UV diagnostics", () => {
       "analyzeUvLayout: uvs[2] must be finite",
     );
   });
+
+  it("bounds U-sweep broad-phase candidates before disjoint V ranges can become quadratic", () => {
+    const count = 4097;
+    const positions = new Float32Array(count * 9);
+    const uvs = new Float32Array(count * 6);
+    const indices = new Uint32Array(count * 3);
+    for (let triangleIndex = 0; triangleIndex < count; triangleIndex += 1) {
+      const vertex = triangleIndex * 3;
+      positions.set([0, 0, 0, 1, 0, 0, 0, 1, 0], vertex * 3);
+      const bottom = triangleIndex / count;
+      const top = (triangleIndex + 1) / count;
+      uvs.set([0, bottom, 0.1, bottom, 0, top], vertex * 2);
+      indices.set([vertex, vertex + 1, vertex + 2], triangleIndex * 3);
+    }
+    expect(() => analyzeUvLayout({ positions, uvs, indices })).toThrow(
+      "analyzeUvLayout: UV overlap pair work exceeds 8388608",
+    );
+  });
 });
 
 describe("triplanar sampling", () => {
@@ -180,6 +198,14 @@ describe("triplanar sampling", () => {
       [1, 1, 0],
     );
     expect(empty).toEqual({ color: [0, 0, 0, 0], roughness: 0, bump: 0, metalness: 0 });
+  });
+
+  it("keeps a dominant projection representable at high finite sharpness", () => {
+    const sample = sampleTriplanarSurface(where, [0.4, 0.3, 0.2], [0.9, 0.8, 0], {
+      sharpness: 1_000_000_000,
+    });
+    // The x projection is dominant and reads [z, y] = [0.2, 0.3].
+    expect(sample).toEqual({ color: [51, 77, 0, 255], roughness: 0.2, bump: -0.4 });
   });
 });
 

@@ -343,11 +343,11 @@ function geometricOverlapFraction(
     for (let rightOrder = leftOrder + 1; rightOrder < order.length; rightOrder += 1) {
       const right = order[rightOrder];
       if (minU[right] >= maxU[left]) break;
-      if (minV[right] >= maxV[left] || maxV[right] <= minV[left]) continue;
-      if (uvArea(uvOf(mesh, right)) < UV_DEGENERATE_EPSILON) continue;
       pairWork += 1;
       if (pairWork > MAX_OVERLAP_PAIR_WORK)
         throw new Error(`${operation}: UV overlap pair work exceeds ${MAX_OVERLAP_PAIR_WORK}`);
+      if (minV[right] >= maxV[left] || maxV[right] <= minV[left]) continue;
+      if (uvArea(uvOf(mesh, right)) < UV_DEGENERATE_EPSILON) continue;
       if (hasPositiveInteriorIntersection(uvOf(mesh, left), uvOf(mesh, right))) {
         overlaps[left] = 1;
         overlaps[right] = 1;
@@ -522,10 +522,13 @@ export function sampleTriplanarSurface(
   const nx = normal[0] / length;
   const ny = normal[1] / length;
   const nz = normal[2] / length;
+  const maximumNormal = Math.max(Math.abs(nx), Math.abs(ny), Math.abs(nz));
+  // Divide by the dominant component before exponentiation. This is the same
+  // normalized ratio as abs(normal)^sharpness, but it leaves at least one 1.
   const rawWeights = [
-    Math.abs(nx) ** sharpness,
-    Math.abs(ny) ** sharpness,
-    Math.abs(nz) ** sharpness,
+    (Math.abs(nx) / maximumNormal) ** sharpness,
+    (Math.abs(ny) / maximumNormal) ** sharpness,
+    (Math.abs(nz) / maximumNormal) ** sharpness,
   ];
   const weightTotal = rawWeights[0] + rawWeights[1] + rawWeights[2];
   if (!Number.isFinite(weightTotal) || weightTotal <= 0)

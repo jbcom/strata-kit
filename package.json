@@ -34,7 +34,6 @@
     "test:coverage": "vitest run --coverage --coverage.reporter=lcov --coverage.reporter=text && node scripts/normalize-lcov.mjs",
     "verify": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build && pnpm run package:check"
   },
-  "heavySlot": { "priorityLane": true },
   "keywords": ["procedural-generation", "seeded", "layers", "terrain", "surface-fields", "materials", "bake", "three", "typescript"],
   "author": "Jon Bogaty <jon@jonbogaty.com>",
   "license": "MIT",

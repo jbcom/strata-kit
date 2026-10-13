@@ -8,7 +8,7 @@ consumers keep their dependency boundary explicit.
 
 | Import | Exports | Dependencies |
 | --- | --- | --- |
-| `strata-procedural` | Noise, SDF, terrain, surface-bake, and scalar-relief APIs | none |
+| `strata-procedural` | Noise, SDF, terrain, surface samplers/layers/wear, mesh generators, UV/triplanar/atlas, shader, and scalar-relief APIs | none |
 | `strata-procedural/noise` | `seedToUint32`, `createSeededRandom`, `createSeededNoise`, `fractalNoise` | none |
 | `strata-procedural/sdf` | `sdSphere`, `sdPlane`, `sdBox`, `opUnion`, `opIntersection`, `opSubtraction`, `opSmoothUnion`, `opSmoothSubtraction` | none |
 | `strata-procedural/terrain` | `createSeededTerrainField` and terrain data types | none |

@@ -76,6 +76,20 @@ describe('seeded terrain fields', () => {
     expect(Number.isFinite(tinyRadius.heightAt(1, 0))).toBe(true);
   });
 
+  it('blends a large biome list without spreading it into a function call', () => {
+    const field = createSeededTerrainField({
+      seed: 'many-biomes',
+      biomeBlend: 1,
+      biomes: Array.from({ length: 200_000 }, () => ({
+        type: 'forest' as const,
+        center: [0, 0] as const,
+        radius: 10,
+      })),
+    });
+
+    expect(Number.isFinite(field.heightAt(0, 0))).toBe(true);
+  });
+
   it('rejects unrepresentable and oversized heightfields before allocation', () => {
     const field = createSeededTerrainField({ seed: 'heightfield-guards', biomes: pairedBiomes });
 
