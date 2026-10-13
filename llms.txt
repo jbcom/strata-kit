@@ -21,9 +21,24 @@
 - Surface composition uses linear-sRGB source-over and shared scalar alpha weights.
 - Wear is palette-free; UV reskinning receives portable indexed arrays.
 - Mesh generators produce typed arrays; Three textures expose explicit disposal.
+- Swept radius cusps may add coincident rings with separate shading normals;
+  vertex indices are not stable across profile changes.
+- Positive biome blends use overflow-safe relative weights; coordinate precision
+  still bounds distinguishable distances.
+- Default nearest-biome ranking also handles overflow/underflow; ordinary output
+  and first-entry ties remain stable, previously incorrect extreme results change.
 - The interactive source-checkout gallery runs with `pnpm build` then `pnpm demo`.
 
 ## Read next
+
+- [Visual acceptance](https://github.com/jbcom/strata-procedural/blob/main/docs/VISUAL-ACCEPTANCE.md):
+  injected defects, restoration, geometry/UV diagnostics and rendered-proof limits.
+
+- [Performance](https://github.com/jbcom/strata-procedural/blob/main/docs/PERFORMANCE.md):
+  validated work limits, representative CPU fixtures and truthful metric definitions.
+
+- [Compatibility](https://github.com/jbcom/strata-procedural/blob/main/docs/COMPATIBILITY.md):
+  saved seeds and normalized plans, callback limits, buffer encoding and upgrade checks.
 
 - [README](https://github.com/jbcom/strata-procedural/blob/main/README.md): installation and
   runnable terrain, surface-bake, and scalar-relief examples.

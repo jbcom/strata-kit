@@ -23,3 +23,25 @@ jobs:
       - uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
       - run: mise exec node@${{ matrix.node }} -- pnpm install --frozen-lockfile
       - run: mise exec node@${{ matrix.node }} -- pnpm verify
+
+  visual:
+    name: Procedural visual diagnostics
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      PW_HEADLESS: '1'
+      HEAVY_BROWSER_GPU: swiftshader
+      HEAVY_BROWSER_MUTE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
+      - run: mise exec -- pnpm install --frozen-lockfile
+      - run: mise exec -- pnpm exec playwright install --with-deps chromium
+      - run: mise exec -- pnpm test:visual
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: procedural-visual-diagnostics
+          path: test-results/procedural-gallery/
+          if-no-files-found: warn
+          retention-days: 7

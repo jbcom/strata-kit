@@ -8,7 +8,9 @@ import {
   bakeSurface,
   createSurfaceBakeManifest,
   createSurfacePlan,
+  createSurfaceSampler,
   sampleSurface,
+  type SurfacePlan,
 } from "../src/materials.ts";
 import { createSeededNoise, createSeededRandom, fractalNoise, seedToUint32 } from "../src/noise.ts";
 import {
@@ -33,6 +35,28 @@ const manifest = JSON.parse(readFileSync(resolve(directory, "../package.json"), 
 };
 
 describe("strata-procedural public contract", () => {
+  it("replays a saved normalized surface plan without rehashing its seed", () => {
+    const plan = createSurfacePlan({
+      seed: "saved-surface-content",
+      scale: 2.25,
+      baseColor: [0.12, 0.3, 0.52],
+    });
+    const restored = JSON.parse(JSON.stringify(plan)) as SurfacePlan;
+    const expected = bakeSurface(plan, { width: 8, height: 8 });
+    expect(plan.seed).toBe(1495448502);
+    expect(Array.from(expected.color.slice(0, 16))).toEqual([
+      27, 68, 119, 255, 28, 71, 123, 255, 29, 72, 125, 255, 26, 65, 113, 255,
+    ]);
+    expect(Array.from(expected.roughness.slice(0, 4))).toEqual([158, 96, 112, 128]);
+    expect(Array.from(expected.bump.slice(0, 4))).toEqual([104, 131, 150, 68]);
+    const replayed = bakeSurface(createSurfaceSampler(restored), { width: 8, height: 8 });
+    expect(replayed).toEqual(expected);
+    expect(sampleSurface(restored, 0.125, 0.875)).toEqual(sampleSurface(plan, 0.125, 0.875));
+    expect(createSurfaceBakeManifest(restored, replayed)).toEqual(
+      createSurfaceBakeManifest(plan, expected),
+    );
+  });
+
   it("publishes only the procedural spine and optional renderer adapters", () => {
     expect(manifest.name).toBe("strata-procedural");
     expect(Object.keys(manifest.exports).sort()).toEqual([

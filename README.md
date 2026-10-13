@@ -80,6 +80,25 @@ Only these package-exported paths are public API. See [docs/API.md](docs/API.md)
 the exported symbols and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for boundaries
 and intentional limits.
 
+For saved procedural content, read [compatibility guidance](docs/COMPATIBILITY.md).
+Keep the package version and complete inputs or buffers; a seed cannot serialize
+an arbitrary sampler recipe.
+
+[Performance guidance](docs/PERFORMANCE.md) distinguishes request limits from
+measured workload sizes and documents the reproducible CPU benchmark.
+
+The [visual acceptance gate](docs/VISUAL-ACCEPTANCE.md) deliberately rejects inverted
+gravity and an omitted oxide layer, then verifies exact restoration. Its diagnostic
+captures supplement direct visual review and consumer testing.
+
+Swept meshes separate shading normals at sharp radius cusps, adding coincident
+rings where needed. Positive terrain biome blends preserve relative contributions
+even when normalized squared distances overflow. See the API reference for layout
+and floating-point limits.
+
+Nearest-biome selection also retains valid ranking at extreme radii. That correction
+changes previously incorrect extreme-input results while preserving ordinary output.
+
 ## Compose surface layers
 
 ```ts

@@ -52,13 +52,26 @@ and `scrubland`. Heightfield width and depth are integers of at least two.
 `ScatterPoint`, and `SeededTerrainField` are exported terrain types.
 
 `biomeBlend` is an optional nonnegative finite value. Zero, the default, retains
-nearest-biome profiles. Positive values blend biome profiles using normalized
+nearest-biome profiles, with stable ranking when extreme radii or coordinates
+overflow or underflow the legacy distance arithmetic. Equal ranked distances keep
+the first biome. This corrects previously order-dependent extreme-input output.
+Positive values blend biome profiles using normalized
 squared-distance exponential weights; larger values broaden the transition.
+If squared distances overflow, relative weights are evaluated in log space across
+all biomes, including finite distances. Equal computed distances receive equal
+weights; distinctions below coordinate precision cannot be recovered.
 Heightfields are limited to one million vertices and six million indices, and reject
 cell spacing that collapses at their centered Float32 coordinates. Scatter is limited
 to one million points.
 
 ## Surface bakes
+
+[Performance guidance](PERFORMANCE.md) collects allocation and work limits and
+explains the benchmark's timing, output-byte and process-memory measurements.
+
+See [generated-content compatibility](COMPATIBILITY.md) before persisting plans,
+callbacks or baked buffers. Normalized surface plans are consumed directly;
+passing them through `createSurfacePlan` again hashes their numeric seed again.
 
 `createSurfacePlan({ seed, scale?, baseColor? })` normalizes a plan. `scale` is
 positive and finite; `baseColor` has three finite channels in the inclusive `[0, 1]`
@@ -98,6 +111,9 @@ positive v downward; scale affects noise frequency. Zero amount disables wear ma
 
 ## Portable meshes and reskinning
 
+The [visual acceptance gate](VISUAL-ACCEPTANCE.md) describes checked material bytes,
+geometry/UV diagnostics, injected failures and the limits of rendered evidence.
+
 `ProceduralMesh` contains Float32 positions, normals, and UVs plus Uint16 or Uint32
 triangle indices. `createRevolvedMesh({ profile, segments, caps? })` revolves
 `{ radius, height }` rows with strictly increasing heights. Endpoint radii may be
@@ -105,6 +121,9 @@ zero; all-zero and adjacent-zero profiles are rejected.
 `createSweptMesh({ path, radius, radialSegments, caps? })` transports a circular
 section along a `Vec3` path. Radius can be a positive number or an arc-length-based
 callback. Duplicate and reversing path segments are rejected.
+Sharp opposing radius slopes use coincident rings with separate incoming and
+outgoing normals. This can increase the vertex count without changing positions
+or triangle count; vertex indices are not stable across profile changes.
 `createSheetMesh({ width, height, columns, rows, heightAt? })` samples an upward
 XZ sheet. Meshes are bounded to one million vertices and six million indices and
 reject indexed faces collapsed by Float32 quantization.

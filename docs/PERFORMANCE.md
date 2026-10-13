@@ -10,6 +10,8 @@ claims.
 These are request-validation limits, not recommendations or performance targets.
 Inputs below a limit can still be expensive depending on geometry, surface recipe,
 and host runtime.
+Caller-supplied samplers determine their own cost; request limits do not impose a
+deadline on arbitrary callback code.
 
 | API | Validated limit |
 | --- | --- |

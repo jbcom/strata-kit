@@ -374,7 +374,7 @@ export function createSweptMesh(options: SweptMeshOptions): ProceduralMesh {
   for (let index = 0; index < path.length; index += 1)
     requireFinitePoint(operation, `path[${index}]`, path[index]!);
 
-  const sideVertices = path.length * (radialSegments + 1);
+  let sideVertices = path.length * (radialSegments + 1);
   const capVertices = caps ? 2 * (radialSegments + 2) : 0;
   const sideIndices = (path.length - 1) * radialSegments * 6;
   const capIndices = caps ? radialSegments * 6 : 0;
@@ -444,6 +444,22 @@ export function createSweptMesh(options: SweptMeshOptions): ProceduralMesh {
     }
     radii[index] = value;
   }
+
+  const ringSize = radialSegments + 1;
+  const incomingRings = new Uint32Array(path.length);
+  const outgoingRings = new Uint32Array(path.length);
+  for (let row = 0; row < path.length; row += 1) {
+    incomingRings[row] = row * ringSize;
+    outgoingRings[row] = row * ringSize;
+    if (row === 0 || row === path.length - 1) continue;
+    const before = (radii[row]! - radii[row - 1]!) / (lengthAt[row]! - lengthAt[row - 1]!);
+    const after = (radii[row + 1]! - radii[row]!) / (lengthAt[row + 1]! - lengthAt[row]!);
+    if (1 + before * after < 0) {
+      outgoingRings[row] = sideVertices;
+      sideVertices += ringSize;
+    }
+  }
+  checkedCount(operation, sideVertices + capVertices, sideIndices + capIndices);
 
   const transportedNormals = new Float64Array(path.length * 3);
   const binormals = new Float64Array(path.length * 3);
@@ -551,13 +567,16 @@ export function createSweptMesh(options: SweptMeshOptions): ProceduralMesh {
     }
   }
 
-  for (let row = 0; row < path.length; row += 1) {
-    const previousRow = Math.max(0, row - 1);
-    const nextRow = Math.min(path.length - 1, row + 1);
+  const writeRingNormals = (
+    row: number,
+    ring: number,
+    previousRow: number,
+    nextRow: number,
+  ): void => {
     for (let column = 0; column < radialSegments; column += 1) {
       const previousColumn = (column - 1 + radialSegments) % radialSegments;
       const nextColumn = (column + 1) % radialSegments;
-      const current = row * (radialSegments + 1) + column;
+      const current = ring + column;
       const radialBefore = row * (radialSegments + 1) + previousColumn;
       const radialAfter = row * (radialSegments + 1) + nextColumn;
       const longitudinalBefore = previousRow * (radialSegments + 1) + column;
@@ -581,7 +600,7 @@ export function createSweptMesh(options: SweptMeshOptions): ProceduralMesh {
       const ny = rz * lx - rx * lz;
       const nz = rx * ly - ry * lx;
       const normalLength = Math.hypot(nx, ny, nz);
-      if (normalLength > 1e-12 && Number.isFinite(normalLength)) {
+      if (normalLength > 0 && Number.isFinite(normalLength)) {
         setNormal(mesh.normals, current, nx, ny, nz);
       } else {
         const frameOffset = row * 3;
@@ -598,17 +617,36 @@ export function createSweptMesh(options: SweptMeshOptions): ProceduralMesh {
         );
       }
     }
-    const first = row * (radialSegments + 1);
+    const first = ring;
     const seam = first + radialSegments;
     mesh.normals.set(mesh.normals.subarray(first * 3, first * 3 + 3), seam * 3);
+  };
+  for (let row = 0; row < path.length; row += 1) {
+    const incoming = incomingRings[row]!;
+    const outgoing = outgoingRings[row]!;
+    const split = incoming !== outgoing;
+    writeRingNormals(
+      row,
+      incoming,
+      Math.max(0, row - 1),
+      split ? row : Math.min(path.length - 1, row + 1),
+    );
+    if (split) {
+      mesh.positions.set(
+        mesh.positions.subarray(incoming * 3, (incoming + ringSize) * 3),
+        outgoing * 3,
+      );
+      mesh.uvs.set(mesh.uvs.subarray(incoming * 2, (incoming + ringSize) * 2), outgoing * 2);
+      writeRingNormals(row, outgoing, row, row + 1);
+    }
   }
 
   let indexCursor = 0;
   for (let row = 0; row < path.length - 1; row += 1) {
     for (let column = 0; column < radialSegments; column += 1) {
-      const lowerCurrent = row * (radialSegments + 1) + column;
+      const lowerCurrent = outgoingRings[row]! + column;
       const lowerNext = lowerCurrent + 1;
-      const upperCurrent = lowerCurrent + radialSegments + 1;
+      const upperCurrent = incomingRings[row + 1]! + column;
       const upperNext = upperCurrent + 1;
       mesh.indices[indexCursor++] = lowerCurrent;
       mesh.indices[indexCursor++] = lowerNext;

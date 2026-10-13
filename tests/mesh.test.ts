@@ -136,6 +136,39 @@ describe("neutral procedural meshes", () => {
     expectFiniteUnitNormals(mesh);
   });
 
+  it.each([false, true])("keeps swept cusp faces outward with caps=%s", (caps) => {
+    let radiusCalls = 0;
+    const mesh = createSweptMesh({
+      path: [
+        { x: 0, y: 0, z: 0 },
+        { x: 1, y: 0, z: 0 },
+        { x: 1.1, y: 0, z: 0 },
+      ],
+      radius: (t) => {
+        radiusCalls += 1;
+        return t === 0 ? 1 : t === 1 ? 2.8 : 3;
+      },
+      radialSegments: 6,
+      caps,
+    });
+    expect(radiusCalls).toBe(3);
+    expect(mesh.positions.length / 3).toBe(caps ? 44 : 28);
+    expect(mesh.indices.length).toBe(caps ? 108 : 72);
+    for (let column = 0; column < 7; column += 1) {
+      expect(position(mesh, 21 + column)).toEqual(position(mesh, 7 + column));
+      expect(Array.from(mesh.uvs.subarray((21 + column) * 2, (22 + column) * 2))).toEqual(
+        Array.from(mesh.uvs.subarray((7 + column) * 2, (8 + column) * 2)),
+      );
+    }
+    for (let triangle = 0; triangle < mesh.indices.length / 3; triangle += 1) {
+      const face = faceNormal(mesh, triangle);
+      for (let corner = 0; corner < 3; corner += 1) {
+        expect(dot(face, normal(mesh, mesh.indices[triangle * 3 + corner]!))).toBeGreaterThan(0);
+      }
+    }
+    expectFiniteUnitNormals(mesh);
+  });
+
   it("splits opposing revolution cusp normals so every adjacent side face is outward", () => {
     const mesh = createRevolvedMesh({
       profile: [
