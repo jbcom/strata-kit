@@ -2,14 +2,15 @@
 
 > Strata Procedural is a renderer-neutral TypeScript library for deterministic procedural
 > layering in 3D space: seeded noise, signed-distance composition, terrain fields,
-> surface-map bakes, scalar relief profiles, and optional Three.js/R3F adapters.
+> coherent surface layers, portable meshes, UV atlas bakes, scalar relief profiles,
+> and optional Three.js/R3F adapters.
 
 ## Use the package
 
 - Install: `pnpm add strata-procedural`.
 - ESM package; supports Node.js 22 and newer.
 - Import only from `strata-procedural` or its documented exports: `noise`, `sdf`,
-  `terrain`, `materials`, `shaders`, `surface-fields`, `three`, and `r3f`.
+  `terrain`, `materials`, `mesh`, `shaders`, `surface-fields`, `three`, and `r3f`.
 - The root through `surface-fields` are renderer-neutral. `three` and `r3f` require
   their optional peer dependencies.
 - Built-in random generators derive from an explicit string or finite numeric seed.
@@ -17,6 +18,10 @@
   and independent of call order. Do not
   introduce `Math.random` or rely on random-draw order without treating it as a
   compatibility change.
+- Surface composition uses linear-sRGB source-over and shared scalar alpha weights.
+- Wear is palette-free; UV reskinning receives portable indexed arrays.
+- Mesh generators produce typed arrays; Three textures expose explicit disposal.
+- The interactive source-checkout gallery runs with `pnpm build` then `pnpm demo`.
 
 ## Read next
 

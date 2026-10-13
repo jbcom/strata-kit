@@ -26,6 +26,7 @@ const pureEntrypoints = [
   'strata-procedural/sdf',
   'strata-procedural/terrain',
   'strata-procedural/materials',
+  'strata-procedural/mesh',
   'strata-procedural/shaders',
   'strata-procedural/surface-fields',
 ];
@@ -88,6 +89,7 @@ const firstPackDirectory = mkdtempSync(path.join(tmpdir(), 'strata-procedural-pa
 const secondPackDirectory = mkdtempSync(path.join(tmpdir(), 'strata-procedural-pack-b-'));
 const pureConsumerDirectory = mkdtempSync(path.join(tmpdir(), 'strata-procedural-pure-'));
 const adapterConsumerDirectory = mkdtempSync(path.join(tmpdir(), 'strata-procedural-adapter-'));
+const minimumThreeDirectory = mkdtempSync(path.join(tmpdir(), 'strata-procedural-three-floor-'));
 
 try {
   const first = pack(firstPackDirectory);
@@ -118,6 +120,7 @@ try {
     'dist/sdf.js',
     'dist/terrain.js',
     'dist/materials.js',
+    'dist/mesh.js',
     'dist/shaders.js',
     'dist/surface-fields.js',
     'dist/three.js',
@@ -145,6 +148,22 @@ try {
   ]);
   importEntrypoints(adapterConsumerDirectory, allEntrypoints, 'adapter packed consumer imports every public entrypoint');
 
+  installConsumer(minimumThreeDirectory, ['--omit=optional', first.tarball, 'three@0.152.0']);
+  execFileSync(process.execPath, ['--input-type=module', '--eval', `
+    import assert from 'node:assert/strict';
+    import { createThreeSurfaceTextures } from 'strata-procedural/three';
+    const textures = createThreeSurfaceTextures({
+      width: 1, height: 1, color: new Uint8Array([128, 64, 32, 255]),
+      roughness: new Uint8Array([127]), bump: new Uint8Array([127]),
+      metalness: new Uint8Array([255]),
+    });
+    assert.equal(textures.map.colorSpace, 'srgb');
+    assert.equal(textures.roughnessMap.colorSpace, '');
+    assert.equal(textures.metalnessMap.image.data[2], 255);
+    textures.dispose();
+  `], { cwd: minimumThreeDirectory, encoding: 'utf8', stdio: 'pipe' });
+  console.log('minimum Three r152 packed consumer preserves texture color spaces and metalness');
+
   console.log(`strata-procedural: checked ${first.manifest.entryCount} packed files and both optional-peer modes`);
 } finally {
   for (const directory of [
@@ -152,6 +171,7 @@ try {
     secondPackDirectory,
     pureConsumerDirectory,
     adapterConsumerDirectory,
+    minimumThreeDirectory,
   ]) {
     rmSync(directory, { recursive: true, force: true });
   }

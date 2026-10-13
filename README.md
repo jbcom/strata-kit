@@ -1,9 +1,9 @@
 # Strata Procedural
 
 Strata Procedural is a small, renderer-neutral TypeScript library for deterministic
-procedural layering in 3D space. It currently supplies seeded noise, signed-distance
-composition, biome-shaped terrain fields, surface-map bakes, scalar relief profiles,
-and optional Three.js and React Three Fiber views.
+procedural layering in 3D space. It supplies seeded noise, signed-distance
+composition, biome-shaped terrain fields, coherent surface layers, portable meshes,
+UV atlas bakes, scalar relief profiles, and optional Three.js and React Three Fiber views.
 
 The repository, project, and npm distribution share the name **Strata Procedural**:
 [`strata-procedural`](https://www.npmjs.com/package/strata-procedural).
@@ -70,14 +70,39 @@ image files and applying them to a material remain consumer work.
 | `strata-procedural/sdf` | Sphere, plane, box, and boolean/smooth distance operations |
 | `strata-procedural/terrain` | Seeded terrain fields, heightfields, and scatter data |
 | `strata-procedural/materials` | Surface plans, samples, bakes, and bake manifests |
-| `strata-procedural/shaders` | GLSL seeded value-noise chunk |
+| `strata-procedural/mesh` | Revolved profiles, transported sweeps, and sampled sheets |
+| `strata-procedural/shaders` | GLSL seeded noise and checked literal shader patches |
 | `strata-procedural/surface-fields` | C1 scalar profiles, relief derivatives and frames, matching GLSL |
-| `strata-procedural/three` | `HeightfieldMesh` to `THREE.BufferGeometry` conversion |
+| `strata-procedural/three` | Mesh geometry and explicitly disposable surface textures |
 | `strata-procedural/r3f` | `StrataHeightfield` React Three Fiber component |
 
 Only these package-exported paths are public API. See [docs/API.md](docs/API.md) for
 the exported symbols and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for boundaries
 and intentional limits.
+
+## Compose surface layers
+
+```ts
+import { bakeSurface, composeSurfaceLayers, createWearField } from 'strata-procedural';
+
+const wear = createWearField({
+  seed: 'panel-01', scale: 1, amount: 0.7, edgeBias: 0.4, bottomBias: 0.3,
+});
+const painted = {
+  sample: () => ({ color: [55, 85, 110, 255] as const, roughness: 0.6, bump: 0 }),
+};
+const exposed = {
+  sample: () => ({ color: [155, 155, 150, 255] as const, roughness: 0.35, bump: -0.1, metalness: 1 }),
+};
+const sampler = composeSurfaceLayers(painted, [
+  { sampler: exposed, mask: (u, v) => wear.sample(u, v).chip },
+]);
+const maps = bakeSurface(sampler, { width: 512, height: 512 });
+```
+
+Layers share a deterministic coordinate domain. Color blends in linear sRGB;
+roughness, bump, and optional metalness use the same alpha weights. Wear fields
+provide correlated masks without choosing a palette or material for the consumer.
 
 ## Scalar relief profiles
 
@@ -148,6 +173,10 @@ mise exec -- pnpm verify
 checks. Run `mise exec -- pnpm test:gpu` separately when changing the CPU/GLSL
 scalar-relief pair; it is a muted WebGL2 readback test and belongs on the configured
 hardware test path.
+
+From a source checkout, run `mise exec -- pnpm build` then
+`mise exec -- pnpm demo` to inspect the interactive procedural gallery at
+`http://127.0.0.1:4400`. The gallery owns its renderer, controls, and resource lifecycle.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution expectations and
 [llms.txt](llms.txt) for a concise machine-readable project index.

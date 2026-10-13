@@ -27,6 +27,8 @@ export interface Biome {
 export interface SeededTerrainOptions {
   seed: Seed;
   biomes: readonly Biome[];
+  /** Optional normalized-distance blend width; zero preserves nearest-biome selection. */
+  biomeBlend?: number;
 }
 
 /** Height and signed-distance values sampled from a terrain field. */
@@ -68,6 +70,9 @@ const biomeKinds = new Set<BiomeKind>([
   'mountain',
   'scrubland',
 ]);
+const maximumHeightfieldVertices = 1_000_000;
+const maximumHeightfieldIndexEntries = 6_000_000;
+const maximumScatterPoints = 1_000_000;
 
 function requireBiomes(biomes: readonly Biome[]): void {
   if (biomes.length === 0) throw new Error('createSeededTerrainField: biomes cannot be empty');
@@ -86,7 +91,6 @@ function requireBiomes(biomes: readonly Biome[]): void {
 }
 
 function closestBiome(x: number, z: number, biomes: readonly Biome[]): Biome {
-  requireBiomes(biomes);
   return biomes.reduce((closest, biome) => {
     const closestDistance =
       ((x - closest.center[0]) ** 2 + (z - closest.center[1]) ** 2) / closest.radius ** 2;
@@ -95,12 +99,54 @@ function closestBiome(x: number, z: number, biomes: readonly Biome[]): Biome {
   });
 }
 
+function biomeHeight(biome: Biome, x: number, base: number, detail: number): number {
+  switch (biome.type) {
+    case 'mountain':
+      return base * 26 + Math.abs(detail) * 14;
+    case 'tundra':
+      return base * 7 + detail * 2;
+    case 'forest':
+      return base * 9 + detail * 4;
+    case 'desert':
+      return base * 2 + Math.sin(x * 0.1 + detail * 3) * 3;
+    case 'marsh':
+      return base + detail * 0.4;
+    case 'savanna':
+      return base * 3 + Math.max(0, detail) * 6;
+    default:
+      return base * 4 + detail * 2;
+  }
+}
+
+function normalizedBiomeDistanceSquared(x: number, z: number, biome: Biome): number {
+  const normalizedX = (x - biome.center[0]) / biome.radius;
+  const normalizedZ = (z - biome.center[1]) / biome.radius;
+  return normalizedX ** 2 + normalizedZ ** 2;
+}
+
+function requireDistinctFloat32AxisSamples(axis: 'x' | 'z', size: number, cellSize: number): void {
+  let previous = Math.fround((-(size - 1) / 2) * cellSize);
+  for (let index = 1; index < size; index += 1) {
+    const current = Math.fround((index - (size - 1) / 2) * cellSize);
+    if (current === previous) {
+      throw new Error(
+        `createHeightfield: ${axis} axis samples must remain distinct after Float32 quantization`
+      );
+    }
+    previous = current;
+  }
+}
+
 /** Creates a finite, seeded terrain and continuous cave distance field. */
 export function createSeededTerrainField(options: SeededTerrainOptions): SeededTerrainField {
   if (typeof options.seed === 'number') {
     requireFiniteNumber('createSeededTerrainField', 'seed', options.seed);
   }
   requireBiomes(options.biomes);
+  const biomeBlend = options.biomeBlend === undefined ? 0 : options.biomeBlend;
+  if (!Number.isFinite(biomeBlend) || biomeBlend < 0) {
+    throw new Error('createSeededTerrainField: biomeBlend must be a non-negative finite number');
+  }
   const seed = options.seed;
   const biomes: Biome[] = options.biomes.map((biome) => ({
     type: biome.type,
@@ -111,25 +157,27 @@ export function createSeededTerrainField(options: SeededTerrainOptions): SeededT
   const heightAt = (x: number, z: number): number => {
     requireFiniteNumber('heightAt', 'x', x);
     requireFiniteNumber('heightAt', 'z', z);
-    const biome = closestBiome(x, z, biomes);
     const base = fractalNoise(noise, x * 0.02, 0, z * 0.02, 4);
     const detail = fractalNoise(noise, x * 0.06, 19, z * 0.06, 3);
-    switch (biome.type) {
-      case 'mountain':
-        return base * 26 + Math.abs(detail) * 14;
-      case 'tundra':
-        return base * 7 + detail * 2;
-      case 'forest':
-        return base * 9 + detail * 4;
-      case 'desert':
-        return base * 2 + Math.sin(x * 0.1 + detail * 3) * 3;
-      case 'marsh':
-        return base + detail * 0.4;
-      case 'savanna':
-        return base * 3 + Math.max(0, detail) * 6;
-      default:
-        return base * 4 + detail * 2;
+    if (biomeBlend === 0 || biomes.length === 1) {
+      return biomeHeight(closestBiome(x, z, biomes), x, base, detail);
     }
+    const distances = biomes.map((biome) => normalizedBiomeDistanceSquared(x, z, biome));
+    const finiteDistances = distances.filter(Number.isFinite);
+    if (finiteDistances.length === 0) {
+      throw new Error('heightAt: normalized biome distances must include a finite value');
+    }
+    const minimumDistance = Math.min(...finiteDistances);
+    let totalWeight = 0;
+    let blendedHeight = 0;
+    for (let index = 0; index < biomes.length; index += 1) {
+      const distance = distances[index];
+      if (!Number.isFinite(distance)) continue;
+      const weight = Math.exp(-(distance - minimumDistance) / biomeBlend);
+      totalWeight += weight;
+      blendedHeight += biomeHeight(biomes[index], x, base, detail) * weight;
+    }
+    return blendedHeight / totalWeight;
   };
   const caveDistance = (point: Vec3): number => {
     requireFiniteVector3('sample', 'point', point);
@@ -150,13 +198,23 @@ export function createSeededTerrainField(options: SeededTerrainOptions): SeededT
       if (!Number.isInteger(width) || !Number.isInteger(depth) || width < 2 || depth < 2) {
         throw new Error('createHeightfield: width and depth must be integers >= 2');
       }
+      const vertexCount = width * depth;
+      const indexEntryCount = (width - 1) * (depth - 1) * 6;
+      if (vertexCount > maximumHeightfieldVertices) {
+        throw new Error('createHeightfield: vertex count must not exceed 1000000');
+      }
+      if (indexEntryCount > maximumHeightfieldIndexEntries) {
+        throw new Error('createHeightfield: index count must not exceed 6000000');
+      }
       const maximumCoordinate = ((Math.max(width, depth) - 1) * cellSize) / 2;
       if (!Number.isFinite(maximumCoordinate) || maximumCoordinate > 3.4028234663852886e38) {
         throw new Error('createHeightfield: grid extent must fit finite Float32 positions');
       }
-      const positions = new Float32Array(width * depth * 3);
-      const normals = new Float32Array(width * depth * 3);
-      const indices = new Uint32Array((width - 1) * (depth - 1) * 6);
+      requireDistinctFloat32AxisSamples('x', width, cellSize);
+      requireDistinctFloat32AxisSamples('z', depth, cellSize);
+      const positions = new Float32Array(vertexCount * 3);
+      const normals = new Float32Array(vertexCount * 3);
+      const indices = new Uint32Array(indexEntryCount);
       for (let z = 0; z < depth; z += 1) {
         for (let x = 0; x < width; x += 1) {
           const offset = (z * width + x) * 3;
@@ -202,6 +260,9 @@ export function createSeededTerrainField(options: SeededTerrainOptions): SeededT
         throw new Error(
           'scatter: count must be a non-negative integer and area must be a positive finite number'
         );
+      }
+      if (count > maximumScatterPoints) {
+        throw new Error('scatter: count must not exceed 1000000');
       }
       if (typeof scatterSeed === 'number') requireFiniteNumber('scatter', 'seed', scatterSeed);
       const random = createSeededRandom(scatterSeed);

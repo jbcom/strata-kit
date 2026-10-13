@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Strata Procedural — material and geometry gallery</title>
+  <link rel="icon" href="data:," />
+  <style>
+    :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background:#0c1117; color:#edf1f6; }
+    * { box-sizing:border-box; } body { margin:0; } header { padding:26px 32px 16px; }
+    .eyebrow { font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:#a2b4c7; margin-bottom:9px; }
+    h1 { font-weight:550; letter-spacing:-.035em; font-size:30px; margin:0 0 8px; }
+    p { color:#aab7c6; font-size:14px; line-height:1.5; margin:0; max-width:760px; }
+    nav { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:0 32px 18px; }
+    button,input { font:inherit; color:inherit; background:#151e29; border:1px solid #2c3d50; border-radius:7px; padding:9px 13px; }
+    button { cursor:pointer; } button[aria-pressed="true"] { background:#cfaa70; color:#17150f; border-color:#cfaa70; }
+    label { margin-left:auto; font-size:12px; color:#aab7c6; display:flex; align-items:center; gap:8px; }
+    input { width:150px; font-size:12px; }
+    main { position:relative; height:calc(100vh - 216px); min-height:390px; margin:0 20px; border:1px solid #293747; border-radius:12px; overflow:hidden; background:#111821; }
+    canvas { display:block; width:100%; height:100%; touch-action:none; }
+    .caption { position:absolute; left:22px; bottom:18px; right:22px; font-size:12px; pointer-events:none; text-shadow:0 1px 5px #000; }
+    .caption strong { color:#f2e5d0; font-weight:500; } .caption span { color:#b0bfd0; margin-left:12px; }
+    footer { display:flex; justify-content:space-between; gap:12px; padding:14px 32px; color:#8fa2b8; font-size:11px; }
+    @media(max-width:600px) { header {padding:20px 18px 14px;} h1{font-size:24px;} nav{padding:0 18px 14px;gap:6px;} button{padding:8px 10px;font-size:12px;} label{margin-left:0;width:100%;} main{margin:0 10px;height:calc(100vh - 252px);min-height:350px;} footer{padding:12px 18px;flex-direction:column;} .caption{left:14px;bottom:14px;} .caption span{display:block;margin:6px 0 0;} }
+  </style>
+  <script type="importmap">
+  {"imports":{"three":"/vendor/three.module.js","three/addons/":"/addons/"}}
+  </script>
+</head>
+<body>
+  <header>
+    <div class="eyebrow">Strata Procedural · seeded construction</div>
+    <h1>One field. Several layers.</h1>
+    <p>Coating, exposed metal, oxidation and relief share a deterministic wear field. Explore portable surfaces, generated shapes, and UV atlas bakes.</p>
+  </header>
+  <nav aria-label="Gallery view">
+    <button data-mode="materials" aria-pressed="true">Layered surfaces</button>
+    <button data-mode="geometry" aria-pressed="false">Geometry</button>
+    <button data-mode="atlas" aria-pressed="false">UV atlas</button>
+    <button id="scale" aria-pressed="false">Scale: 1 m</button>
+    <label>Seed <input id="seed" value="workshop-17" aria-label="Generation seed" /></label>
+  </nav>
+  <main><canvas id="view" aria-label="Interactive procedural material and geometry scene"></canvas><div class="caption"><strong id="caption">Layered material study</strong><span>Drag to orbit · scroll to inspect</span></div></main>
+  <footer><span id="status">Preparing seeded fields…</span><span>Pure data → explicit renderer resources</span></footer>
+  <script type="module" src="/gallery.mjs"></script>
+</body>
+</html>

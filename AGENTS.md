@@ -7,7 +7,7 @@ package-facing documentation.
 ## Public boundary
 
 The package exports only the root API and the subpaths declared in `package.json`:
-`noise`, `sdf`, `terrain`, `materials`, `shaders`, `surface-fields`, `three`, and
+`noise`, `sdf`, `terrain`, `materials`, `mesh`, `shaders`, `surface-fields`, `three`, and
 `r3f`. Do not document, import, or depend on deep source paths.
 
 The root and the renderer-neutral subpaths must not import React, Three.js, browser
