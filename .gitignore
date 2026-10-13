@@ -67,6 +67,10 @@ unresolved_ids.txt
 
 # Local agent runtime state
 .agent-state/
+# Internal coordination and cross-project research belong in .agent-state/.
+# Guard the former locations against accidental republication.
+docs/plans/evidence/
+docs/plans/2026-10-11-trim-to-procedural-kit.md
 .claude/
 .mcp.json
 opencode.json
