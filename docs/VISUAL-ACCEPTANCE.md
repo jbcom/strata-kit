@@ -47,6 +47,15 @@ runtime errors, context health, actual physical bounds and shader assembly.
 
 ## What this gate proves
 
+The separate `tests/playwright.three-webgl1.config.ts` diagnostic packs the current
+library and installs exact Three r152 in a temporary consumer. It forces a WebGL1
+context, observes rejection of the historic one-channel RedFormat bump layout,
+restores the saved RGBA bytes exactly, then requires an error-free nonblank render.
+It writes a corrected canvas and bounded receipt. This configuration runs through
+the remote hardware renderer with Metal and mute enabled; it is separate from the
+software-rendered CI gallery. Dependency setup uses the npm registry, while browser
+modules are served only from the temporary installed consumer.
+
 This is a reproducible diagnostic for the specified layer defects, coherent bake
 bytes, data-to-scene linkage and restoration. The oracle uses public procedural APIs;
 their numerical behavior also needs independent unit and compatibility fixtures.
