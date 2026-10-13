@@ -95,6 +95,14 @@ try {
   assert.equal(sha256(first.tarball), sha256(second.tarball), 'npm pack must be byte-for-byte reproducible');
 
   const packedPaths = new Set(first.manifest.files.map((file) => file.path));
+  for (const internal of [
+    'docs/PROVENANCE.md',
+    'docs/STATUS.md',
+    'docs/PROCEDURAL_MODERNIZATION.md',
+    'docs/IMPLEMENTATION_PLAN.md',
+  ]) {
+    assert(!packedPaths.has(internal), `packed artifact contains internal coordination: ${internal}`);
+  }
   for (const required of [
     'LICENSE',
     'README.md',
@@ -117,7 +125,7 @@ try {
   ]) {
     assert(packedPaths.has(required), `packed artifact is missing ${required}`);
   }
-  for (const forbiddenPrefix of ['src/', 'tests/', 'scripts/', 'coverage/']) {
+  for (const forbiddenPrefix of ['src/', 'tests/', 'scripts/', 'coverage/', '.agent-state/', 'memory-bank/', 'docs/plans/evidence/']) {
     assert(
       [...packedPaths].every((file) => !file.startsWith(forbiddenPrefix)),
       `packed artifact unexpectedly contains ${forbiddenPrefix}`

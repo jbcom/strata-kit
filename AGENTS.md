@@ -22,6 +22,10 @@ consumer's rendering policy. Preserve that boundary when changing it.
 
 ## Working agreement
 
+Keep internal handoffs, cross-project research, source checkout paths, and agent
+coordination in gitignored `.agent-state/`. Never commit or push them. Public
+documentation describes this package's behavior, API, and contribution process.
+
 Use the maintained toolchain from `mise.toml`:
 
 ```sh

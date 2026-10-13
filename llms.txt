@@ -26,9 +26,6 @@
   imports, exported symbols, output layouts, input rules, and adapter contracts.
 - [Architecture](https://github.com/jbcom/strata-procedural/blob/main/docs/ARCHITECTURE.md):
   module boundaries, determinism contract, data ownership, and intentional limits.
-  a proposal for future extraction work and current source evidence; it is not an API
-  reference and does not extend the current API.
-  source and licensing evidence for the library's procedural work.
 - [Contributing](https://github.com/jbcom/strata-procedural/blob/main/CONTRIBUTING.md): local
   setup and verification.
 - [Agent guide](https://github.com/jbcom/strata-procedural/blob/main/AGENTS.md): repository

@@ -77,8 +77,7 @@ image files and applying them to a material remain consumer work.
 
 Only these package-exported paths are public API. See [docs/API.md](docs/API.md) for
 the exported symbols and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for boundaries
-is the proposal for extracting and modernizing further procedural capabilities; it
-does not extend the current API.
+and intentional limits.
 
 ## Scalar relief profiles
 
