@@ -1,25 +1,91 @@
-# strata-kit
+# Strata Kit
 
-`strata-kit` provides deterministic procedural terrain, surface bakes, signed-distance primitives, and analytic scalar relief. The root package is pure TypeScript. Three.js and React Three Fiber are opt-in subpaths.
+Strata Kit is a small, renderer-neutral TypeScript library for deterministic
+procedural layering in 3D space. It currently supplies seeded noise, signed-distance
+composition, biome-shaped terrain fields, surface-map bakes, scalar relief profiles,
+and optional Three.js and React Three Fiber views.
 
-Strata Kit is published to npm as [`strata-procedural`](https://www.npmjs.com/package/strata-procedural).
+The project is named **Strata Kit**. Install it from npm as
+[`strata-procedural`](https://www.npmjs.com/package/strata-procedural): npm rejected
+`strata-kit` because its name was too similar to an existing package.
+
+## Install
+
+```sh
+pnpm add strata-procedural
+```
+
+The published package is ESM-only and supports Node.js 22 and newer. The core imports
+have no renderer dependency. `three`, `react`, and `@react-three/fiber` are optional
+peer dependencies used only by the adapter subpaths.
+
+## Start with a terrain field
 
 ```ts
-import { bakeSurface, createSeededTerrainField, createSurfacePlan } from 'strata-procedural';
+import { createSeededTerrainField } from 'strata-procedural';
 
 const terrain = createSeededTerrainField({
   seed: 'coast-01',
   biomes: [{ type: 'mountain', center: [0, 0], radius: 80 }],
 });
+
+const height = terrain.heightAt(12, -4);
 const mesh = terrain.createHeightfield({ width: 64, depth: 64, cellSize: 2 });
-const surface = bakeSurface(createSurfacePlan({ seed: 'paint-01' }), { width: 256, height: 256 });
+const placements = terrain.scatter({ count: 40, area: 120 });
 ```
 
-Use `strata-procedural/three` for a Three.js `BufferGeometry`, and `strata-procedural/r3f` for the opt-in heightfield component. `strata-procedural/noise`, `/sdf`, `/terrain`, `/materials`, and `/shaders` have no renderer or React dependency.
+The same seed and inputs produce the same field, heightfield, and scatter sequence.
+`HeightfieldMesh` is plain typed-array data, so it can be consumed by any renderer or
+asset pipeline.
 
-## Analytic scalar relief
+## Bake a surface layer
 
-`strata-procedural/surface-fields` provides a continuous, texture-free scalar profile and a matching GLSL ES 3 chunk. It has no knowledge of UV layout, body shape, texture atlases, skinning, or normal-map policy.
+```ts
+import {
+  bakeSurface,
+  createSurfaceBakeManifest,
+  createSurfacePlan,
+} from 'strata-procedural';
+
+const plan = createSurfacePlan({
+  seed: 'slate-01',
+  scale: 1.5,
+  baseColor: [0.28, 0.31, 0.34],
+});
+const bake = bakeSurface(plan, { width: 512, height: 512 });
+const manifest = createSurfaceBakeManifest(plan, bake);
+```
+
+`bake.color` is tightly packed RGBA8 data. `bake.roughness` is R8. `bake.bump` is
+R8 data that represents the signed `[-1, 1]` bump sample remapped into `[0, 255]`.
+The manifest records their layout and normalized plan inputs. Encoding the buffers into
+image files and applying them to a material remain consumer work.
+
+## Public imports
+
+| Import | Use it for |
+| --- | --- |
+| `strata-procedural` | Root API: noise, SDFs, terrain, material bakes, and scalar relief |
+| `strata-procedural/noise` | Seed normalization, random streams, value noise, and fractal sums |
+| `strata-procedural/sdf` | Sphere, plane, box, and boolean/smooth distance operations |
+| `strata-procedural/terrain` | Seeded terrain fields, heightfields, and scatter data |
+| `strata-procedural/materials` | Surface plans, samples, bakes, and bake manifests |
+| `strata-procedural/shaders` | GLSL seeded value-noise chunk |
+| `strata-procedural/surface-fields` | C1 scalar profiles, relief derivatives and frames, matching GLSL |
+| `strata-procedural/three` | `HeightfieldMesh` to `THREE.BufferGeometry` conversion |
+| `strata-procedural/r3f` | `StrataHeightfield` React Three Fiber component |
+
+Only these package-exported paths are public API. See [docs/API.md](docs/API.md) for
+the exported symbols and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for boundaries
+is the proposal for extracting and modernizing further procedural capabilities; it
+does not extend the current API.
+
+## Scalar relief profiles
+
+`surface-fields` evaluates clamped C1 cubic-Hermite profiles and their analytic
+derivatives. A consumer chooses the scalar coordinate and supplies its derivatives
+over the surface; Strata Kit applies the chain rule and can derive a local
+first-order relief frame from caller-supplied surface differentials.
 
 ```ts
 import {
@@ -34,37 +100,41 @@ const profile = createCubicHermiteProfile([
   { coordinate: 0.5, value: 0.012, derivative: 0.03 },
   { coordinate: 1, value: 0, derivative: 0 },
 ]);
-const scalar = sampleCubicHermiteProfile(profile, callerCoordinate);
-const relief = projectScalarProfileDerivative(scalar, callerCoordinateGradient);
-const frame = deriveReliefFrame(callerSurfaceJacobian, relief.derivatives);
+const sample = sampleCubicHermiteProfile(profile, coordinate);
+const relief = projectScalarProfileDerivative(sample, { du: dqDu, dv: dqDv });
+const frame = deriveReliefFrame({ du: dPDu, dv: dPDv }, relief.derivatives);
 ```
 
-`value` is in the caller's height unit, such as metres. `derivative` is height per `coordinate` unit. `callerCoordinateGradient` supplies `dq/du` and `dq/dv`; `callerSurfaceJacobian` supplies `dP/du` and `dP/dv` in the same evaluation space as the desired result. The normal is formed from the local first-order relief tangent plane, not a fixed normal axis.
+The CPU and GLSL evaluators use the same maximum of eight knots.
+`deriveReliefFrame` is a local approximation based on `dP + N * dH`; it is not the
+exact tangent frame of a curved, physically displaced surface. Consumers that change
+geometry need a curvature-aware path.
 
-For a rigid affine transform, transform the two position differentials with the position transform before calling the function. For skinned or other non-affine deformation, pass the local posed surface Jacobian; a single global normal matrix cannot describe that deformation. The returned frame is intended for the consumer's existing normal-map composition. This package does not replace or retune it.
+## Optional views
 
-This is a local shading approximation: it evaluates `dP + N * dH`. It intentionally omits `H * dN`, so it is not the exact normal of a curved surface physically offset as `P + HN`. A consumer that changes curved geometry needs a curvature-aware differential path of its own.
+```ts
+import { createThreeHeightfieldGeometry } from 'strata-procedural/three';
 
-The GLSL evaluator has an explicit eight-knot ceiling, so its profile work remains bounded per fragment. `toCubicHermiteProfileUniforms` creates the matching fixed-width uniform arrays.
+const geometry = createThreeHeightfieldGeometry(mesh);
+```
 
-## Install
+`strata-procedural/r3f` exports `StrataHeightfield`, which receives a precomputed
+`HeightfieldMesh` and an optional Three `Material`. Neither adapter creates terrain,
+simulation state, or a render loop.
 
-Install a released package from npm:
+## Develop
 
 ```sh
-pnpm add strata-procedural@<released-version>
+mise trust
+mise install
+mise exec -- pnpm install --frozen-lockfile
+mise exec -- pnpm verify
 ```
 
-Then import `strata-procedural/surface-fields` or another documented public subpath. The package publishes ESM entrypoints. `three`, `react`, and `@react-three/fiber` are optional peers and are loaded only by `strata-procedural/three` or `strata-procedural/r3f`.
+`pnpm verify` runs Biome, TypeScript, unit tests, the build, and package-consumer
+checks. Run `mise exec -- pnpm test:gpu` separately when changing the CPU/GLSL
+scalar-relief pair; it is a muted WebGL2 readback test and belongs on the configured
+hardware test path.
 
-## Development
-
-Use Node 22 or newer and the pnpm version pinned in `package.json`:
-
-```sh
-corepack enable
-pnpm install
-pnpm verify
-```
-
-`pnpm verify` lints, type-checks, runs the renderer-free suite, builds every public entrypoint, and installs the packed artifact into clean pure and adapter consumers. The GPU evaluator is a separate hardware proof run through the render pool; see `docs/RELEASE.md`.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution expectations and
+[llms.txt](llms.txt) for a concise machine-readable project index.
