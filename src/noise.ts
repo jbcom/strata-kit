@@ -1,6 +1,6 @@
 /** Seeded, renderer-neutral noise fields. */
 
-import { requireFiniteNumber } from './validation.js';
+import { requireFiniteNumber } from "./validation.js";
 
 /** A stable string or finite numeric key for deterministic generation. */
 export type Seed = number | string;
@@ -8,17 +8,17 @@ export type Seed = number | string;
 export type Random = () => number;
 
 function requireSeed(operation: string, seed: Seed): void {
-  if (typeof seed !== 'string' && typeof seed !== 'number') {
+  if (typeof seed !== "string" && typeof seed !== "number") {
     throw new Error(`${operation}: seed must be a string or finite number`);
   }
-  if (typeof seed === 'number' && !Number.isFinite(seed)) {
+  if (typeof seed === "number" && !Number.isFinite(seed)) {
     throw new Error(`${operation}: seed must be a string or finite number`);
   }
 }
 
 /** Converts a validated seed into a stable unsigned 32-bit key. */
 export function seedToUint32(seed: Seed): number {
-  requireSeed('seedToUint32', seed);
+  requireSeed("seedToUint32", seed);
   const text = String(seed);
   let hash = 2166136261;
   for (let index = 0; index < text.length; index += 1) {
@@ -30,7 +30,7 @@ export function seedToUint32(seed: Seed): number {
 
 /** Creates a deterministic pseudo-random stream for one seed. */
 export function createSeededRandom(seed: Seed): Random {
-  requireSeed('createSeededRandom', seed);
+  requireSeed("createSeededRandom", seed);
   let state = seedToUint32(seed);
   return () => {
     state |= 0;
@@ -53,12 +53,12 @@ function lattice(seed: number, x: number, y: number, z: number): number {
 
 /** Creates a finite-coordinate 3D value-noise sampler for one seed. */
 export function createSeededNoise(seed: Seed): (x: number, y: number, z?: number) => number {
-  requireSeed('createSeededNoise', seed);
+  requireSeed("createSeededNoise", seed);
   const key = seedToUint32(seed);
   return (x, y, z = 0) => {
-    requireFiniteNumber('createSeededNoise', 'x', x);
-    requireFiniteNumber('createSeededNoise', 'y', y);
-    requireFiniteNumber('createSeededNoise', 'z', z);
+    requireFiniteNumber("createSeededNoise", "x", x);
+    requireFiniteNumber("createSeededNoise", "y", y);
+    requireFiniteNumber("createSeededNoise", "z", z);
     const x0 = Math.floor(x);
     const y0 = Math.floor(y);
     const z0 = Math.floor(z);
@@ -74,29 +74,41 @@ export function createSeededNoise(seed: Seed): (x: number, y: number, z?: number
   };
 }
 
-/** Sums positive integer octaves of a finite-coordinate noise sampler. */
+/** Sums 1..32 octaves of a finite-coordinate sampler, rejecting nonfinite callback results. */
 export function fractalNoise(
   noise: (x: number, y: number, z?: number) => number,
   x: number,
   y: number,
   z: number,
-  octaves = 4
+  octaves = 4,
 ): number {
-  requireFiniteNumber('fractalNoise', 'x', x);
-  requireFiniteNumber('fractalNoise', 'y', y);
-  requireFiniteNumber('fractalNoise', 'z', z);
+  requireFiniteNumber("fractalNoise", "x", x);
+  requireFiniteNumber("fractalNoise", "y", y);
+  requireFiniteNumber("fractalNoise", "z", z);
   if (!Number.isInteger(octaves) || octaves <= 0) {
-    throw new Error('fractalNoise: octaves must be a positive integer');
+    throw new Error("fractalNoise: octaves must be a positive integer");
   }
+  if (octaves > 32) throw new Error("fractalNoise: octaves must not exceed 32");
+  if (typeof noise !== "function") throw new Error("fractalNoise: noise must be a function");
   let value = 0;
   let amplitude = 0.5;
   let frequency = 1;
   let total = 0;
   for (let index = 0; index < octaves; index += 1) {
-    value += noise(x * frequency, y * frequency, z * frequency) * amplitude;
+    const scaledX = x * frequency;
+    const scaledY = y * frequency;
+    const scaledZ = z * frequency;
+    requireFiniteNumber("fractalNoise", "scaled x", scaledX);
+    requireFiniteNumber("fractalNoise", "scaled y", scaledY);
+    requireFiniteNumber("fractalNoise", "scaled z", scaledZ);
+    const sample = noise(scaledX, scaledY, scaledZ);
+    requireFiniteNumber("fractalNoise", "noise sample", sample);
+    value += sample * amplitude;
     total += amplitude;
     amplitude *= 0.5;
     frequency *= 2;
   }
-  return value / total;
+  const result = value / total;
+  requireFiniteNumber("fractalNoise", "result", result);
+  return result;
 }

@@ -1,3 +1,5 @@
+export { applyShaderPatches, replaceOrThrow } from "./shaderPatches.js";
+
 /** GLSL 3D value-noise helpers parameterized by an explicit seed scalar. */
 export const seededSurfaceNoiseGlsl = /* glsl */ `
 float strataKitHash(vec3 point, float seed) {

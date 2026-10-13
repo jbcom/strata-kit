@@ -7,6 +7,7 @@ export default defineConfig({
     sdf: 'src/sdf.ts',
     terrain: 'src/terrain.ts',
     materials: 'src/materials.ts',
+    mesh: 'src/mesh.ts',
     shaders: 'src/shaders.ts',
     'surface-fields': 'src/surfaceFields.ts',
     three: 'src/three.ts',

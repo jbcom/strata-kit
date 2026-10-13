@@ -9,16 +9,45 @@ export type {
   SurfacePlan,
   SurfacePlanOptions,
   SurfaceSample,
-} from './materials.js';
+  SurfaceSampler,
+  SurfaceLayer,
+  NeutralIndexedMesh,
+  ReskinPlan,
+  ReskinProjection,
+  TriplanarSurfaceOptions,
+  UvAtlasBake,
+  UvAtlasBakeOptions,
+  UvLayoutDiagnostics,
+  UvLayoutOptions,
+  WearField,
+  WearFieldOptions,
+  WearSample,
+} from "./materials.js";
 export {
   bakeSurface,
   createSurfaceBakeManifest,
   createSurfacePlan,
   sampleSurface,
-} from './materials.js';
-export type { Random, Seed } from './noise.js';
-export { createSeededNoise, createSeededRandom, fractalNoise, seedToUint32 } from './noise.js';
-export type { Vec3 } from './sdf.js';
+  createSurfaceSampler,
+  composeSurfaceLayers,
+  createWearField,
+  analyzeUvLayout,
+  bakeUvAtlas,
+  createReskinPlan,
+  sampleTriplanarSurface,
+} from "./materials.js";
+export type {
+  ProceduralMesh,
+  RevolveProfilePoint,
+  RevolvedMeshOptions,
+  SheetMeshOptions,
+  SweptMeshOptions,
+} from "./mesh.js";
+export { createRevolvedMesh, createSheetMesh, createSweptMesh } from "./mesh.js";
+export { applyShaderPatches, replaceOrThrow, seededSurfaceNoiseGlsl } from "./shaders.js";
+export type { Random, Seed } from "./noise.js";
+export { createSeededNoise, createSeededRandom, fractalNoise, seedToUint32 } from "./noise.js";
+export type { Vec3 } from "./sdf.js";
 export {
   opIntersection,
   opSmoothSubtraction,
@@ -28,7 +57,7 @@ export {
   sdBox,
   sdPlane,
   sdSphere,
-} from './sdf.js';
+} from "./sdf.js";
 export type {
   CubicHermiteProfile,
   CubicHermiteProfileKnot,
@@ -39,7 +68,7 @@ export type {
   ScalarCoordinateDerivatives,
   ScalarFieldSample,
   SurfaceDifferentials,
-} from './surfaceFields.js';
+} from "./surfaceFields.js";
 export {
   createCubicHermiteProfile,
   deriveReliefFrame,
@@ -48,7 +77,7 @@ export {
   sampleCubicHermiteProfile,
   surfaceFieldsGlsl,
   toCubicHermiteProfileUniforms,
-} from './surfaceFields.js';
+} from "./surfaceFields.js";
 export type {
   Biome,
   BiomeKind,
@@ -57,5 +86,5 @@ export type {
   SeededTerrainField,
   SeededTerrainOptions,
   TerrainSample,
-} from './terrain.js';
-export { createSeededTerrainField } from './terrain.js';
+} from "./terrain.js";
+export { createSeededTerrainField } from "./terrain.js";
