@@ -8,8 +8,8 @@
  * wear-field math. This module intentionally exposes no game names, palettes,
  * assets, or runtime-specific APIs.
  */
-import { type Seed, seedToUint32 } from './noise.js';
-import { requireFiniteNumber, requirePositiveFiniteNumber } from './validation.js';
+import { type Seed, seedToUint32 } from "./noise.js";
+import { requireFiniteNumber, requirePositiveFiniteNumber } from "./validation.js";
 
 /** Parameters for a deterministic, normalized coating-wear field. */
 export interface WearFieldOptions {
@@ -84,7 +84,7 @@ function fbm(x: number, y: number, seed: number, octaves = 5): number {
   let weight = 0;
   for (let octave = 0; octave < octaves; octave += 1) {
     if (!Number.isFinite(x) || !Number.isFinite(y)) {
-      throw new Error('createWearField: scaled noise coordinates must remain finite');
+      throw new Error("createWearField: scaled noise coordinates must remain finite");
     }
     total += amplitude * valueNoise(x, y, seed);
     weight += amplitude;
@@ -109,7 +109,10 @@ function sampleNoiseBands(u: number, v: number, scale: number, seed: number): We
   };
 }
 
-function requireUnitInterval(name: keyof Omit<WearFieldOptions, 'seed' | 'scale'>, value: number): void {
+function requireUnitInterval(
+  name: keyof Omit<WearFieldOptions, "seed" | "scale">,
+  value: number,
+): void {
   if (!Number.isFinite(value) || value < 0 || value > 1) {
     throw new Error(`createWearField: ${name} must be a finite number between 0 and 1`);
   }
@@ -118,27 +121,37 @@ function requireUnitInterval(name: keyof Omit<WearFieldOptions, 'seed' | 'scale'
 /** Creates a pure wear-field-v1 sampler. Scale affects noise only; masks always use clamped UVs. */
 export function createWearField(options: WearFieldOptions): WearField {
   const seed = seedToUint32(options.seed);
-  requirePositiveFiniteNumber('createWearField', 'scale', options.scale);
-  requireUnitInterval('amount', options.amount);
-  requireUnitInterval('edgeBias', options.edgeBias);
-  requireUnitInterval('bottomBias', options.bottomBias);
+  requirePositiveFiniteNumber("createWearField", "scale", options.scale);
+  requireUnitInterval("amount", options.amount);
+  requireUnitInterval("edgeBias", options.edgeBias);
+  requireUnitInterval("bottomBias", options.bottomBias);
   const { scale, amount, edgeBias, bottomBias } = options;
+  let lastU: number | undefined;
+  let lastV: number | undefined;
+  let lastSample: WearSample | undefined;
+  const remember = (u: number, v: number, sample: WearSample): WearSample => {
+    lastSample = lastSample ? Object.assign(lastSample, sample) : { ...sample };
+    lastU = u;
+    lastV = v;
+    return sample;
+  };
 
   return {
     sample(u: number, v: number): WearSample {
-      requireFiniteNumber('createWearField', 'u', u);
-      requireFiniteNumber('createWearField', 'v', v);
+      requireFiniteNumber("createWearField", "u", u);
+      requireFiniteNumber("createWearField", "v", v);
+      if (lastSample && u === lastU && v === lastV) return { ...lastSample };
       const bands = sampleNoiseBands(u, v, scale, seed);
-      if (amount === 0) return { ...bands, chip: 0, steel: 0, oxide: 0, drip: 0 };
+      if (amount === 0) return remember(u, v, { ...bands, chip: 0, steel: 0, oxide: 0, drip: 0 });
       const maskU = clamp01(u);
       const maskV = clamp01(v);
       const edgeDistance = Math.min(maskU, 1 - maskU, maskV, 1 - maskV);
       const bias = Math.max(
         smoothstep(0.5, 1, maskV) * bottomBias,
-        (1 - smoothstep(0, 0.14, edgeDistance)) * edgeBias
+        (1 - smoothstep(0, 0.14, edgeDistance)) * edgeBias,
       );
       const field = bands.broad * 0.78 + bands.mid * 0.22 + bias * 0.42 - 0.66;
-      return {
+      return remember(u, v, {
         ...bands,
         chip: amount * smoothstep(-0.14, 0, field),
         steel: amount * smoothstep(0, 0.07, field),
@@ -147,7 +160,7 @@ export function createWearField(options: WearFieldOptions): WearField {
           amount *
           smoothstep(0.5, 0.78, fbm(u * scale * 46, v * scale * 1.4, seed, 3)) *
           smoothstep(0, 0.35, maskV + bands.broad * 0.3),
-      };
+      });
     },
   };
 }
