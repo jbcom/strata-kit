@@ -1,26 +1,78 @@
 # Architecture
 
-`strata-kit` preserves a data-first content pipeline:
+Strata Kit is a data-first procedural library, not a game framework. Its current
+pipeline composes deterministic numeric fields into portable data that a consumer can
+render, bake, serialize, or use to drive its own systems.
 
 ```text
-seed -> noise/SDF -> terrain or surface data -> CPU bake -> optional Three.js -> optional R3F
+explicit seed
+  -> noise and SDF operations
+  -> terrain fields, surface plans, or scalar profiles
+  -> typed-array heightfields and surface-map buffers
+  -> optional Three.js geometry or React Three Fiber view
 ```
 
-The root, noise, SDF, terrain, materials and shader subpaths are Node-runnable. They never import Three.js or React. `./three` receives precomputed `HeightfieldMesh` data and creates a Three geometry only when a consumer imports that subpath. `./r3f` renders that explicit geometry and does not create game state or a global render loop.
+## Module boundaries
 
-The package deliberately excludes game lifecycle, input, state, persistence, audio, physics, animation, inventory, UI, camera and renderer-framework wrappers. Those concerns have separate owners or need an owner decision before they can be republished.
+| Layer | Modules | Responsibility |
+| --- | --- | --- |
+| Numeric primitives | `noise`, `sdf` | Explicit seeded randomness, value noise, and finite SDF composition |
+| Procedural data | `terrain`, `materials`, `surface-fields`, `shaders` | Height samples, mesh buffers, surface-map bytes, scalar profiles, and GLSL snippets |
+| Adapters | `three`, `r3f` | Convert a supplied heightfield into a Three geometry or view |
 
-## Analytic scalar relief
+The root package re-exports only the procedural layers. `three` and `r3f` are separate
+package exports with optional peer dependencies, so importing the core does not load a
+renderer or React.
 
-`surface-fields` is a pure CPU/GLSL pair for a caller-owned scalar coordinate. It evaluates a clamped C1 cubic-Hermite profile, returns the scalar height and analytic derivative, and applies the chain rule only after the caller supplies the projection gradient. A caller then supplies the surface Jacobian (`dP/du`, `dP/dv`) in one explicitly chosen evaluation space. Its local first-order shading frame is formed from:
+## Determinism and validation
+
+Every stochastic public operation begins from a string or finite numeric `Seed`.
+Fields capture normalized inputs before use, so later mutation of the caller's input
+does not alter an already-created terrain field or surface plan. The public seeded
+field, surface-plan, SDF, and scalar-profile APIs validate documented finite inputs
+before they enter generated output.
+
+Determinism applies to a fixed release and equal inputs. A change to seed hashing,
+random draw order, noise arithmetic, or a documented output layout changes generated
+content and must receive compatibility review plus focused regression tests.
+
+## Data ownership
+
+The library returns plain values and typed arrays. Consumers own:
+
+- image-file encoding and texture upload for surface bakes;
+- material selection and shader assembly;
+- world placement, streaming, persistence, and lifecycle;
+- geometry deformation and rendering policy;
+- camera, input, physics, audio, UI, and game state.
+
+This keeps the library portable across renderers and prevents assumptions about a host
+application from becoming part of its public API.
+
+## Scalar relief model
+
+`surface-fields` pairs a CPU oracle with a GLSL ES 3 chunk. It samples a clamped C1
+cubic-Hermite profile, carries its analytic derivative through a caller-supplied
+coordinate gradient, and derives a local frame from caller-supplied surface
+differentials. The uniform packer and shader evaluator share the eight-knot bound.
+
+The local frame uses:
 
 ```text
 N0 = normalize(cross(dP/du, dP/dv))
-Tu = dP/du + dH/du * N0
-Tv = dP/dv + dH/dv * N0
+Tu = dP/du + N0 * dH/du
+Tv = dP/dv + N0 * dH/dv
 N  = normalize(cross(Tu, Tv))
 ```
 
-The CPU and GLSL implementations use the same bounded eight-knot calculation. The frame evaluates `dP + N0 * dH`; it intentionally omits `H * dN0`. It is therefore a local bump/relief shading frame, not an exact normal for physically offset curved geometry `P + HN0`. A geometry-displacing consumer needs its own curvature-aware differential path. The module does not inspect textures, read an atlas, select a coordinate projection, apply a skeleton, or compose normal maps. Consumers retain those operations and may use the returned orthonormal frame with their established normal-map logic.
+This is first-order relief shading. It intentionally omits the curvature term from the
+derivative of a physically offset curved surface. Consumers that alter curved geometry
+need a curvature-aware differential implementation of their own.
 
-A rest-space caller may pass rest-space differentials. A world-space caller passes world-space differentials. A skinned or non-affinely deformed caller supplies a local posed Jacobian; transforming a normal with one global normal matrix is insufficient for that case.
+## Intentional limits
+
+The package currently provides the APIs documented in [API.md](API.md). It does not
+claim mesh extraction, runtime world management, scene composition, asset-placement
+policy, texture-file encoding, or general-purpose material systems. New capability
+belongs in the smallest renderer-neutral layer that can express it; adapters should
+only translate established data into their ecosystem.
