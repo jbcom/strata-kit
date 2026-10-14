@@ -12,10 +12,14 @@ import type { SurfaceBake } from "./materials.js";
 import type { ProceduralMesh } from "./mesh.js";
 import type { HeightfieldMesh } from "./terrain.js";
 
-function validateMeshBuffers(
-  mesh: Pick<ProceduralMesh, "positions" | "normals" | "indices"> & { uvs?: Float32Array },
-  allowEmpty = false,
-): number {
+export { snapshotThreeStaticMeshes } from "./threeSnapshot.js";
+export type { ThreeStaticMeshSnapshot, SnapshotThreeStaticMeshesOptions } from "./threeSnapshot.js";
+
+type MeshBuffers = Pick<ProceduralMesh, "positions" | "normals" | "indices"> & {
+  uvs?: Float32Array;
+};
+
+function validateMeshBuffers(mesh: MeshBuffers, allowEmpty = false): number {
   if (
     !(mesh.positions instanceof Float32Array) ||
     mesh.positions.length < 9 ||
@@ -54,13 +58,11 @@ function validateMeshBuffers(
   return vertices;
 }
 
-function geometryFromBuffers(
-  mesh: Pick<ProceduralMesh, "positions" | "normals" | "uvs" | "indices">,
-): BufferGeometry {
+function geometryFromBuffers(mesh: MeshBuffers): BufferGeometry {
   const geometry = new BufferGeometry();
   geometry.setAttribute("position", new BufferAttribute(mesh.positions, 3));
   geometry.setAttribute("normal", new BufferAttribute(mesh.normals, 3));
-  geometry.setAttribute("uv", new BufferAttribute(mesh.uvs, 2));
+  if (mesh.uvs) geometry.setAttribute("uv", new BufferAttribute(mesh.uvs, 2));
   geometry.setIndex(new BufferAttribute(mesh.indices, 1));
   geometry.computeBoundingBox();
   geometry.computeBoundingSphere();
@@ -72,7 +74,7 @@ function geometryFromBuffers(
  * Attributes view the supplied buffers: keep them immutable while the geometry is used.
  * Dispose the returned geometry when its consumer no longer needs it.
  */
-export function createThreeMeshGeometry(mesh: ProceduralMesh): BufferGeometry {
+export function createThreeMeshGeometry(mesh: MeshBuffers): BufferGeometry {
   validateMeshBuffers(mesh, true);
   return geometryFromBuffers(mesh);
 }

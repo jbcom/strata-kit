@@ -18,11 +18,19 @@ explicit seed
 | --- | --- | --- |
 | Numeric primitives | `noise`, `sdf` | Explicit seeded randomness, value noise, and finite SDF composition |
 | Procedural data | `terrain`, `materials`, `mesh`, `surface-fields`, `shaders` | Height samples, portable meshes, coherent surface layers, UV bakes, scalar profiles, and checked GLSL patches |
-| Adapters | `three`, `r3f` | Translate supplied mesh/bake data into geometry, textures, or a view |
+| Adapters | `three`, `r3f` | Translate supplied mesh/bake data into geometry, textures, or a view; copy prepared static Three meshes into neutral buffers |
 
 The root package re-exports only the procedural layers. `three` and `r3f` are separate
 package exports with optional peer dependencies, so importing the core does not load a
 renderer or React.
+
+The optional static snapshot path runs in the opposite direction: a caller-prepared
+Three hierarchy becomes copied mesh buffers for the neutral analysis and baking
+pipeline. It reads world matrices without scene updates, applies inverse-transpose
+normal transforms and reflected winding, and retains no renderer resources or
+source object references. Hierarchy-wide count limits precede output allocation.
+Unsupported deformation and render partitions fail explicitly; the adapter does
+not infer material semantics or become an asset loader or animation system.
 
 ## Determinism and validation
 

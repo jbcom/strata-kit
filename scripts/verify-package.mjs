@@ -192,7 +192,34 @@ try {
       "--eval",
       `
     import assert from 'node:assert/strict';
-    import { createThreeSurfaceTextures } from 'strata-procedural/three';
+    import { BufferGeometry, Float32BufferAttribute, Group, Mesh, MeshBasicMaterial } from 'three';
+    import { createThreeSurfaceTextures, createThreeMeshGeometry, snapshotThreeStaticMeshes } from 'strata-procedural/three';
+    const sourceGeometry = new BufferGeometry();
+    const sourcePositions = new Float32Array([0,0,0, 1,0,0, 0,1,0]);
+    sourceGeometry.setAttribute('position', new Float32BufferAttribute(sourcePositions, 3));
+    const source = new Mesh(sourceGeometry, new MeshBasicMaterial());
+    const root = new Group();
+    root.position.x = 10;
+    root.scale.set(-2, 3, 4);
+    root.add(source);
+    root.updateWorldMatrix(true, true);
+    const matrixBefore = source.matrixWorld.toArray();
+    const [relative] = snapshotThreeStaticMeshes(root);
+    const [world] = snapshotThreeStaticMeshes(root, { space: 'world' });
+    assert.deepEqual(Array.from(relative.positions), [0,0,0, 1,0,0, 0,1,0]);
+    assert.deepEqual(Array.from(relative.indices), [0,1,2]);
+    assert.deepEqual(Array.from(world.positions), [10,0,0, 8,0,0, 10,3,0]);
+    assert.deepEqual(Array.from(world.indices), [0,2,1]);
+    assert.deepEqual(Array.from(world.normals), [0,0,1, 0,0,1, 0,0,1]);
+    assert.equal(world.uvs, undefined);
+    const converted = createThreeMeshGeometry(world);
+    assert.equal(converted.getAttribute('uv'), undefined);
+    converted.dispose();
+    world.positions[0] = 99;
+    assert.deepEqual(source.matrixWorld.toArray(), matrixBefore);
+    assert.deepEqual(Array.from(sourceGeometry.getAttribute('position').array), Array.from(sourcePositions));
+    sourceGeometry.dispose();
+    source.material.dispose();
     const textures = createThreeSurfaceTextures({
       width: 1, height: 1, color: new Uint8Array([128, 64, 32, 255]),
       roughness: new Uint8Array([127]), bump: new Uint8Array([127]),
@@ -208,7 +235,9 @@ try {
     ],
     { cwd: minimumThreeDirectory, encoding: "utf8", stdio: "pipe" },
   );
-  console.log("minimum Three r152 packed consumer preserves texture color spaces and metalness");
+  console.log(
+    "minimum Three r152 packed consumer preserves static snapshots and texture contracts",
+  );
 
   console.log(
     `strata-procedural: checked ${first.manifest.entryCount} packed files and both optional-peer modes`,
