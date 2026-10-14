@@ -162,6 +162,7 @@ test("real seed and pointer inputs change the gallery and restore deterministic 
     await save("mouse-zoom", zoomed);
     assert.notEqual(zoomed.png, rotated.png);
     assert.deepEqual(zoomed.resources, baseline.resources);
+    assert.deepEqual(errors, [], "Desktop phase must have no errors");
     await desktop.close();
 
     const mobile = await browser.newContext({
@@ -220,6 +221,10 @@ test("real seed and pointer inputs change the gallery and restore deterministic 
       touchPoints: [point(2, tx - 45, ty), point(3, tx + 45, ty)],
     });
     await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await touchPage.waitForFunction((distance) => {
+      const demo = (window as unknown as { __proceduralDemo: Demo }).__proceduralDemo;
+      return Math.abs(demo.camera.distance - distance) > 0.001;
+    }, touchOrbit.camera.distance);
     const touchZoom = await capture(touchPage);
     await save("touch-zoom", touchZoom);
     assert(Math.abs(touchZoom.camera.distance - touchOrbit.camera.distance) > 0.001);
