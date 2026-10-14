@@ -16,8 +16,8 @@ explicit seed
 
 | Layer | Modules | Responsibility |
 | --- | --- | --- |
-| Numeric primitives | `noise`, `sdf` | Explicit seeded randomness, value noise, and finite SDF composition |
-| Procedural data | `terrain`, `materials`, `mesh`, `surface-fields`, `shaders` | Height samples, portable meshes, coherent surface layers, UV bakes, scalar profiles, and checked GLSL patches |
+| Numeric primitives | `noise`, `sdf` | Explicit seeded randomness, injected integer lattices, recursive affine noise, and finite SDF composition |
+| Procedural data | `terrain`, `materials`, `mesh`, `surface-fields`, `shaders` | Ordered scalar fields and XZ projection, smooth contour masks, height samples, portable meshes, surface layers, UV bakes, scalar profiles, and checked GLSL patches |
 | Adapters | `three`, `r3f` | Translate supplied mesh/bake data into geometry, textures, or a view; copy prepared static Three meshes into neutral buffers |
 
 The root package re-exports only the procedural layers. `three` and `r3f` are separate
@@ -35,12 +35,29 @@ not infer material semantics or become an asset loader or animation system.
 ## Determinism and validation
 
 The built-in stochastic generators begin from a string or finite numeric `Seed`.
-`fractalNoise` accepts a caller-supplied noise function: its determinism depends
-on that function being deterministic and independent of call order.
+`fractalNoise`, callable 2D fields, and injected lattice/profile callbacks depend
+on their supplied functions being pure, deterministic, and independent of call order.
 Fields capture normalized inputs before use, so later mutation of the caller's input
 does not alter an already-created terrain field or surface plan. The public seeded
 field, surface-plan, SDF, and scalar-profile APIs validate documented finite inputs
 before they enter generated output.
+
+Callable field constructors capture numeric options and copy bounded lists, records,
+and tuples. They borrow callback identities and cannot freeze a callback's closure
+state. Composition accepts at most 64 layers, directional projection at most 32
+displacements, and 2D fractal noise at most 32 octaves. These are per-constructor
+bounds, not limits on the expanded cost of nested recipes or arbitrary callback time.
+Fields retain no persistent coordinate cache, callback registry, or graph scheduler.
+Finite-input and sampled-result checks reject invalid numerical output rather than
+silently clamping heights or normalizing a composition.
+
+The 2D integer-lattice value-noise extension preserves an ordered bilinear
+polynomial. Recursive affine fractal noise preserves octave-by-octave coordinate
+updates and accumulation; it normalizes by total amplitude only when requested.
+Both seeded and injected lattices are supported. Configured sine lattices use
+numeric seeds directly as phase and hashed string seeds as phase, distinct from
+the standard integer-hash seed semantics. Engine/platform differences in `Math.sin`
+and finite phase resolution prevent a cross-engine byte-identity promise.
 
 `createHeightfield` uses an operation-local exact-coordinate cache while it derives
 central-difference normals. It retains no more than 65,536 live samples in at most
@@ -127,10 +144,27 @@ See [performance guidance](PERFORMANCE.md) for measurement semantics and limits.
 
 ## Scalar relief model
 
-`surface-fields` pairs a CPU oracle with a GLSL ES 3 chunk. It samples a clamped C1
+`surface-fields` pairs its cubic-Hermite CPU oracle with a GLSL ES 3 chunk. It samples a clamped C1
 cubic-Hermite profile, carries its analytic derivative through a caller-supplied
 coordinate gradient, and derives a local frame from caller-supplied surface
 differentials. The uniform packer and shader evaluator share the eight-knot bound.
+
+The same subpath exposes CPU-only unit-period ridge and cosine samplers with
+analytic derivatives per cycle. The ridge is C1 for `risePower > 1`; it does not
+promise C2 joins, and the wrap is not C2 for powers between one and two. These
+profiles do not extend the existing GLSL chunk or its uniform packer. Scalar profile
+math chooses no surface coordinate, geometry deformation, image encoding, or
+rendering policy.
+
+Directional projection belongs to `terrain`: it projects caller XZ coordinates
+onto a supplied unit direction, adds ordered length displacements, divides by
+positive wavelength, then adds cycle phase. Ordinary ordered field multiplication
+expresses amplitude; composition handles add, multiply, and blend without a world
+generator. Smooth masks use radial distance or an explicit box-max contour with
+increasing or decreasing smoothstep edges. Box-max is not Euclidean signed distance,
+and its corner ties do not imply globally smooth spatial gradients. Domain transforms
+provide per-axis scale and translation; caller placement and coordinate policy stay
+outside the scalar-profile layer.
 
 The local frame uses:
 

@@ -9,9 +9,9 @@ consumers keep their dependency boundary explicit.
 | Import | Exports | Dependencies |
 | --- | --- | --- |
 | `strata-procedural` | Noise, SDF, terrain, surface samplers/layers/wear, mesh generators, UV/triplanar/atlas, shader, and scalar-relief APIs | none |
-| `strata-procedural/noise` | `seedToUint32`, `createSeededRandom`, `createSeededNoise`, `fractalNoise` | none |
+| `strata-procedural/noise` | `seedToUint32`, `createSeededRandom`, `createSeededNoise`, `fractalNoise`, `createValueNoise2D`, `createFractalNoise2D`, `createSineLattice2D` | none |
 | `strata-procedural/sdf` | `sdSphere`, `sdPlane`, `sdBox`, `opUnion`, `opIntersection`, `opSubtraction`, `opSmoothUnion`, `opSmoothSubtraction` | none |
-| `strata-procedural/terrain` | `createSeededTerrainField` and terrain data types | none |
+| `strata-procedural/terrain` | `createSeededTerrainField`, `composeScalarField2D`, `transformScalarField2D`, `createDirectionalField2D`, `createSmoothMask2D`, and terrain/field types | none |
 | `strata-procedural/materials` | Surface plans, samplers, composition, wear, UV diagnostics, triplanar sampling, and atlas bakes | none |
 | `strata-procedural/mesh` | `createRevolvedMesh`, `createSweptMesh`, `createSheetMesh`, and mesh types | none |
 | `strata-procedural/shaders` | `seededSurfaceNoiseGlsl`, `replaceOrThrow`, `applyShaderPatches` | none |
@@ -32,6 +32,133 @@ The SDF functions operate on finite `{ x, y, z }` values. The primitive function
 return signed distances. The boolean functions combine finite distance values; smooth
 operations require a positive finite blend radius. `Vec3` is the shared coordinate
 type.
+
+## Callable 2D noise
+
+`createValueNoise2D({ seed })` or `createValueNoise2D({ lattice })` returns a
+`(x, z) => number` sampler. Supply exactly one option. A seeded sampler uses the
+existing integer hash at Y=0 with lattice values in `[-1, 1]`. An injected
+`LatticeSampler2D` receives integer `(ix, iz)` coordinates, including negative
+integers; its finite values are neither remapped nor clamped. It must be
+deterministic and independent of call order. The four corners are evaluated in
+the order `(ix, iz)`, `(ix + 1, iz)`, `(ix, iz + 1)`, `(ix + 1, iz + 1)`.
+
+Fractional cell coordinates use cubic smoothstep. Interpolation preserves the
+ordered polynomial `a + (b-a)*ux + (c-a)*uz + (a-b-c+d)*ux*uz`;
+rounding can differ from repeated linear interpolation. A bounded lattice remains
+within its corner range up to floating rounding. Coordinates must be finite with
+absolute magnitude below `2**52`, and integer neighbors must be safe integers.
+Nonfinite corner values or checked arithmetic overflow throw.
+
+`createFractalNoise2D({ noise, octaves?, initialAmplitude?, persistence?,
+octaveTransform?, normalize? })` samples a supplied 2D field with recursive
+per-axis affine coordinates. Defaults are four octaves, amplitude `0.5`,
+persistence `0.5`, scale `[2, 2]`, offset `[0, 0]`, and `normalize: true`.
+An explicit `octaveTransform` requires both finite `scale` and `offset` pairs;
+zero or negative scale is supported. Each octave adds `amplitude * noise(qx, qz)`
+in order, then, only if another octave remains, advances
+`qx = qx * sx + ox`, `qz = qz * sz + oz`, and `amplitude *= persistence`.
+It does not pre-expand the recurrence into one transform.
+
+Octaves must be an integer in `[1, 32]`, initial amplitude positive and finite,
+persistence finite in `[0, 1]`, and normalization boolean. Normalized output
+divides by the accumulated amplitude; `normalize: false` returns the raw sum.
+Zero persistence still evaluates every declared octave, including zero-amplitude
+samples. Input coordinates, recurrence, callback results, weighted samples, sums,
+and the result must remain finite. The injected sampler can impose a narrower
+coordinate domain, such as the value-noise limit above.
+
+`createSineLattice2D({ seed, coefficients, multiplier })` creates an explicitly
+configured integer lattice. All options are required; `coefficients` is a finite
+pair and `multiplier` is positive and finite. It returns
+`fract(sin(ix * coefficients[0] + iz * coefficients[1] + phase) * multiplier)`,
+where `fract(v) = v - floor(v)`. Numeric seeds are finite phases; string seeds use
+`seedToUint32(seed)` as phase. Thus numeric `0` and string `'0'` have different
+meanings here, unlike the integer-hash seed normalization. For example:
+
+```ts
+import { createSineLattice2D, createValueNoise2D } from 'strata-procedural/noise';
+
+const lattice = createSineLattice2D({
+  seed: 0,
+  coefficients: [13.3, 29.7],
+  multiplier: 1024,
+});
+const field = createValueNoise2D({ lattice });
+const value = field(-0.5, 0.25);
+```
+
+Lattice coordinates must be integers with absolute magnitude below `2**52`.
+Products, sums, and the sine product must remain finite. Large finite products
+or phases can still lose phase resolution. `Math.sin` low bits may differ between
+engines or platforms; this compatibility primitive does not promise portable byte
+identity. The standard seeded integer lattice remains available without sine hashing.
+
+`ValueNoise2DOptions`, `FractalNoise2DOptions`, `SineLattice2DOptions`, and
+`LatticeSampler2D` are exported from root and `noise`. Constructors capture option
+values and copy tuples. Callback identity and callback state remain borrowed;
+callback failures and nonfinite results are rejected during sampling.
+
+## Callable terrain fields
+
+`ScalarField2D` is `(x: number, z: number) => number`; `ScalarField2DInput` is a
+finite constant or such a sampler. These fields use caller-declared XZ coordinates
+and do not imply any height unit, mesh, or scene. Injected callbacks must be pure,
+deterministic, and independent of sampling order.
+
+`composeScalarField2D(base, layers)` captures up to 64 ordered layer records:
+
+| Layer | Arithmetic |
+| --- | --- |
+| `{ operation: 'add', field, gain? }` | `h = h + field(x, z) * gain`, default gain `1` |
+| `{ operation: 'multiply', field }` | `h = h * field(x, z)` |
+| `{ operation: 'blend', field, weight }` | `h = h * (1-w) + field(x, z) * w` |
+
+Gain can be any finite number, including negative or zero. Blend weights are
+constant or sampled and must remain finite in `[0, 1]`; they are rejected rather
+than clamped. Base is sampled first, then layers in declaration order; blend samples
+its target before its weight, including at zero/one weights. Empty layers preserve
+the base. There is no implicit normalization or value clamping. Later mutation of
+input arrays or records does not alter the captured recipe; callbacks remain borrowed.
+
+`transformScalarField2D(field, { scale?, offset? } = {})` samples
+`field(x * sx + ox, z * sz + oz)`. Scale defaults to `[1, 1]`, offset to `[0, 0]`.
+Pairs are finite and copied; zero scales make an axis constant and negative scales
+mirror it. Coordinates and transformed coordinates must be finite.
+
+`createDirectionalField2D({ direction, wavelength, profile, displacement?, phase? })`
+starts with `q = x * direction[0] + z * direction[1]`, adds each displacement in
+declared order, divides by wavelength, then adds phase and samples the profile.
+Direction is a finite pair whose length differs from one by at most `1e-12`;
+its components are preserved without renormalizing. Wavelength is positive and
+finite. At most 32 displacements are accepted, each a constant or 2D field in
+the same length units as XZ. Phase is a constant or field in **cycles**, default `0`.
+An omitted displacement list is empty. Both profile value and derivative must be
+finite, even though this field returns only the value. Direction and displacement
+data are copied; a supplied profile is a borrowed `ScalarProfileSampler`.
+
+`createSmoothMask2D({ shape, edges })` returns a scalar in `[0, 1]` by evaluating
+`t*t*(3-2*t)` with `t = clamp((contour-e0)/(e1-e0), 0, 1)`:
+
+- `{ kind: 'radial', center: [cx, cz] }` uses `hypot(x-cx, z-cz)`.
+- `{ kind: 'box-max', center: [cx, cz], halfExtents: [hx, hz] }` uses
+  `max(abs(x-cx)-hx, abs(z-cz)-hz)` with positive finite half-extents.
+
+Centers and edges are required finite pairs and copied. Edges must be distinct
+with a finite difference; reversed edges produce a decreasing mask. Sampling
+rejects nonfinite contours or transition ratios before clamping. Box-max is a
+scalar contour, **not a Euclidean signed-distance box**: diagonal outside corners
+use the maximum axis distance. Box ties can have creases in the active transition;
+radial distance has an origin singularity unless the mask is locally constant.
+Neither shape promises globally smooth spatial gradients.
+
+All callable terrain fields validate finite inputs, callback values, and their
+documented intermediate/result checks. Construction is bounded per list; sampling
+cost follows the expanded callback recipe. Nested fields and arbitrary callbacks
+remain caller-controlled, so the list limits do not bound total callback time.
+There is no persistent coordinate cache or graph scheduler. `ScalarField2D`,
+`ScalarField2DInput`, `ScalarField2DLayer`, `DirectionalField2DOptions`, and
+`SmoothMask2DOptions` are exported from root and `terrain`.
 
 ## Terrain
 
@@ -217,6 +344,34 @@ contextual errors. Both return new strings; retained-anchor insertions reject re
 application. Consumers own shader version compatibility and assembly.
 
 ## Scalar profiles and relief frames
+
+`ScalarProfileSampler` is `(coordinate: number) => ScalarFieldSample`. A scalar
+profile chooses no spatial projection; `terrain.createDirectionalField2D` supplies
+an explicit XZ projection when needed. The following profiles are exported from
+root and `surface-fields` and have no matching GLSL implementation:
+
+`createPeriodicRidgeProfile({ crest, risePower })` returns a unit-period profile.
+Both options are required and finite: `0 < crest < 1` and `risePower > 1`.
+For fractional phase `p = coordinate - floor(coordinate)`, its value is
+`sin((s * Math.PI) / 2) ** risePower`, with `s = p / crest`, on the rising segment;
+otherwise it is `1 - s*s*(3-2*s)`, with `s = (p-crest)/(1-crest)`.
+Values lie in `[0, 1]`; derivatives are analytic value changes **per cycle**.
+Wraps and crests return derivative zero explicitly, including negative cycles.
+The joins are C1, but curvature continuity is not promised; in particular the
+periodic wrap is not C2 for `1 < risePower < 2`. Options are captured by value,
+and each sample returns an independent record.
+
+`sampleCosineProfile(coordinate)` returns
+`{ value: Math.cos(coordinate * Math.PI * 2), derivative: -Math.sin(coordinate * Math.PI * 2) * Math.PI * 2 }`.
+It preserves that multiplication order without reducing the coordinate first;
+whole-cycle translations can therefore differ by floating argument-reduction error.
+
+Both periodic samplers require finite coordinates with absolute magnitude below
+`2**52`. The ridge constructor rejects nonfinite segment reciprocals; sampling
+rejects nonfinite values, derivatives, and checked slope intermediates. Very narrow
+finite segments can produce an overflowing derivative and throw when sampled.
+These guards do not impose an arbitrary upper exponent limit or change the existing
+cubic-Hermite coordinate domain.
 
 `createCubicHermiteProfile(knots)` creates an immutable clamped C1 profile with two
 to eight strictly increasing knots. Each knot has `coordinate`, `value`, and

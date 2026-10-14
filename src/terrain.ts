@@ -1,5 +1,18 @@
 import { createSeededNoise, createSeededRandom, fractalNoise, type Seed } from "./noise.js";
 import { opSmoothSubtraction, type Vec3 } from "./sdf.js";
+export {
+  composeScalarField2D,
+  transformScalarField2D,
+  createDirectionalField2D,
+  createSmoothMask2D,
+} from "./terrainFields.js";
+export type {
+  ScalarField2D,
+  ScalarField2DInput,
+  ScalarField2DLayer,
+  DirectionalField2DOptions,
+  SmoothMask2DOptions,
+} from "./terrainFields.js";
 import {
   requireFiniteNumber,
   requireFiniteVector3,

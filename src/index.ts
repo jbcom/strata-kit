@@ -91,3 +91,25 @@ export type {
   TerrainSample,
 } from "./terrain.js";
 export { createSeededTerrainField } from "./terrain.js";
+export { createValueNoise2D, createFractalNoise2D, createSineLattice2D } from "./noise.js";
+export type {
+  ValueNoise2DOptions,
+  FractalNoise2DOptions,
+  SineLattice2DOptions,
+  LatticeSampler2D,
+} from "./noise.js";
+export {
+  composeScalarField2D,
+  transformScalarField2D,
+  createDirectionalField2D,
+  createSmoothMask2D,
+} from "./terrain.js";
+export type {
+  ScalarField2D,
+  ScalarField2DInput,
+  ScalarField2DLayer,
+  DirectionalField2DOptions,
+  SmoothMask2DOptions,
+} from "./terrain.js";
+export { createPeriodicRidgeProfile, sampleCosineProfile } from "./surfaceFields.js";
+export type { ScalarProfileSampler } from "./surfaceFields.js";
