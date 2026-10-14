@@ -99,6 +99,11 @@ or triplanar sampling policy without owning scene objects. Allocation and raster
 bounds reject oversized requests before output buffers are created. UV overlap analysis
 uses deterministic two-axis bounding-box candidates and the existing exact-sign
 triangle predicate; broadphase acceleration does not change overlap semantics.
+UV atlas coverage defaults to pixel centres. Optional area coverage clips triangles
+in texel-local coordinates while carrying barycentric weights, then samples surface
+centroids and accumulates unquantized alpha-premultiplied linear channels. This
+preserves small valid charts without weakening geometric validation. Finite texel
+footprints may mix disjoint islands; consumers choose resolution and coverage policy.
 The Three adapter copies texture bytes, expands scalar texels to linear grayscale RGBA for WebGL1
 compatibility, views mesh arrays, and exposes explicit texture disposal; it does
 not dispose caller materials. The gallery is a consumer application, separate from

@@ -27,6 +27,14 @@ deadline on arbitrary callback code.
 
 Float32 output coordinates must remain finite and distinguishable after quantization.
 UV atlas baking also rejects outside, degenerate, overlapping, or zero-texel charts.
+Default pixel-centre coverage requires a centre in every triangle. Optional area
+coverage requires positive-area texel intersections and preserves the same geometric
+and work limits. Area coverage uses 64 additional bytes per output pixel for eight
+Float64 accumulators: 256 MiB at the pixel cap. With RGBA, scalar maps, written flags
+and optional padding workspace, array capacity is at most approximately 304 MiB,
+excluding source meshes, UV analysis workspace, runtime overhead and garbage collection.
+This is capacity accounting, not a measured peak-memory claim. Fixed clipping buffers
+are reused; centroid sampling is more work per candidate than centre sampling.
 
 UV overlap candidate selection sweeps U with a balanced active V-interval tree;
 it avoids scanning every U-overlapping pair when V ranges are disjoint. The exact
