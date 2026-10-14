@@ -23,10 +23,26 @@ deadline on arbitrary callback code.
 | Terrain scatter | 1,000,000 points |
 | UV layout analysis | 1,000,000 triangles; diagnostic grid at most 2048 per axis and 4,194,304 cells |
 | UV atlas bake | 4,194,304 pixels, 64 padding rings, and 67,108,864 combined raster/padding work units |
-| UV overlap broad phase | 8,388,608 candidate-pair work units |
+| UV overlap broad phase | 8,388,608 positive-width/height 2D bounding-box candidate pairs |
 
 Float32 output coordinates must remain finite and distinguishable after quantization.
 UV atlas baking also rejects outside, degenerate, overlapping, or zero-texel charts.
+Default pixel-centre coverage requires a centre in every triangle. Optional area
+coverage requires positive-area texel intersections and preserves the same geometric
+and work limits. Area coverage uses 64 additional bytes per output pixel for eight
+Float64 accumulators: 256 MiB at the pixel cap. With RGBA, scalar maps, written flags
+and optional padding workspace, array capacity is at most approximately 304 MiB,
+excluding source meshes, UV analysis workspace, runtime overhead and garbage collection.
+This is capacity accounting, not a measured peak-memory claim. Fixed clipping buffers
+are reused; centroid sampling is more work per candidate than centre sampling.
+
+UV overlap candidate selection sweeps U with a balanced active V-interval tree;
+it avoids scanning every U-overlapping pair when V ranges are disjoint. The exact
+Float32 triangle-intersection predicate and area-weighted result are unchanged.
+Candidate-budget exhaustion does not establish that triangles actually overlap.
+Its typed-array workspace uses approximately 43 bytes per input triangle plus
+constant sentinel storage, excluding mesh inputs, existing area arrays, sorting
+internals and runtime overhead. This is buffer capacity, not measured peak memory.
 
 Static snapshots return owned copies. At the aggregate limits, positions and
 normals occupy 24 MB, optional UVs add 8 MB, and Uint32 indices add up to 24 MB

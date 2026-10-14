@@ -23,6 +23,13 @@
   compatibility change.
 - Surface composition uses linear-sRGB source-over and shared scalar alpha weights.
 - Wear is palette-free; UV reskinning receives portable indexed arrays.
+- `bakeUvAtlas` defaults to strict `coverage: 'pixel-center'`; opt-in `'area'`
+  samples clipped positive-area centroids and blends unrounded linear channels.
+  Alpha averages over covered geometry; footprint filtering can mix disjoint islands.
+  Geometric/work guards remain; area accumulators cost 64 extra bytes per pixel.
+- Exact UV overlap uses two-axis bounding-box candidates and positive-area
+  Float32 triangle tests. Shared edges are not overlap; the 8,388,608 candidate
+  budget remains, and exhaustion is not an actual-overlap verdict.
 - Sheets sample each height once and preserve valid smooth normals; conflicting
   incident corners are duplicated with outward face normals. Returned vertex count
   and index width may increase within the one-million-vertex bound.
