@@ -52,6 +52,8 @@ export interface SheetMeshOptions {
   columns: number;
   rows: number;
   heightAt?: (u: number, v: number) => number;
+  /** Select cells in row-major order before height sampling; omitted cells emit no triangles. */
+  includeCell?: (column: number, row: number) => boolean;
 }
 
 function requirePositiveInteger(
@@ -716,13 +718,15 @@ export function createSweptMesh(options: SweptMeshOptions): ProceduralMesh {
  *
  * `columns` and `rows` count vertices, including both boundaries, and must each be at
  * least two. `heightAt` is sampled once per vertex in unit-domain `(u, v)` coordinates;
- * normals use finite differences of those samples. A corner whose normal points
+ * optional `includeCell` runs once per cell in row-major order before height sampling.
+ * Excluded cells emit no triangles; sampled vertices and UVs are retained.
+ * Normals use finite differences of those samples. A corner whose normal points
  * behind its incident triangle is duplicated with that triangle's outward normal;
  * valid smooth normals, positions, UVs and winding remain unchanged.
  */
 export function createSheetMesh(options: SheetMeshOptions): ProceduralMesh {
   const operation = "createSheetMesh";
-  const { width, height, columns, rows, heightAt = () => 0 } = options;
+  const { width, height, columns, rows, heightAt = () => 0, includeCell } = options;
   requireRepresentablePositiveFloat32(operation, "width", width);
   requireRepresentablePositiveFloat32(operation, "height", height);
   requirePositiveInteger(operation, "columns", columns, 2);
@@ -730,7 +734,28 @@ export function createSheetMesh(options: SheetMeshOptions): ProceduralMesh {
   const vertices = columns * rows;
   const indices = (columns - 1) * (rows - 1) * 6;
   checkedCount(operation, vertices, indices);
-  const mesh = allocateMesh(vertices, indices);
+  if (includeCell !== undefined && typeof includeCell !== "function") {
+    throw new Error(`${operation}: includeCell must be a function`);
+  }
+  let selected: Uint8Array | undefined;
+  let selectedIndices = indices;
+  if (includeCell) {
+    selected = new Uint8Array((columns - 1) * (rows - 1));
+    selectedIndices = 0;
+    for (let row = 0; row < rows - 1; row += 1) {
+      for (let column = 0; column < columns - 1; column += 1) {
+        const included = includeCell(column, row);
+        if (typeof included !== "boolean") {
+          throw new Error(`${operation}: includeCell(${column}, ${row}) must return a boolean`);
+        }
+        if (included) {
+          selected[row * (columns - 1) + column] = 1;
+          selectedIndices += 6;
+        }
+      }
+    }
+  }
+  const mesh = allocateMesh(vertices, selectedIndices);
   for (let row = 0; row < rows; row += 1) {
     const v = row / (rows - 1);
     for (let column = 0; column < columns; column += 1) {
@@ -764,6 +789,7 @@ export function createSheetMesh(options: SheetMeshOptions): ProceduralMesh {
   let indexCursor = 0;
   for (let row = 0; row < rows - 1; row += 1) {
     for (let column = 0; column < columns - 1; column += 1) {
+      if (selected && !selected[row * (columns - 1) + column]) continue;
       const lowerLeft = row * columns + column;
       mesh.indices[indexCursor++] = lowerLeft;
       mesh.indices[indexCursor++] = lowerLeft + columns;

@@ -65,6 +65,13 @@ normal outside any incident face's outward hemisphere falls back to exact up;
 positive face-Y winding guarantees it is outward for all incident triangles.
 Valid central-difference normal bytes and positions/indices remain unchanged.
 
+Optional cell selection evaluates a boolean callback once per cell in row-major
+order before sampling heights. It changes only emitted connectivity, leaving
+projection, collision and layout policy with the consumer. Worst-case grid bounds
+apply even to an empty selection; corner correction visits retained faces only.
+Empty indexed sheets keep validated attributes and can pass through the generic
+Three mesh adapter without relaxing the heightfield or UV-analysis contracts.
+
 ## Data ownership
 
 The library returns plain values and typed arrays. Consumers own:

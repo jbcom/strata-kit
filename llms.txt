@@ -26,6 +26,9 @@
 - Sheets sample each height once and preserve valid smooth normals; conflicting
   incident corners are duplicated with outward face normals. Returned vertex count
   and index width may increase within the one-million-vertex bound.
+- Optional sheet `includeCell(column, row)` selects cells once in row-major order
+  before height sampling. Omitted cells retain sampled vertices/UVs; all-false
+  returns empty indices supported by the generic Three mesh adapter.
 - Mesh generators produce typed arrays; Three textures expose explicit disposal.
 - Heightfields preserve their grid vertex/index layout. Only shared normals pointing
   behind an incident stored face fall back to `[0, 1, 0]`; valid normal bytes remain
