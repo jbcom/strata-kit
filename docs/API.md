@@ -16,7 +16,7 @@ consumers keep their dependency boundary explicit.
 | `strata-procedural/mesh` | `createRevolvedMesh`, `createSweptMesh`, `createSheetMesh`, and mesh types | none |
 | `strata-procedural/shaders` | `seededSurfaceNoiseGlsl`, `replaceOrThrow`, `applyShaderPatches` | none |
 | `strata-procedural/surface-fields` | Scalar-profile, relief-frame, uniform-packing, and GLSL APIs | none |
-| `strata-procedural/three` | `createThreeHeightfieldGeometry`, `createThreeMeshGeometry`, `createThreeSurfaceTextures`, `snapshotThreeStaticMeshes` | `three` peer |
+| `strata-procedural/three` | `createThreeHeightfieldGeometry`, `createThreeMeshGeometry`, `createThreeSurfaceTextures`, `snapshotThreeStaticMeshes`, `createThreeTriplanarMaterial` | `three` peer |
 | `strata-procedural/r3f` | `StrataHeightfield` and `StrataHeightfieldProps` | React, Three, and R3F peers |
 
 ## Seeded primitives
@@ -261,6 +261,50 @@ grayscale into RGBA: roughness and metalness use Three's G/B channels, while bum
 uses R. This supports WebGL1 texture uploads at the r152 peer floor and uses four
 texture-buffer bytes per scalar texel. Disposal releases only these textures.
 The adapter requires Three r152 or newer for the `Texture.colorSpace` contract.
+
+`createThreeTriplanarMaterial(textures, options?)` returns a fresh
+`MeshStandardMaterial` that borrows `map`, `roughnessMap`, `bumpMap`, and optional
+`metalnessMap`. It copies the texture bindings and affine `fieldTransform`; it
+does not mutate geometry or dispose textures. Dispose each material independently.
+Recreate through the factory rather than cloning or serializing the shader hook.
+Its types are `ThreeTriplanarTextures` and `ThreeTriplanarMaterialOptions`.
+
+`fieldTransform` defaults to identity and maps geometry-local positions to field
+coordinates; normals use its inverse transpose before interpolation. The three
+projections are `.zy`, `.xz`, `.xy`. `sharpness` defaults to 4 and must remain
+positive in Float32. `flipV` defaults to true, converting v-down field coordinates
+to t-up texture coordinates; choose it to match the supplied texture rows. Color
+and scalar channels share alpha-weighted normal blending. Texture upload decodes
+sRGB color once. Uncovered blended samples have zero alpha and neutral encoded bump
+0.5. The returned material uses Three's default opaque rendering, which forces
+framebuffer alpha to one; callers choose transparency through standard material
+properties when needed.
+
+Options also accept standard `color`, `roughness` (default 1), `metalness`
+(default 0), `bumpScale` (default 1), and `side` (default FrontSide). Scalars
+roughness/metalness are in [0,1]. Bump uses encoded unit-interval height and
+Three's native derivative perturbation, not a physical displacement in meters;
+height differences hold blend weights fixed. Native bump behavior can differ
+between Three revisions. Valid nonzero static normals are the caller's contract;
+animated rest-coordinate binding and node materials are not provided.
+
+Each texture must be ready non-premultiplied unsigned-byte RGBA8 2D data with at
+most 4,194,304 pixels. Color accepts sRGB or linear-sRGB; scalars require
+NoColorSpace. Cube, array, volume, video, compressed and render-target textures,
+internal-format overrides and malformed image bytes are rejected. Transforms must
+have default offset/repeat/center/rotation and an identity texture matrix; use
+`fieldTransform` for coordinate control. Keep borrowed texture data and metadata
+unchanged while the material uses them. Field transforms must
+be finite, affine and invertible after Float32 conversion. Shader integration
+requires WebGLRenderer and the supported standard-material chunk anchors; missing
+anchors fail before shader mutation. The color include must precede dependent
+roughness, metalness and normal-map includes; native scalar-factor declarations
+must remain in their corresponding chunks. Unsupported layouts fail before any
+source or uniform assignment. This is a bounded compatibility check, not support
+for arbitrary future shader semantics. WebGL1 sRGB requires EXT_sRGB. The r152
+renderer-owned legacy sRGB upload format is accepted only with its native metadata
+and WebGL1 extension; it cannot be reused on WebGL2. The material replaces native
+map sampling chunks without adding a second UV sampling path or owning a renderer.
 
 `StrataHeightfield` is a React Three Fiber component with
 `{ mesh: HeightfieldMesh; material?: THREE.Material }`. It creates and disposes a
