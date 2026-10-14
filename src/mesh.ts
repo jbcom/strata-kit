@@ -833,6 +833,8 @@ function correctSheetIncidentCorners(operation: string, mesh: ProceduralMesh): P
     }
   };
   const vertices = mesh.positions.length / 3;
+  // Both passes read only the original mesh. Their callbacks change the count
+  // or separately allocated result, so they visit the same corners in order.
   let additions = 0;
   visitBehindCorners(() => {
     additions += 1;

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { createSheetMesh, type ProceduralMesh } from "../src/mesh.ts";
 
 function expectOutwardCorners(mesh: ProceduralMesh): void {
+  expect(mesh.indices.length % 3).toBe(0);
   for (let t = 0; t < mesh.indices.length; t += 3) {
     const [a, b, c] = Array.from(mesh.indices.slice(t, t + 3), (i) => i * 3);
     const ab = [0, 1, 2].map((i) => mesh.positions[b + i]! - mesh.positions[a + i]!);
