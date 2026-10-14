@@ -124,7 +124,7 @@ describe("model-neutral UV diagnostics", () => {
     );
   });
 
-  it("bounds U-sweep broad-phase candidates before disjoint V ranges can become quadratic", () => {
+  it("filters disjoint V ranges before charging U-sweep pair work", () => {
     const count = 4097;
     const positions = new Float32Array(count * 9);
     const uvs = new Float32Array(count * 6);
@@ -137,9 +137,7 @@ describe("model-neutral UV diagnostics", () => {
       uvs.set([0, bottom, 0.1, bottom, 0, top], vertex * 2);
       indices.set([vertex, vertex + 1, vertex + 2], triangleIndex * 3);
     }
-    expect(() => analyzeUvLayout({ positions, uvs, indices })).toThrow(
-      "analyzeUvLayout: UV overlap pair work exceeds 8388608",
-    );
+    expect(analyzeUvLayout({ positions, uvs, indices }).overlap).toBe(0);
   });
 });
 

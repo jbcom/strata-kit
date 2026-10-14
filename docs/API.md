@@ -156,6 +156,12 @@ contracts still require triangles. Normal correction considers retained faces on
 outside, degenerate, overlapping, and stretched UV charts, plus raster coverage.
 `createReskinPlan` selects `uv` or `triplanar`; it does not modify geometry.
 Diagnostic `gridSize` defaults to 256 and must be an integer from one to 2048.
+Overlap uses positive-area triangle intersection in the stored Float32 UVs;
+shared edges are not overlap. A deterministic U sweep with balanced active V
+intervals selects pairs whose bounding boxes intersect in both axes. The unchanged
+8,388,608-pair budget now counts those two-axis candidates rather than every U-only
+pair, so V-disjoint layouts no longer exhaust it merely by sharing U coordinates.
+Pathological candidate density can still fail before an overlap verdict.
 `sampleTriplanarSurface(sampler, point, normal, { scale?, sharpness? })` takes numeric
 triples and blends three axis projections with alpha-normalized scalar channels.
 Scale and sharpness must be positive finite values, defaulting to one and four.
