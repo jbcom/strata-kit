@@ -82,10 +82,16 @@ it("returns fresh materials without mutating or disposing caller textures", () =
   input.roughnessMap.name = "caller-owned-roughness";
   let disposed = 0;
   for (const texture of [input.map, input.roughnessMap, input.bumpMap, input.metalnessMap])
-    texture?.addEventListener("dispose", () => disposed += 1);
+    texture?.addEventListener("dispose", () => (disposed += 1));
 
   const first = factory()(input);
-  const second = factory()(input, { color: "#d3a35f", roughness: 0.36, metalness: 0.74, bumpScale: 1.5, side: DoubleSide });
+  const second = factory()(input, {
+    color: "#d3a35f",
+    roughness: 0.36,
+    metalness: 0.74,
+    bumpScale: 1.5,
+    side: DoubleSide,
+  });
 
   expect(first).toBeInstanceOf(MeshStandardMaterial);
   expect(second).toBeInstanceOf(MeshStandardMaterial);
@@ -114,8 +120,20 @@ it("returns fresh materials without mutating or disposing caller textures", () =
 
 it("keeps option values in uniforms rather than fragmenting equivalent program keys", () => {
   const input = textures();
-  const first = factory()(input, { sharpness: 2, flipV: false, roughness: 0.2, metalness: 0.1, bumpScale: 0.5 });
-  const second = factory()(input, { sharpness: 9, flipV: true, roughness: 0.9, metalness: 0.8, bumpScale: 2 });
+  const first = factory()(input, {
+    sharpness: 2,
+    flipV: false,
+    roughness: 0.2,
+    metalness: 0.1,
+    bumpScale: 0.5,
+  });
+  const second = factory()(input, {
+    sharpness: 9,
+    flipV: true,
+    roughness: 0.9,
+    metalness: 0.8,
+    bumpScale: 2,
+  });
   const withoutMetalness = factory()(textures(false));
 
   expect(first.customProgramCacheKey()).toBe(second.customProgramCacheKey());
@@ -154,12 +172,29 @@ it("binds default uniforms while replacing the real standard material sampling c
   input.dispose();
 });
 
+it("keeps the scalar metalness factor when no optional metalness map is supplied", () => {
+  const input = textures(false);
+  const material = factory()(input, { metalness: 0.37 });
+  const shader = actualStandardShader();
+  material.onBeforeCompile(shader as never, webgl2Renderer as never);
+
+  expect(material.metalnessMap).toBeNull();
+  expect(shader.uniforms.strataTriMetalness).toBeUndefined();
+  expect(shader.fragmentShader).toContain("float metalnessFactor = metalness;");
+  expect(shader.fragmentShader).not.toContain("strataTriMetalness");
+  material.dispose();
+  input.dispose();
+});
+
 it("refuses to compile through a non-WebGL renderer before mutating shader state", () => {
   const input = textures();
   const material = factory()(input);
   const shader = actualStandardShader();
-  const vertexBefore = shader.vertexShader, fragmentBefore = shader.fragmentShader;
-  expect(() => material.onBeforeCompile(shader as never, { isWebGLRenderer: false } as never)).toThrow();
+  const vertexBefore = shader.vertexShader,
+    fragmentBefore = shader.fragmentShader;
+  expect(() =>
+    material.onBeforeCompile(shader as never, { isWebGLRenderer: false } as never),
+  ).toThrow();
   expect(shader.vertexShader).toBe(vertexBefore);
   expect(shader.fragmentShader).toBe(fragmentBefore);
   expect(shader.uniforms).toEqual({});
@@ -171,7 +206,8 @@ it("requires EXT_sRGB when compiling an sRGB triplanar map on WebGL1", () => {
   const input = textures();
   const material = factory()(input);
   const shader = actualStandardShader();
-  const vertexBefore = shader.vertexShader, fragmentBefore = shader.fragmentShader;
+  const vertexBefore = shader.vertexShader,
+    fragmentBefore = shader.fragmentShader;
   const webgl1WithoutSrgb = {
     isWebGLRenderer: true,
     capabilities: { isWebGL2: false },
@@ -184,22 +220,20 @@ it("requires EXT_sRGB when compiling an sRGB triplanar map on WebGL1", () => {
   expect(shader.uniforms).toEqual({});
 
   const supportedShader = actualStandardShader();
-  material.onBeforeCompile(supportedShader as never, {
-    ...webgl1WithoutSrgb,
-    extensions: { has: (name: string) => name === "EXT_sRGB" },
-  } as never);
+  material.onBeforeCompile(
+    supportedShader as never,
+    {
+      ...webgl1WithoutSrgb,
+      extensions: { has: (name: string) => name === "EXT_sRGB" },
+    } as never,
+  );
   expect(supportedShader.uniforms.strataTriMap?.value).toBe(input.map);
   material.dispose();
   input.dispose();
 });
 
 it("copies an affine field transform into independent field and normal uniforms", () => {
-  const fieldTransform = new Matrix4().set(
-    2, 0, 0, 3,
-    0, 3, 0, 4,
-    0, 0, 4, 5,
-    0, 0, 0, 1,
-  );
+  const fieldTransform = new Matrix4().set(2, 0, 0, 3, 0, 3, 0, 4, 0, 0, 4, 5, 0, 0, 0, 1);
   const input = textures();
   const material = factory()(input, { fieldTransform });
   const shader = actualStandardShader();
@@ -211,20 +245,28 @@ it("copies an affine field transform into independent field and normal uniforms"
   const normal = values.filter((value): value is Matrix3 => value instanceof Matrix3);
   expect(inverse).toHaveLength(1);
   expect(normal).toHaveLength(1);
-  const expectedField = new Matrix4().set(
-    2, 0, 0, 3,
-    0, 3, 0, 4,
-    0, 0, 4, 5,
-    0, 0, 0, 1,
+  const expectedField = new Matrix4().set(2, 0, 0, 3, 0, 3, 0, 4, 0, 0, 4, 5, 0, 0, 0, 1);
+  const expectedNormal = new Matrix3().getNormalMatrix(
+    new Matrix4().set(2, 0, 0, 3, 0, 3, 0, 4, 0, 0, 4, 5, 0, 0, 0, 1),
   );
-  const expectedNormal = new Matrix3().getNormalMatrix(new Matrix4().set(
-    2, 0, 0, 3,
-    0, 3, 0, 4,
-    0, 0, 4, 5,
-    0, 0, 0, 1,
-  ));
   expect(matrixValues(inverse[0]!)).toEqual(matrixValues(expectedField));
   expect(matrixValues(normal[0]!)).toEqual(matrixValues(expectedNormal));
+  material.dispose();
+  input.dispose();
+});
+
+it("keeps a large finite field scale with a finite inverse-transpose normal matrix", () => {
+  const fieldTransform = new Matrix4().makeScale(1e30, 1e30, 1e30);
+  const input = textures();
+  const material = factory()(input, { fieldTransform });
+  const shader = actualStandardShader();
+  material.onBeforeCompile(shader as never, webgl2Renderer as never);
+
+  const field = shader.uniforms.strataFieldTransform?.value as Matrix4;
+  const normal = shader.uniforms.strataFieldNormalTransform?.value as Matrix3;
+  expect(matrixValues(field).every(Number.isFinite)).toBe(true);
+  expect(matrixValues(normal).every(Number.isFinite)).toBe(true);
+  expect(matrixValues(normal)).toEqual(matrixValues(new Matrix3().getNormalMatrix(fieldTransform)));
   material.dispose();
   input.dispose();
 });
@@ -244,7 +286,8 @@ it("fails before mutating a real standard shader when any required include ancho
   for (const [part, anchor] of anchors) {
     const shader = actualStandardShader();
     shader[part] = shader[part].replace(anchor, "");
-    const vertexBefore = shader.vertexShader, fragmentBefore = shader.fragmentShader;
+    const vertexBefore = shader.vertexShader,
+      fragmentBefore = shader.fragmentShader;
     shader.uniforms.preserved = { value: "untouched" };
     expect(() => material.onBeforeCompile(shader as never, webgl2Renderer as never)).toThrow();
     expect(shader.vertexShader).toBe(vertexBefore);
@@ -279,9 +322,28 @@ it("validates the public scalar, boolean, and affine transform inputs", () => {
   input.dispose();
 });
 
-it("rejects map modes that cannot preserve RGBA triplanar sampling", () => {
-  const input = textures();
-  input.map.colorSpace = NoColorSpace;
-  expect(() => factory()(input)).toThrow();
-  input.dispose();
+it("rejects overridden, render-target, malformed, and unloaded map data", () => {
+  const invalid = [
+    (input: Textures) => {
+      input.map.colorSpace = NoColorSpace;
+    },
+    (input: Textures) => {
+      input.map.internalFormat = "RGBA8";
+    },
+    (input: Textures) => {
+      (input.map as Texture & { isRenderTargetTexture?: boolean }).isRenderTargetTexture = true;
+    },
+    (input: Textures) => {
+      (input.map.image as { data: Uint8Array }).data = new Uint8Array(3);
+    },
+    (input: Textures) => {
+      (input.map.image as { complete?: boolean }).complete = false;
+    },
+  ];
+  for (const configure of invalid) {
+    const input = textures();
+    configure(input);
+    expect(() => factory()(input)).toThrow();
+    input.dispose();
+  }
 });
