@@ -309,9 +309,132 @@ function hasPositiveInteriorIntersection(
   return !hasStrictTriangleSeparator(first, second) && !hasStrictTriangleSeparator(second, first);
 }
 
+/** Balanced active V intervals; node storage is bounded by the triangle count. */
+class ActiveUvIntervals {
+  private readonly left: Uint32Array;
+  private readonly right: Uint32Array;
+  private readonly ids: Uint32Array;
+  private readonly heights: Uint8Array;
+  private readonly upper: Float32Array;
+  private root = 0;
+
+  constructor(
+    private readonly minimum: Float32Array,
+    private readonly maximum: Float32Array,
+  ) {
+    const size = minimum.length + 1;
+    this.left = new Uint32Array(size);
+    this.right = new Uint32Array(size);
+    this.ids = new Uint32Array(size);
+    this.heights = new Uint8Array(size);
+    this.upper = new Float32Array(size);
+  }
+
+  private compare(a: number, b: number): number {
+    return this.minimum[a] - this.minimum[b] || a - b;
+  }
+
+  private update(node: number): void {
+    this.heights[node] =
+      1 + Math.max(this.heights[this.left[node]], this.heights[this.right[node]]);
+    this.upper[node] = Math.max(
+      this.maximum[this.ids[node]],
+      this.left[node] ? this.upper[this.left[node]] : -Infinity,
+      this.right[node] ? this.upper[this.right[node]] : -Infinity,
+    );
+  }
+
+  private rotateLeft(node: number): number {
+    const next = this.right[node];
+    this.right[node] = this.left[next];
+    this.left[next] = node;
+    this.update(node);
+    this.update(next);
+    return next;
+  }
+
+  private rotateRight(node: number): number {
+    const next = this.left[node];
+    this.left[node] = this.right[next];
+    this.right[next] = node;
+    this.update(node);
+    this.update(next);
+    return next;
+  }
+
+  private balance(node: number): number {
+    this.update(node);
+    const difference = this.heights[this.left[node]] - this.heights[this.right[node]];
+    if (difference > 1) {
+      const child = this.left[node];
+      if (this.heights[this.left[child]] < this.heights[this.right[child]])
+        this.left[node] = this.rotateLeft(child);
+      return this.rotateRight(node);
+    }
+    if (difference < -1) {
+      const child = this.right[node];
+      if (this.heights[this.right[child]] < this.heights[this.left[child]])
+        this.right[node] = this.rotateRight(child);
+      return this.rotateLeft(node);
+    }
+    return node;
+  }
+
+  private insertNode(node: number, id: number): number {
+    if (!node) {
+      const created = id + 1;
+      this.ids[created] = id;
+      this.heights[created] = 1;
+      this.upper[created] = this.maximum[id];
+      return created;
+    }
+    if (this.compare(id, this.ids[node]) < 0)
+      this.left[node] = this.insertNode(this.left[node], id);
+    else this.right[node] = this.insertNode(this.right[node], id);
+    return this.balance(node);
+  }
+
+  private removeNode(node: number, id: number): number {
+    if (!node) return 0;
+    const comparison = this.compare(id, this.ids[node]);
+    if (comparison < 0) this.left[node] = this.removeNode(this.left[node], id);
+    else if (comparison > 0) this.right[node] = this.removeNode(this.right[node], id);
+    else {
+      if (!this.left[node]) return this.right[node];
+      if (!this.right[node]) return this.left[node];
+      let successor = this.right[node];
+      while (this.left[successor]) successor = this.left[successor];
+      this.ids[node] = this.ids[successor];
+      this.right[node] = this.removeNode(this.right[node], this.ids[successor]);
+    }
+    return this.balance(node);
+  }
+
+  insert(id: number): void {
+    this.root = this.insertNode(this.root, id);
+  }
+
+  remove(id: number): void {
+    this.root = this.removeNode(this.root, id);
+  }
+
+  forEachIntersection(low: number, high: number, visit: (id: number) => void): void {
+    const query = (node: number): void => {
+      if (!node || this.upper[node] <= low) return;
+      query(this.left[node]);
+      const id = this.ids[node];
+      if (this.minimum[id] >= high) return;
+      if (this.maximum[id] > low) visit(id);
+      query(this.right[node]);
+    };
+    query(this.root);
+  }
+}
+
 /**
  * Returns the model-surface fraction whose UV triangles participate in at least one
- * positive-area intersection. Bounding boxes are a sweep broad phase; the final test
+ * positive-area intersection. A U sweep and active V intervals select bounding-box
+ * candidates; the final test
  * is an exact-sign separating-axis test, so shared UV edges have zero overlap.
  */
 function geometricOverlapFraction(
@@ -326,6 +449,8 @@ function geometricOverlapFraction(
   const minV = new Float32Array(mesh.triangleCount);
   const maxV = new Float32Array(mesh.triangleCount);
   const order = new Uint32Array(mesh.triangleCount);
+  const expiry = new Uint32Array(mesh.triangleCount);
+  const eligible = new Uint8Array(mesh.triangleCount);
   const overlaps = new Uint8Array(mesh.triangleCount);
   for (let triangle = 0; triangle < mesh.triangleCount; triangle += 1) {
     const uv = uvOf(mesh, triangle);
@@ -334,25 +459,30 @@ function geometricOverlapFraction(
     minV[triangle] = Math.min(uv[1], uv[3], uv[5]);
     maxV[triangle] = Math.max(uv[1], uv[3], uv[5]);
     order[triangle] = triangle;
+    expiry[triangle] = triangle;
+    eligible[triangle] = uvArea(uv) >= UV_DEGENERATE_EPSILON ? 1 : 0;
   }
   order.sort((left, right) => minU[left] - minU[right] || left - right);
+  expiry.sort((left, right) => maxU[left] - maxU[right] || left - right);
+  const active = new ActiveUvIntervals(minV, maxV);
+  let expired = 0;
   let pairWork = 0;
-  for (let leftOrder = 0; leftOrder < order.length; leftOrder += 1) {
-    const left = order[leftOrder];
-    if (uvArea(uvOf(mesh, left)) < UV_DEGENERATE_EPSILON) continue;
-    for (let rightOrder = leftOrder + 1; rightOrder < order.length; rightOrder += 1) {
-      const right = order[rightOrder];
-      if (minU[right] >= maxU[left]) break;
+  for (const right of order) {
+    while (expired < expiry.length && maxU[expiry[expired]] <= minU[right]) {
+      const id = expiry[expired++];
+      if (eligible[id]) active.remove(id);
+    }
+    if (!eligible[right]) continue;
+    active.forEachIntersection(minV[right], maxV[right], (left) => {
       pairWork += 1;
       if (pairWork > MAX_OVERLAP_PAIR_WORK)
         throw new Error(`${operation}: UV overlap pair work exceeds ${MAX_OVERLAP_PAIR_WORK}`);
-      if (minV[right] >= maxV[left] || maxV[right] <= minV[left]) continue;
-      if (uvArea(uvOf(mesh, right)) < UV_DEGENERATE_EPSILON) continue;
       if (hasPositiveInteriorIntersection(uvOf(mesh, left), uvOf(mesh, right))) {
         overlaps[left] = 1;
         overlaps[right] = 1;
       }
-    }
+    });
+    active.insert(right);
   }
   let overlappingArea = 0;
   for (let triangle = 0; triangle < overlaps.length; triangle += 1)
