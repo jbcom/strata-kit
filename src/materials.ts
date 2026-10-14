@@ -6,6 +6,7 @@ export {
   bakeUvAtlas,
   createReskinPlan,
   sampleTriplanarSurface,
+  visitUvTexelFootprints,
 } from "./reskin.js";
 export type {
   NeutralIndexedMesh,
@@ -16,6 +17,8 @@ export type {
   UvAtlasBakeOptions,
   UvLayoutDiagnostics,
   UvLayoutOptions,
+  UvTexelFootprint,
+  UvTexelFootprintOptions,
 } from "./reskin.js";
 export { createWearField } from "./wear.js";
 export type { WearField, WearFieldOptions, WearSample } from "./wear.js";

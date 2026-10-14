@@ -104,6 +104,11 @@ in texel-local coordinates while carrying barycentric weights, then samples surf
 centroids and accumulates unquantized alpha-premultiplied linear channels. This
 preserves small valid charts without weakening geometric validation. Finite texel
 footprints may mix disjoint islands; consumers choose resolution and coverage policy.
+The raw UV footprint visitor shares that clipping kernel but emits geometric area
+and owned centroid records without material sampling or atlas buffers. Selection
+and bounded raster admission precede callbacks; chart overlap and physical occupancy
+remain consumer policies. Bottom-origin clipping avoids subtracting tiny UV values
+from one; optional top-origin labels do not change traversal or weights.
 The Three adapter copies texture bytes, expands scalar texels to linear grayscale RGBA for WebGL1
 compatibility, views mesh arrays, and exposes explicit texture disposal; it does
 not dispose caller materials. The gallery is a consumer application, separate from

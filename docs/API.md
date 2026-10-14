@@ -183,6 +183,32 @@ Padding is at most
 64 pixels, and bounded raster/dilation work may reject expensive layouts below the
 4,194,304-pixel output cap. These APIs are exported from root and `materials`.
 
+`visitUvTexelFootprints(mesh, { width, height, triangles?, rowOrigin? }, visit)` streams
+one `UvTexelFootprint` per positive-area triangle/texel intersection and returns
+`{ triangles, footprints }`. Each record owns its `barycentric` and model-space
+`position` triples, source `triangle` ID, integer `column` and `row`, and raw
+`weight` in texel-square units. Weight is geometric area, independent of material
+alpha, and is not normalized across triangles. Overlapping source triangles can
+contribute more than one square unit to a cell; callers own overlap admission and
+aggregation policy. This is UV coverage, not solid-volume or clearance evidence.
+
+Omitted `triangles` visits all source triangles. A copied array or Uint16/Uint32 array
+selects distinct in-range source IDs in caller order; an empty selection emits nothing.
+Clipping always traverses increasing bottom-origin rows, then columns. The default
+`rowOrigin: 'bottom'` labels that order directly; `'top'` only reverses row labels.
+Selected triangles must have finite unit-tile UVs and nonzero exact orientation.
+There is no atlas stretch or minimum-area admission threshold. When Float64
+arithmetic is ill-conditioned, area weights and centroids can lose accuracy even
+though orientation validation is exact; this API does not promise exact integration.
+If numerical clipping computes no positive piece of a selected nondegenerate triangle,
+the call throws instead of silently omitting it. Width/height obey the 4,194,304-pixel
+cap and selected bounding-box raster work is limited to 67,108,864 candidates before
+callbacks begin. Mesh validation still covers all source arrays and requires a
+nonempty indexed mesh. Inputs are borrowed synchronously: do not mutate them from
+callbacks. A callback or later precision error may follow earlier emitted records;
+commit consumer results only after the call completes. No atlas buffers are allocated.
+The function and both footprint types are exported from root and `materials`.
+
 ## Shader patches
 
 `replaceOrThrow(source, anchor, replacement)` requires exactly one nonempty literal
