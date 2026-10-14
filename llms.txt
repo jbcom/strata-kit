@@ -65,6 +65,10 @@
   samples clipped positive-area centroids and blends unrounded linear channels.
   Alpha averages over covered geometry; footprint filtering can mix disjoint islands.
   Geometric/work guards remain; area accumulators cost 64 extra bytes per pixel.
+- `visitUvTexelFootprints` streams raw positive UV area, barycentric centroids and
+  model-space positions for selected source triangles, without atlas maps. Default
+  bottom-origin traversal has optional top-origin row labels. Overlap aggregation
+  and world-space occupancy remain caller policies; alpha is not area coverage.
 - Exact UV overlap uses two-axis bounding-box candidates and positive-area
   Float32 triangle tests. Shared edges are not overlap; the 8,388,608 candidate
   budget remains, and exhaustion is not an actual-overlap verdict.
@@ -85,6 +89,10 @@
   unchanged. This is an upward fallback, not face-normal averaging.
 - Three scalar textures use linear grayscale RGBA, including bump, for WebGL1
   compatibility at the r152 peer floor; expansion uses four bytes per texel.
+- `three.createThreeTriplanarMaterial` borrows bounded prepared RGBA8 maps, copies
+  an affine geometry-local field transform, and creates a disposable standard PBR
+  material with alpha-weighted projections and native bump perturbation. It requires
+  WebGLRenderer; WebGL1 sRGB requires EXT_sRGB. No animated rest binding is supplied.
 - Swept radius cusps may add coincident rings with separate shading normals;
   vertex indices are not stable across profile changes.
 - Positive biome blends use overflow-safe relative weights; coordinate precision

@@ -19,6 +19,8 @@ export type {
   UvAtlasBakeOptions,
   UvLayoutDiagnostics,
   UvLayoutOptions,
+  UvTexelFootprint,
+  UvTexelFootprintOptions,
   WearField,
   WearFieldOptions,
   WearSample,
@@ -35,6 +37,7 @@ export {
   bakeUvAtlas,
   createReskinPlan,
   sampleTriplanarSurface,
+  visitUvTexelFootprints,
 } from "./materials.js";
 export type {
   ProceduralMesh,
