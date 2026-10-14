@@ -1,0 +1,513 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  createRevolvedSurfaceMesh,
+  type RevolvedSection,
+  type RevolvedSurfaceMesh,
+  type RevolvedSurfaceOptions,
+} from "../src/revolvedSurface.ts";
+
+const section = (height: number, radius = 1): RevolvedSection => ({
+  height,
+  halfWidth: radius,
+  positiveDepth: radius,
+  negativeDepth: radius,
+});
+
+function point(values: Float32Array, vertex: number): number[] {
+  return Array.from(values.subarray(vertex * 3, vertex * 3 + 3));
+}
+
+function expectPoint(actual: readonly number[], expected: readonly number[]): void {
+  for (let component = 0; component < 3; component++)
+    expect(actual[component]).toBeCloseTo(expected[component], 5);
+}
+
+function face(mesh: RevolvedSurfaceMesh, offset: number): number[] {
+  const a = point(mesh.positions, mesh.indices[offset]);
+  const b = point(mesh.positions, mesh.indices[offset + 1]);
+  const c = point(mesh.positions, mesh.indices[offset + 2]);
+  const ab = b.map((value, index) => value - a[index]);
+  const ac = c.map((value, index) => value - a[index]);
+  return [
+    ab[1] * ac[2] - ab[2] * ac[1],
+    ab[2] * ac[0] - ab[0] * ac[2],
+    ab[0] * ac[1] - ab[1] * ac[0],
+  ];
+}
+
+function expectStoredSurface(mesh: RevolvedSurfaceMesh): void {
+  const vertices = mesh.positions.length / 3;
+  expect(mesh.normals).toHaveLength(vertices * 3);
+  expect(mesh.uvs).toHaveLength(vertices * 2);
+  expect(mesh.parameters).toBeInstanceOf(Float64Array);
+  expect(mesh.parameters).toHaveLength(vertices * 2);
+  for (const values of [mesh.positions, mesh.normals, mesh.uvs, mesh.parameters])
+    expect(values.every(Number.isFinite)).toBe(true);
+  expect(mesh.indices.length % 3).toBe(0);
+  expect(mesh.indices.every((index) => index < vertices)).toBe(true);
+  for (let vertex = 0; vertex < vertices; vertex++)
+    expect(Math.hypot(...point(mesh.normals, vertex))).toBeCloseTo(1, 5);
+  for (let offset = 0; offset < mesh.indices.length; offset += 3) {
+    const cross = face(mesh, offset);
+    expect(Math.hypot(...cross)).toBeGreaterThan(0);
+    for (let corner = 0; corner < 3; corner++) {
+      const normal = point(mesh.normals, mesh.indices[offset + corner]);
+      expect(cross.reduce((sum, value, axis) => sum + value * normal[axis], 0)).toBeGreaterThan(0);
+    }
+  }
+}
+
+describe("sampled revolved surfaces", () => {
+  it("uses separate depth halves and the polar ellipse at diagonal angles", () => {
+    const row = {
+      height: 4,
+      halfWidth: 2,
+      positiveDepth: 3,
+      negativeDepth: 1,
+      center: [1, -2] as const,
+    };
+    const mesh = createRevolvedSurfaceMesh({ sections: [row, { ...row, height: 5 }], segments: 8 });
+    expectPoint(point(mesh.positions, 0), [1, 4, 1]);
+    expectPoint(point(mesh.positions, 2), [3, 4, -2]);
+    expectPoint(point(mesh.positions, 4), [1, 4, -3]);
+    expectPoint(point(mesh.positions, 6), [-1, 4, -2]);
+    // x=z relative to the center at pi/4. The ellipse equation
+    // x^2/2^2 + z^2/3^2 = 1 gives x=z=6/sqrt(13).
+    const diagonal = 6 / Math.sqrt(13);
+    expectPoint(point(mesh.positions, 1), [1 + diagonal, 4, -2 + diagonal]);
+    const backDiagonal = 2 / Math.sqrt(5);
+    expectPoint(point(mesh.positions, 3), [1 + backDiagonal, 4, -2 - backDiagonal]);
+    expectStoredSurface(mesh);
+  });
+
+  it("preserves the independent superellipse equation instead of substituting a circle", () => {
+    const mesh = createRevolvedSurfaceMesh({
+      sections: [section(0), section(1)],
+      segments: 8,
+      power: 4,
+    });
+    const diagonal = point(mesh.positions, 1);
+    expectPoint(diagonal, [2 ** -0.25, 0, 2 ** -0.25]);
+    expect(Math.abs(diagonal[0]) ** 4 + Math.abs(diagonal[2]) ** 4).toBeCloseTo(1, 5);
+    expect(Math.hypot(diagonal[0], diagonal[2])).toBeCloseTo(2 ** 0.25, 5);
+    const circular = createRevolvedSurfaceMesh({ sections: [section(0), section(1)], segments: 8 });
+    expect(Math.hypot(...[circular.positions[3], circular.positions[5]])).toBeCloseTo(1, 5);
+    expectStoredSurface(mesh);
+  });
+
+  it("applies center shifts, radial and axial offsets in their separate coordinate roles", () => {
+    const row = {
+      height: 4,
+      halfWidth: 2,
+      positiveDepth: 3,
+      negativeDepth: 1,
+      center: [1, -2] as const,
+    };
+    const mesh = createRevolvedSurfaceMesh({
+      sections: [row, { ...row, height: 5 }],
+      segments: 4,
+      radialOffset: () => 0.5,
+      axialOffset: () => -0.25,
+    });
+    expectPoint(point(mesh.positions, 0), [1, 3.75, 1.5]);
+    expectPoint(point(mesh.positions, 1), [3.5, 3.75, -2]);
+    expectPoint(point(mesh.positions, 2), [1, 3.75, -3.5]);
+    expectPoint(point(mesh.positions, 3), [-1.5, 3.75, -2]);
+    expectStoredSurface(mesh);
+  });
+
+  it("keeps angular-length UVs separate from normalized parameter provenance", () => {
+    const row = { height: 4, halfWidth: 2, positiveDepth: 3, negativeDepth: 1 };
+    const mesh = createRevolvedSurfaceMesh({
+      sections: [row, { ...row, height: 5 }],
+      segments: 4,
+      uv: "angular-length",
+      axialOffset: () => -0.25,
+    });
+    // Mean half-extent is (2+3+1)/3=2, so quarter-turn U is pi.
+    expect(mesh.uvs[2]).toBeCloseTo(Math.PI, 5);
+    expect(mesh.uvs[3]).toBe(3.75);
+    expect(mesh.uvs[6]).toBeCloseTo(-Math.PI, 5);
+    expect(mesh.parameters[2]).toBe(0);
+    expect(mesh.parameters[3]).toBeCloseTo(Math.PI / 2, 14);
+    expect(mesh.parameters[10]).toBe(1);
+    expect(mesh.uvs[11]).toBe(4.75);
+  });
+
+  it("leaves partial angular and axial boundaries open without adding caps", () => {
+    const mesh = createRevolvedSurfaceMesh({
+      sections: [section(0), section(1)],
+      segments: 2,
+      angular: { kind: "open", start: -Math.PI / 2, end: Math.PI / 2 },
+    });
+    expect(mesh.positions).toHaveLength(6 * 3);
+    expect(mesh.indices).toHaveLength(4 * 3);
+    expectPoint(point(mesh.positions, 0), [-1, 0, 0]);
+    expectPoint(point(mesh.positions, 1), [0, 0, 1]);
+    expectPoint(point(mesh.positions, 2), [1, 0, 0]);
+    expectPoint(point(mesh.normals, 1), [0, 0, 1]);
+    for (let offset = 0; offset < mesh.indices.length; offset += 3) {
+      const us = Array.from(
+        mesh.indices.subarray(offset, offset + 3),
+        (index) => mesh.uvs[index * 2],
+      );
+      expect(Math.max(...us) - Math.min(...us)).toBeLessThanOrEqual(0.5);
+    }
+    expectStoredSurface(mesh);
+  });
+
+  it("allows one interval for an explicitly open patch", () => {
+    const mesh = createRevolvedSurfaceMesh({
+      sections: [section(0), section(1)],
+      segments: 1,
+      angular: { kind: "open", start: -Math.PI / 4, end: Math.PI / 4 },
+    });
+    expect(mesh.positions).toHaveLength(4 * 3);
+    expect(mesh.indices).toHaveLength(2 * 3);
+    expectStoredSurface(mesh);
+  });
+
+  it("accepts descending axial rows with radial winding and original section parameters", () => {
+    const mesh = createRevolvedSurfaceMesh({ sections: [section(1), section(0)], segments: 8 });
+    expect(mesh.indices).toHaveLength(16 * 3);
+    expectPoint(point(mesh.positions, 0), [0, 1, 1]);
+    expectPoint(point(mesh.positions, 9), [0, 0, 1]);
+    expect(mesh.parameters[0]).toBe(0);
+    expect(mesh.parameters[18]).toBe(1);
+    for (let offset = 0; offset < mesh.indices.length; offset += 3) {
+      const cross = face(mesh, offset);
+      const points = Array.from(mesh.indices.subarray(offset, offset + 3), (vertex) =>
+        point(mesh.positions, vertex),
+      );
+      const radialX = points.reduce((sum, vertex) => sum + vertex[0], 0);
+      const radialZ = points.reduce((sum, vertex) => sum + vertex[2], 0);
+      expect(cross[0] * radialX + cross[2] * radialZ).toBeGreaterThan(0);
+    }
+    expectStoredSurface(mesh);
+  });
+
+  it("copies a closed seam exactly while preserving distinct normalized UV edges", () => {
+    const mesh = createRevolvedSurfaceMesh({
+      sections: [section(0), section(1)],
+      segments: 4,
+      angular: { kind: "closed", seam: Math.PI },
+    });
+    for (const start of [0, 5]) {
+      expect(point(mesh.positions, start + 4)).toEqual(point(mesh.positions, start));
+      expect(point(mesh.normals, start + 4)).toEqual(point(mesh.normals, start));
+      expect(Array.from(mesh.parameters.subarray((start + 4) * 2, (start + 5) * 2))).toEqual(
+        Array.from(mesh.parameters.subarray(start * 2, (start + 1) * 2)),
+      );
+      expect(mesh.uvs[start * 2]).toBe(0);
+      expect(mesh.uvs[(start + 4) * 2]).toBe(1);
+    }
+    expectPoint(point(mesh.positions, 0), [0, 0, -1]);
+    expect(mesh.indices).toHaveLength(8 * 3);
+  });
+
+  it("uses one-sided normals at open full-turn edges rather than copying the closed stencil", () => {
+    const sections = [section(0), section(1)];
+    const open = createRevolvedSurfaceMesh({
+      sections,
+      segments: 4,
+      angular: { kind: "open", start: 0, end: 2 * Math.PI },
+    });
+    const closed = createRevolvedSurfaceMesh({ sections, segments: 4 });
+    // A square's first outgoing chord is (1,0,-1); its outward endpoint
+    // normal has positive X and Z. The last incoming chord has negative X.
+    expect(open.normals[0]).toBeGreaterThan(0.5);
+    expect(open.normals[2]).toBeGreaterThan(0.5);
+    expect(open.normals[12]).toBeLessThan(-0.5);
+    expect(open.normals[14]).toBeGreaterThan(0.5);
+    expectPoint(point(closed.normals, 0), [0, 0, 1]);
+    expectStoredSurface(open);
+  });
+
+  it.each(["first", "last"] as const)(
+    "emits a finite fan for a zero-size %s endpoint without a redundant cap",
+    (endpoint) => {
+      const sections =
+        endpoint === "first" ? [section(0, 0), section(1)] : [section(0), section(1, 0)];
+      const mesh = createRevolvedSurfaceMesh({ sections, segments: 8 });
+      expect(mesh.indices).toHaveLength(8 * 3);
+      expectStoredSurface(mesh);
+    },
+  );
+
+  it("clamps intentional radial collapse and omits only analytically degenerate triangles", () => {
+    const mesh = createRevolvedSurfaceMesh({
+      sections: [section(0), section(1)],
+      segments: 8,
+      radialOffset: (s) => (s === 0 ? -2 : 0),
+    });
+    expect(mesh.indices).toHaveLength(8 * 3);
+    expectPoint(point(mesh.positions, 0), [0, 0, 0]);
+    expectStoredSurface(mesh);
+  });
+
+  it("captures reused callback sections and centers immediately", () => {
+    const center: [number, number] = [0, 0];
+    const reused = { ...section(0), center };
+    const mesh = createRevolvedSurfaceMesh({
+      segments: 4,
+      subdivisions: 1,
+      sectionAt(s) {
+        reused.height = s;
+        reused.halfWidth = 1 + s;
+        center[0] = 10 * s;
+        return reused;
+      },
+    });
+    reused.height = 100;
+    reused.halfWidth = 100;
+    center[0] = 100;
+    expectPoint(point(mesh.positions, 0), [0, 0, 1]);
+    expectPoint(point(mesh.positions, 1), [1, 0, 0]);
+    expectPoint(point(mesh.positions, 5), [10, 1, 1]);
+    expectPoint(point(mesh.positions, 6), [12, 1, 0]);
+    expectStoredSurface(mesh);
+  });
+
+  it("samples sections once and unique closed offset samples in row-major order", () => {
+    const sectionCalls: number[] = [],
+      radialCalls: number[][] = [],
+      axialCalls: number[][] = [];
+    createRevolvedSurfaceMesh({
+      segments: 4,
+      subdivisions: 2,
+      sectionAt(s) {
+        sectionCalls.push(s);
+        return section(s);
+      },
+      radialOffset(s, theta) {
+        radialCalls.push([s, theta]);
+        return 0;
+      },
+      axialOffset(s, theta) {
+        axialCalls.push([s, theta]);
+        return 0;
+      },
+    });
+    expect(sectionCalls).toEqual([0, 0.5, 1]);
+    const expected = [0, 0.5, 1].flatMap((s) =>
+      [0, Math.PI / 2, Math.PI, -Math.PI / 2].map((theta) => [s, theta]),
+    );
+    expect(radialCalls).toHaveLength(12);
+    expect(axialCalls).toHaveLength(12);
+    for (let index = 0; index < expected.length; index++) {
+      expect(radialCalls[index][0]).toBe(expected[index][0]);
+      expect(radialCalls[index][1]).toBeCloseTo(expected[index][1], 14);
+      expect(axialCalls[index]).toEqual(radialCalls[index]);
+    }
+  });
+
+  it("captures common options before callbacks can mutate the caller recipe", () => {
+    const angular = { kind: "closed" as const, seam: 0 };
+    const calls: number[] = [];
+    const options: RevolvedSurfaceOptions = {
+      segments: 4,
+      subdivisions: 1,
+      power: 2,
+      angular,
+      radialOffset: () => 0,
+      axialOffset: () => 0,
+      sectionAt(s) {
+        calls.push(s);
+        options.segments = 8;
+        options.power = 4;
+        options.uv = "angular-length";
+        options.axialOffset = () => 100;
+        angular.seam = Math.PI;
+        return section(s);
+      },
+    };
+    const baseline = createRevolvedSurfaceMesh({ sections: [section(0), section(1)], segments: 4 });
+    expect(createRevolvedSurfaceMesh(options)).toEqual(baseline);
+    expect(calls).toEqual([0, 1]);
+  });
+
+  it("derives cardinal normals from a linearly shifted centerline", () => {
+    const mesh = createRevolvedSurfaceMesh({
+      sections: [
+        { ...section(0), center: [0, 0] },
+        { ...section(1), center: [1, 0] },
+      ],
+      segments: 4,
+    });
+    // At +X, the vertical direction is (1,1,0). Its perpendicular outward
+    // direction in the XY plane is (1,-1,0), not the unshifted radial +X.
+    expectPoint(point(mesh.normals, 1), [Math.SQRT1_2, -Math.SQRT1_2, 0]);
+    expectPoint(point(mesh.normals, 3), [-Math.SQRT1_2, Math.SQRT1_2, 0]);
+    expectPoint(point(mesh.normals, 0), [0, 0, 1]);
+    expectStoredSurface(mesh);
+  });
+
+  it("allows a horizontal meridian segment without invented end faces", () => {
+    const mesh = createRevolvedSurfaceMesh({
+      sections: [section(0), section(0, 2), section(1, 2)],
+      segments: 8,
+    });
+    expect(mesh.indices).toHaveLength(2 * 2 * 8 * 3);
+    expect(mesh.positions.some((value, index) => index % 3 === 1 && value === 0)).toBe(true);
+    expect(mesh.positions.some((value, index) => index % 3 === 1 && value === 1)).toBe(true);
+    expectStoredSurface(mesh);
+  });
+
+  it("is deterministic for pure callbacks despite unrelated prior invocations", () => {
+    const options: RevolvedSurfaceOptions = {
+      segments: 8,
+      subdivisions: 2,
+      sectionAt: (s) => section(s, 1 + s * 0.25),
+      radialOffset: (s, theta) => 0.05 * Math.cos(theta * 2) * (1 + s),
+      axialOffset: (s, theta) => 0.05 * Math.sin(theta) * s,
+    };
+    const first = createRevolvedSurfaceMesh(options);
+    createRevolvedSurfaceMesh({ sections: [section(-2, 2), section(-1, 3)], segments: 5 });
+    expect(createRevolvedSurfaceMesh(options)).toEqual(first);
+  });
+
+  it("preserves parameter and UV provenance when cusp corners need separate normals", () => {
+    const mesh = createRevolvedSurfaceMesh({
+      sections: [section(0), section(0.1, 0.1), section(0.2, 10)],
+      segments: 8,
+    });
+    expect(mesh.positions.length / 3).toBeGreaterThan(3 * 9);
+    const sources = new Map<string, number[]>();
+    for (let vertex = 0; vertex < mesh.positions.length / 3; vertex++) {
+      const key = [
+        mesh.parameters[vertex * 2],
+        mesh.parameters[vertex * 2 + 1],
+        mesh.uvs[vertex * 2],
+        mesh.uvs[vertex * 2 + 1],
+      ].join(",");
+      const prior = sources.get(key);
+      if (prior) prior.push(vertex);
+      else sources.set(key, [vertex]);
+      expect([0, 0.5, 1]).toContain(mesh.parameters[vertex * 2]);
+    }
+    const duplicated = Array.from(sources.values()).filter((vertices) => vertices.length > 1);
+    expect(duplicated.length).toBeGreaterThan(0);
+    for (const vertices of duplicated)
+      for (const vertex of vertices.slice(1))
+        expect(point(mesh.positions, vertex)).toEqual(point(mesh.positions, vertices[0]));
+    expectStoredSurface(mesh);
+  });
+
+  it("repairs a strictly negative raw stored-face incidence without an epsilon waiver", () => {
+    const mesh = createRevolvedSurfaceMesh({
+      sections: [
+        section(0, 0.643452525138855),
+        section(0.643452525138855, 1.4089385271072388),
+        section(0.7654860019683838, 0),
+      ],
+      segments: 4,
+    });
+    expect(mesh.positions.length / 3).toBe(21);
+    expect(mesh.indices).toHaveLength(12 * 3);
+    // Three rows of five samples establish the original parameter grid.
+    // Every repaired corner must retain one original sample's exact stored
+    // position, UV and parameter metadata, rather than inventing a new sample.
+    const originalVertices = 3 * 5;
+    for (let vertex = originalVertices; vertex < mesh.positions.length / 3; vertex++) {
+      const matchingOriginal = Array.from({ length: originalVertices }, (_, index) => index).find(
+        (index) =>
+          mesh.parameters[index * 2] === mesh.parameters[vertex * 2] &&
+          mesh.parameters[index * 2 + 1] === mesh.parameters[vertex * 2 + 1] &&
+          mesh.uvs[index * 2] === mesh.uvs[vertex * 2] &&
+          mesh.uvs[index * 2 + 1] === mesh.uvs[vertex * 2 + 1],
+      );
+      expect(matchingOriginal).toBeDefined();
+      if (matchingOriginal !== undefined) {
+        expect(point(mesh.positions, vertex)).toEqual(point(mesh.positions, matchingOriginal));
+      }
+    }
+    // The helper uses each unnormalised cross product from the final Float32
+    // positions. Every emitted corner must have a strictly positive raw dot.
+    expectStoredSurface(mesh);
+  });
+
+  it("rejects oversized grids before section callbacks or indexed row reads", () => {
+    let calls = 0;
+    expect(() =>
+      createRevolvedSurfaceMesh({
+        segments: 3,
+        subdivisions: 250000,
+        sectionAt(s) {
+          calls++;
+          return section(s);
+        },
+      }),
+    ).toThrow(/vertex count|resource|1000000/);
+    expect(calls).toBe(0);
+    let reads = 0;
+    const sections = new Proxy([section(0), section(1)], {
+      get(target, key, receiver) {
+        if (key === "length") return 250001;
+        if (typeof key === "string" && /^\d+$/.test(key)) {
+          reads++;
+          return section(Number(key));
+        }
+        return Reflect.get(target, key, receiver);
+      },
+    });
+    expect(() => createRevolvedSurfaceMesh({ sections, segments: 3 })).toThrow(
+      /vertex count|resource|1000000/,
+    );
+    expect(reads).toBe(0);
+  });
+
+  it("selects a wide index array when the stored surface exceeds Uint16 range", () => {
+    const mesh = createRevolvedSurfaceMesh({ sections: [section(0), section(1)], segments: 32768 });
+    expect(mesh.positions.length / 3).toBe(65538);
+    expect(mesh.indices).toBeInstanceOf(Uint32Array);
+    expect(mesh.indices.some((index) => index > 65535)).toBe(true);
+    expect(mesh.indices.every((index) => index < mesh.positions.length / 3)).toBe(true);
+  });
+
+  it("rejects malformed section sources, unsupported angular domains and invalid scalar callbacks", () => {
+    const valid = { sections: [section(0), section(1)], segments: 4 };
+    const invalid: unknown[] = [
+      { ...valid, sections: [section(0)] },
+      { ...valid, sections: [] },
+      { ...valid, segments: 2 },
+      { ...valid, segments: 3.5 },
+      { segments: 4, subdivisions: 0, sectionAt: () => section(0) },
+      { ...valid, power: 1 },
+      { ...valid, power: Number.NaN },
+      { ...valid, sections: [{ ...section(0), halfWidth: 0 }, section(1)] },
+      { ...valid, sections: [section(0, 0), section(1, 0)] },
+      { ...valid, sections: [section(0), section(0)] },
+      { ...valid, sections: [section(0), { ...section(1), center: [Number.NaN, 0] }] },
+      { ...valid, angular: { kind: "open", start: 1, end: 0 } },
+      { ...valid, angular: { kind: "open", start: 0, end: 4 * Math.PI } },
+      { ...valid, angular: { kind: "closed", seam: 1e30 } },
+      { ...valid, radialOffset: () => Number.NaN },
+      { ...valid, axialOffset: () => Number.POSITIVE_INFINITY },
+      { ...valid, uv: "invalid" },
+      { segments: 4, subdivisions: 1, sectionAt: () => undefined },
+      { ...valid, subdivisions: 1, sectionAt: () => section(0) },
+    ];
+    for (const options of invalid)
+      expect(() => createRevolvedSurfaceMesh(options as RevolvedSurfaceOptions)).toThrow();
+  });
+
+  it("rejects positive dimensions or faces erased by Float32 quantization", () => {
+    expect(() =>
+      createRevolvedSurfaceMesh({
+        sections: [section(0, Number.MIN_VALUE), section(1)],
+        segments: 4,
+      }),
+    ).toThrow();
+    expect(() =>
+      createRevolvedSurfaceMesh({ sections: [section(1e30), section(1e30 + 1e20)], segments: 4 }),
+    ).toThrow(/Float32|quantization|zero area/);
+    expect(() =>
+      createRevolvedSurfaceMesh({
+        sections: [section(0), section(1)],
+        segments: 4,
+        axialOffset: () => 3.5e38,
+      }),
+    ).toThrow();
+  });
+});

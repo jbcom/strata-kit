@@ -33,6 +33,21 @@
 - Sheets sample each height once and preserve valid smooth normals; conflicting
   incident corners are duplicated with outward face normals. Returned vertex count
   and index width may increase within the one-million-vertex bound.
+- `createParametricSheetMesh` maps a unit grid with a `Vec3` position callback,
+  optional UV/authored-normal callbacks, generated grid or retained-face
+  area-weighted normals, and cell/vertex masks. `insideAt` is an orientation
+  point, not a solid-space claim. Closed columns copy unique geometry samples
+  while UV and vertex selection remain independent at both seam endpoints.
+  `sourceVertex` maps repaired corners to their original sample IDs.
+- `createRevolvedSurfaceMesh` samples separate half-width and positive/negative Z depths
+  from sections or a section callback. It supports open/closed angles, section
+  centers, power >= 2, offsets and normalized or angular-length UVs.
+  It emits no caps and makes no solid/hollow, skinning or collision promise.
+  `parameters` stores normalized row position and wrapped angle per vertex.
+- Both new mesh builders validate finite/Float32-safe geometry and bound grid
+  work to one million vertices and six million candidate indices before
+  callbacks; repaired output is bounded again. The older
+  `createSheetMesh` and `createRevolvedMesh` contracts remain separate.
 - Optional sheet `includeCell(column, row)` selects cells once in row-major order
   before height sampling. Omitted cells retain sampled vertices/UVs; all-false
   returns empty indices supported by the generic Three mesh adapter.

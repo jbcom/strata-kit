@@ -91,7 +91,7 @@ image files and applying them to a material remain consumer work.
 | `strata-procedural/sdf` | Sphere, plane, box, and boolean/smooth distance operations |
 | `strata-procedural/terrain` | Seeded terrain fields, heightfields, and scatter data |
 | `strata-procedural/materials` | Surface plans, samples, bakes, and bake manifests |
-| `strata-procedural/mesh` | Revolved profiles, transported sweeps, and sampled sheets |
+| `strata-procedural/mesh` | Revolved profiles and section surfaces, transported sweeps, and height or parametric sheets |
 | `strata-procedural/shaders` | GLSL seeded noise and checked literal shader patches |
 | `strata-procedural/surface-fields` | C1 scalar profiles, relief derivatives and frames, matching GLSL |
 | `strata-procedural/three` | Mesh geometry, copied static mesh snapshots, and disposable surface textures |
@@ -100,6 +100,55 @@ image files and applying them to a material remain consumer work.
 Only these package-exported paths are public API. See [docs/API.md](docs/API.md) for
 the exported symbols and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for boundaries
 and intentional limits.
+
+## Build mapped meshes
+
+The existing `createRevolvedMesh` and `createSheetMesh` constructors retain their
+original inputs and output layouts. For a section with separate front/back depths
+or an open angular range, use the additional revolved-surface constructor:
+
+```ts
+import { createRevolvedSurfaceMesh } from 'strata-procedural/mesh';
+
+const shell = createRevolvedSurfaceMesh({
+  sections: [
+    { height: 0, halfWidth: 0.3, positiveDepth: 0.22, negativeDepth: 0.28 },
+    { height: 1, halfWidth: 0.35, positiveDepth: 0.26, negativeDepth: 0.3 },
+  ],
+  segments: 24,
+  power: 2.5,
+  angular: { kind: 'open', start: -1.2, end: 1.2 },
+});
+```
+
+Angle zero points along +Z, and the returned surface has open ends without
+automatically added caps. `shell.parameters` retains each vertex's normalized
+row parameter and wrapped angle, including vertices duplicated to repair normals.
+Section dimensions, offsets and angular bounds must form a coherent radial
+surface; this constructor does not infer a solid interior.
+
+For a surface that maps both unit coordinates to 3D, use
+`createParametricSheetMesh`:
+
+```ts
+import { createParametricSheetMesh } from 'strata-procedural/mesh';
+
+const panel = createParametricSheetMesh({
+  columns: 9,
+  rows: 5,
+  positionAt: (u, v) => ({ x: u, y: v, z: 0.1 * Math.sin(Math.PI * u) }),
+  uvAt: (u, v) => [u * 2, v],
+  normalMode: 'area-weighted',
+});
+```
+
+`columns` and `rows` count sample vertices. The output includes
+`sourceVertex`, which maps every returned vertex to its original grid sample
+after any corner-normal repair. Optional `includeCell` and `includeVertex`
+callbacks remove connectivity, while sampled positions and UVs remain available.
+See the [mesh contract](docs/API.md#portable-meshes-and-reskinning) for normal,
+seam, validation and resource limits. These pure constructors do not choose
+placement, skinning, materials, collision or renderer policy.
 
 For saved procedural content, read [compatibility guidance](docs/COMPATIBILITY.md).
 Keep the package version and complete inputs or buffers; a seed cannot serialize

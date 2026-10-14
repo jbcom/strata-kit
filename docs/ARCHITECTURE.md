@@ -20,6 +20,13 @@ explicit seed
 | Procedural data | `terrain`, `materials`, `mesh`, `surface-fields`, `shaders` | Height samples, portable meshes, coherent surface layers, UV bakes, scalar profiles, and checked GLSL patches |
 | Adapters | `three`, `r3f` | Translate supplied mesh/bake data into geometry, textures, or a view; copy prepared static Three meshes into neutral buffers |
 
+The `mesh` public subpath also exposes `createParametricSheetMesh` and
+`createRevolvedSurfaceMesh` beside the existing sheet and revolve
+constructors. Both new constructors return renderer-neutral typed arrays and
+leave material, placement and deformation policy with callers. Their
+callback inputs are normalized parameters, never a hidden random stream;
+repeatability requires pure, order-independent callbacks.
+
 The root package re-exports only the procedural layers. `three` and `r3f` are separate
 package exports with optional peer dependencies, so importing the core does not load a
 renderer or React.
@@ -80,6 +87,34 @@ apply even to an empty selection; corner correction visits retained faces only.
 Empty indexed sheets keep validated attributes and can pass through the generic
 Three mesh adapter without relaxing the heightfield or UV-analysis contracts.
 
+Parametric sheets map a unit grid to arbitrary finite `Vec3` positions.
+Their default grid normals derive from the full sampled grid; optional
+area-weighted normals accumulate retained indexed faces in Float64.
+Optional authored normals are kept as supplied after normalization and reject
+conflicts with emitted faces. A caller-supplied `insideAt` point orients
+generated normals but does not establish occupancy or collision semantics.
+Cell and vertex masks select connectivity before geometry sampling, while
+the sampled attributes remain in the output. Closed columns share stored
+position/normal data across distinct seam vertices; UVs and vertex selection
+can differ at the endpoints. A `sourceVertex` array maps repaired corners
+back to original grid samples so consumers can propagate their own
+attributes without assuming a fixed index layout.
+
+Revolved section surfaces sample separate X widths and positive/negative Z
+depths along Y. They support open or closed angular domains, local section
+centers, a polar superellipse power and explicit radial/axial offsets.
+Normals are oriented from each section's radial frame; no solid or hollow
+volume is inferred. The builder omits analytically collapsed pole faces,
+rejects inconsistent meridian orientation and Float32 face collapse, and
+repairs individual corners when a shared normal would face behind a stored
+triangle. Its interleaved Float64 `parameters` preserve normalized row
+position and wrapped angle independently of the chosen UV mode.
+
+Both new builders check grid work before invoking callbacks and bound output
+to one million vertices and six million indices, including any corner
+repairs. The original `createSheetMesh` and `createRevolvedMesh` remain
+separate constructors with their existing layout and cap policies.
+
 ## Data ownership
 
 The library returns plain values and typed arrays. Consumers own:
@@ -138,6 +173,7 @@ need a curvature-aware differential implementation of their own.
 
 The package currently provides the APIs documented in [API.md](API.md). It does not
 claim mesh extraction, runtime world management, scene composition, asset-placement
-policy, texture-file encoding, or general-purpose material systems. New capability
+policy, texture-file encoding, skinning, collision/occupancy or general-purpose
+material systems. New capability
 belongs in the smallest renderer-neutral layer that can express it; adapters should
 only translate established data into their ecosystem.

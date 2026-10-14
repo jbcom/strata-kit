@@ -10,6 +10,16 @@
 import type { Vec3 } from "./sdf.js";
 
 export type { Vec3 } from "./sdf.js";
+export { createParametricSheetMesh } from "./parametricSheet.js";
+export type { ParametricSheetMesh, ParametricSheetMeshOptions } from "./parametricSheet.js";
+export { createRevolvedSurfaceMesh } from "./revolvedSurface.js";
+export type {
+  RevolvedAngularDomain,
+  RevolvedSection,
+  RevolvedSectionSource,
+  RevolvedSurfaceMesh,
+  RevolvedSurfaceOptions,
+} from "./revolvedSurface.js";
 
 const MAX_VERTICES = 1_000_000;
 const MAX_INDICES = 6_000_000;
