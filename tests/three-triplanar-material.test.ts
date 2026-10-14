@@ -349,6 +349,26 @@ it("rejects overridden, render-target, malformed, and unloaded map data", () => 
   }
 });
 
+it("rejects every native UV transform because fieldTransform owns triplanar coordinates", () => {
+  const transformed = [
+    (input: Textures) => input.map.offset.set(0.25, 0),
+    (input: Textures) => input.map.repeat.set(2, 1),
+    (input: Textures) => input.map.center.set(0.5, 0),
+    (input: Textures) => {
+      input.map.rotation = Math.PI / 4;
+    },
+    (input: Textures) => {
+      input.map.matrix.elements[0] = 0.5;
+    },
+  ];
+  for (const configure of transformed) {
+    const input = textures();
+    configure(input);
+    expect(() => factory()(input)).toThrow();
+    input.dispose();
+  }
+});
+
 it("rejects the legacy r152 sRGB numeric format when the installed peer does not export it", () => {
   expect((ThreePeer as { _SRGBAFormat?: number })._SRGBAFormat).toBeUndefined();
   const input = textures();
