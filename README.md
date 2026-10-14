@@ -10,6 +10,11 @@ triangle tests. Large charts sharing one coordinate range can be analyzed withou
 spending the overlap budget on pairs separated along the other axis; dense layouts
 still obey the documented work limits.
 
+UV atlas baking defaults to strict pixel-centre sampling. Optional `coverage: 'area'`
+retains tiny valid triangles through clipped footprint sampling and linear-light
+blending. It preserves geometric validation and work limits; finite texel footprints
+can mix nearby islands. See [API details](docs/API.md) for filtering and memory limits.
+
 The repository, project, and npm distribution share the name **Strata Procedural**:
 [`strata-procedural`](https://www.npmjs.com/package/strata-procedural).
 The repository was previously named `strata-kit`; GitHub preserves its redirects.

@@ -165,9 +165,21 @@ Pathological candidate density can still fail before an overlap verdict.
 `sampleTriplanarSurface(sampler, point, normal, { scale?, sharpness? })` takes numeric
 triples and blends three axis projections with alpha-normalized scalar channels.
 Scale and sharpness must be positive finite values, defaulting to one and four.
-`bakeUvAtlas(mesh, sampler, { width, height, padding?, scale?, sharpness? })` samples
+`bakeUvAtlas(mesh, sampler, { width, height, padding?, scale?, sharpness?, coverage? })` samples
 those projections through valid UV charts and returns surface buffers plus `covered`.
-It rejects outside, degenerate, overlapping, or zero-texel charts. Padding is at most
+The default `coverage: 'pixel-center'` retains strict centre sampling and rejects
+triangles reaching no pixel centre. Opt-in `coverage: 'area'` clips every triangle
+against texel squares and samples each positive-area piece at its surface centroid.
+Area mode blends unrounded linear-light color and material channels using geometric
+area and sampler alpha. Nonoverlapping triangles may contribute to the same texel;
+this is footprint filtering, not permission for UV overlap. Alpha is averaged over
+the covered area, so a small opaque triangle remains opaque. `covered` counts texels
+touched before padding, not total geometric area. Covered zero-alpha texels have
+zero color/roughness/metalness and neutral bump 128; untouched texels remain zero.
+Both modes reject outside, degenerate, overlapping, or excessively stretched charts.
+Centroid quadrature approximates varying fields; it does not promise exact field
+integration, high-frequency antialiasing, or separation of islands smaller than a texel.
+Padding is at most
 64 pixels, and bounded raster/dilation work may reject expensive layouts below the
 4,194,304-pixel output cap. These APIs are exported from root and `materials`.
 

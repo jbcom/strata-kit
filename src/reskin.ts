@@ -61,6 +61,8 @@ export interface UvAtlasBakeOptions extends TriplanarSurfaceOptions {
   height: number;
   /** Number of 4-connected texel rings grown from a written island. */
   padding?: number;
+  /** Pixel-centre sampling by default; area mode approximates clipped footprints at centroids. */
+  coverage?: "pixel-center" | "area";
 }
 
 const MAX_PIXELS = 4_194_304;
@@ -638,6 +640,47 @@ export function sampleTriplanarSurface(
   normal: Point,
   options: TriplanarSurfaceOptions = {},
 ): SurfaceSample & { metalness?: number } {
+  const sample = sampleTriplanarLinear(sampler, point, normal, options);
+  const { alpha, hasMetalness } = sample;
+  const color =
+    alpha === 0
+      ? ([0, 0, 0, 0] as const)
+      : ([
+          srgbByte(sample.red / alpha),
+          srgbByte(sample.green / alpha),
+          srgbByte(sample.blue / alpha),
+          Math.round(alpha * 255),
+        ] as const);
+  if (alpha === 0)
+    return hasMetalness
+      ? { color, roughness: 0, bump: 0, metalness: 0 }
+      : { color, roughness: 0, bump: 0 };
+  return hasMetalness
+    ? {
+        color,
+        roughness: sample.roughness / alpha,
+        bump: sample.bump / alpha,
+        metalness: sample.metalness / alpha,
+      }
+    : { color, roughness: sample.roughness / alpha, bump: sample.bump / alpha };
+}
+
+/** Unquantized, alpha-premultiplied values for footprint integration. */
+function sampleTriplanarLinear(
+  sampler: SurfaceSampler,
+  point: Point,
+  normal: Point,
+  options: TriplanarSurfaceOptions,
+): {
+  red: number;
+  green: number;
+  blue: number;
+  alpha: number;
+  roughness: number;
+  bump: number;
+  metalness: number;
+  hasMetalness: boolean | undefined;
+} {
   const operation = "sampleTriplanarSurface";
   const { scale, sharpness } = triplanarOptions(operation, options);
   point.forEach((value, index) => {
@@ -697,22 +740,16 @@ export function sampleTriplanarSurface(
     bump += sample.bump * sampleAlpha * weight;
     if (sampleHasMetalness) metalness += (sample.metalness ?? 0) * sampleAlpha * weight;
   }
-  const color =
-    alpha === 0
-      ? ([0, 0, 0, 0] as const)
-      : ([
-          srgbByte(linearRed / alpha),
-          srgbByte(linearGreen / alpha),
-          srgbByte(linearBlue / alpha),
-          Math.round(alpha * 255),
-        ] as const);
-  if (alpha === 0)
-    return hasMetalness
-      ? { color, roughness: 0, bump: 0, metalness: 0 }
-      : { color, roughness: 0, bump: 0 };
-  return hasMetalness
-    ? { color, roughness: roughness / alpha, bump: bump / alpha, metalness: metalness / alpha }
-    : { color, roughness: roughness / alpha, bump: bump / alpha };
+  return {
+    red: linearRed,
+    green: linearGreen,
+    blue: linearBlue,
+    alpha,
+    roughness,
+    bump,
+    metalness,
+    hasMetalness,
+  };
 }
 
 function validateAtlasDimensions(options: UvAtlasBakeOptions): {
@@ -739,6 +776,7 @@ function assertBakedLayout(
   validated: ValidatedMesh,
   width: number,
   height: number,
+  coverage: "pixel-center" | "area",
 ): void {
   for (let triangle = 0; triangle < validated.triangleCount; triangle += 1) {
     const uv = uvOf(validated, triangle);
@@ -753,6 +791,7 @@ function assertBakedLayout(
     throw new Error("bakeUvAtlas: UV layout overlaps and cannot be baked safely");
   if (diagnostics.stretched >= CLEAN_UV.stretched)
     throw new Error("bakeUvAtlas: UV layout is too stretched to bake safely");
+  if (coverage === "area") return;
   for (let triangle = 0; triangle < validated.triangleCount; triangle += 1) {
     let reached = 0;
     rasterize(uvOf(validated, triangle), width, height, () => {
@@ -795,6 +834,190 @@ function triangleNormal(mesh: ValidatedMesh, triangle: number): Point {
   return [aby * acz - abz * acy, abz * acx - abx * acz, abx * acy - aby * acx];
 }
 
+/** Clips a convex polygon carrying x/y and three barycentric coordinates. */
+function clipAtlasPolygon(
+  input: Float64Array,
+  output: Float64Array,
+  count: number,
+  axis: number,
+  boundary: number,
+  greater: boolean,
+): number {
+  let result = 0;
+  const append = (source: Float64Array, offset: number): void => {
+    if (
+      result > 0 &&
+      output[(result - 1) * 5] === source[offset] &&
+      output[(result - 1) * 5 + 1] === source[offset + 1]
+    )
+      return;
+    for (let component = 0; component < 5; component += 1)
+      output[result * 5 + component] = source[offset + component];
+    result += 1;
+  };
+  for (let vertex = 0; vertex < count; vertex += 1) {
+    const previous = ((vertex + count - 1) % count) * 5;
+    const current = vertex * 5;
+    const p = input[previous + axis];
+    const q = input[current + axis];
+    const pInside = greater ? p >= boundary : p <= boundary;
+    const qInside = greater ? q >= boundary : q <= boundary;
+    if (pInside !== qInside) {
+      const ratio = (boundary - p) / (q - p);
+      const offset = result * 5;
+      for (let component = 0; component < 5; component += 1)
+        output[offset + component] =
+          input[previous + component] +
+          ratio * (input[current + component] - input[previous + component]);
+      output[offset + axis] = boundary;
+      if (
+        result === 0 ||
+        output[offset] !== output[offset - 5] ||
+        output[offset + 1] !== output[offset - 4]
+      )
+        result += 1;
+    }
+    if (qInside) append(input, current);
+  }
+  if (
+    result > 1 &&
+    output[0] === output[(result - 1) * 5] &&
+    output[1] === output[(result - 1) * 5 + 1]
+  )
+    result -= 1;
+  return result;
+}
+
+/** Positive-area texel intersections, with centroid barycentrics carried through clipping. */
+function rasterizeArea(
+  uv: readonly number[],
+  width: number,
+  height: number,
+  first: Float64Array,
+  second: Float64Array,
+  visit: (texel: number, area: number, a: number, b: number, c: number) => void,
+): number {
+  const xs = [uv[0] * width, uv[2] * width, uv[4] * width];
+  const ys = [(1 - uv[1]) * height, (1 - uv[3]) * height, (1 - uv[5]) * height];
+  const left = Math.max(0, Math.floor(Math.min(...xs)));
+  const right = Math.min(width - 1, Math.ceil(Math.max(...xs)) - 1);
+  const top = Math.max(0, Math.floor(Math.min(...ys)));
+  const bottom = Math.min(height - 1, Math.ceil(Math.max(...ys)) - 1);
+  let reached = 0;
+  for (let row = top; row <= bottom; row += 1)
+    for (let column = left; column <= right; column += 1) {
+      for (let vertex = 0; vertex < 3; vertex += 1) {
+        const offset = vertex * 5;
+        first[offset] = xs[vertex] - column;
+        first[offset + 1] = ys[vertex] - row;
+        for (let component = 0; component < 3; component += 1)
+          first[offset + component + 2] = component === vertex ? 1 : 0;
+      }
+      let count = clipAtlasPolygon(first, second, 3, 0, 0, true);
+      count = clipAtlasPolygon(second, first, count, 0, 1, false);
+      count = clipAtlasPolygon(first, second, count, 1, 0, true);
+      count = clipAtlasPolygon(second, first, count, 1, 1, false);
+      let area = 0;
+      let a = 0;
+      let b = 0;
+      let c = 0;
+      for (let vertex = 1; vertex + 1 < count; vertex += 1) {
+        const p = vertex * 5;
+        const q = (vertex + 1) * 5;
+        const piece =
+          Math.abs(
+            (first[p] - first[0]) * (first[q + 1] - first[1]) -
+              (first[q] - first[0]) * (first[p + 1] - first[1]),
+          ) * 0.5;
+        area += piece;
+        a += piece * (first[2] + first[p + 2] + first[q + 2]);
+        b += piece * (first[3] + first[p + 3] + first[q + 3]);
+        c += piece * (first[4] + first[p + 4] + first[q + 4]);
+      }
+      if (area > 0) {
+        visit(row * width + column, area, a / (3 * area), b / (3 * area), c / (3 * area));
+        reached += 1;
+      }
+    }
+  return reached;
+}
+
+function bakeAreaAtlas(
+  mesh: ValidatedMesh,
+  sampler: SurfaceSampler,
+  width: number,
+  height: number,
+  padding: number,
+  scale: number,
+  sharpness: number,
+): UvAtlasBake {
+  const pixelCount = width * height;
+  // Geometric area, premultiplied alpha/RGB and three material channels.
+  const sums = new Float64Array(pixelCount * 8);
+  const first = new Float64Array(80);
+  const second = new Float64Array(80);
+  let hasMetalness: boolean | undefined;
+  for (let triangle = 0; triangle < mesh.triangleCount; triangle += 1) {
+    const normal = triangleNormal(mesh, triangle);
+    const reached = rasterizeArea(
+      uvOf(mesh, triangle),
+      width,
+      height,
+      first,
+      second,
+      (texel, area, a, b, c) => {
+        const sample = sampleTriplanarLinear(
+          sampler,
+          interpolatePoint(mesh, triangle, a, b, c),
+          normal,
+          { scale, sharpness },
+        );
+        if (hasMetalness === undefined) hasMetalness = sample.hasMetalness;
+        else if (hasMetalness !== sample.hasMetalness)
+          throw new Error("bakeUvAtlas: sampler metalness presence must be consistent");
+        const offset = texel * 8;
+        sums[offset] += area;
+        sums[offset + 1] += area * sample.alpha;
+        sums[offset + 2] += area * sample.red;
+        sums[offset + 3] += area * sample.green;
+        sums[offset + 4] += area * sample.blue;
+        sums[offset + 5] += area * sample.roughness;
+        sums[offset + 6] += area * sample.bump;
+        sums[offset + 7] += area * sample.metalness;
+      },
+    );
+    if (reached === 0)
+      throw new Error(`bakeUvAtlas: UV triangle ${triangle} does not reach an atlas pixel`);
+  }
+  const color = new Uint8Array(pixelCount * 4);
+  const roughness = new Uint8Array(pixelCount);
+  const bump = new Uint8Array(pixelCount);
+  const metalness = hasMetalness ? new Uint8Array(pixelCount) : undefined;
+  const written = new Uint8Array(pixelCount);
+  let covered = 0;
+  for (let texel = 0; texel < pixelCount; texel += 1) {
+    const offset = texel * 8;
+    const area = sums[offset];
+    if (area === 0) continue;
+    written[texel] = 1;
+    covered += 1;
+    const alpha = sums[offset + 1];
+    bump[texel] = 128;
+    if (alpha === 0) continue;
+    color[texel * 4] = srgbByte(sums[offset + 2] / alpha);
+    color[texel * 4 + 1] = srgbByte(sums[offset + 3] / alpha);
+    color[texel * 4 + 2] = srgbByte(sums[offset + 4] / alpha);
+    color[texel * 4 + 3] = Math.round((255 * alpha) / area);
+    roughness[texel] = Math.round((255 * sums[offset + 5]) / alpha);
+    bump[texel] = Math.round(255 * (0.5 + (0.5 * sums[offset + 6]) / alpha));
+    if (metalness) metalness[texel] = Math.round((255 * sums[offset + 7]) / alpha);
+  }
+  dilateAtlas(color, roughness, bump, metalness, written, width, height, padding);
+  return metalness
+    ? { width, height, color, roughness, bump, metalness, covered: covered / pixelCount }
+    : { width, height, color, roughness, bump, covered: covered / pixelCount };
+}
+
 function dilateAtlas(
   color: Uint8Array,
   roughness: Uint8Array,
@@ -832,7 +1055,7 @@ function dilateAtlas(
 }
 
 /**
- * Rasterises a clean UV atlas at pixel centres and samples each texel from its mesh surface.
+ * Samples a clean UV atlas at pixel centres, or clipped footprint centroids in area mode.
  * Unwritten pixels remain transparent; padding grows only deterministic neighbouring island data.
  */
 export function bakeUvAtlas(
@@ -841,13 +1064,18 @@ export function bakeUvAtlas(
   options: UvAtlasBakeOptions,
 ): UvAtlasBake {
   const { width, height, padding } = validateAtlasDimensions(options);
+  const coverage = options.coverage === undefined ? "pixel-center" : options.coverage;
+  if (coverage !== "pixel-center" && coverage !== "area")
+    throw new Error("bakeUvAtlas: coverage must be 'pixel-center' or 'area'");
   const validated = validateMesh("bakeUvAtlas", mesh, true);
   const rasterWork = estimateRasterWork(validated, width, height, "bakeUvAtlas");
   const combinedWork = rasterWork + width * height * padding;
   if (combinedWork > MAX_RASTER_WORK)
     throw new Error(`bakeUvAtlas: combined raster and padding work exceeds ${MAX_RASTER_WORK}`);
-  assertBakedLayout(mesh, validated, width, height);
+  assertBakedLayout(mesh, validated, width, height, coverage);
   const { scale, sharpness } = triplanarOptions("bakeUvAtlas", options);
+  if (coverage === "area")
+    return bakeAreaAtlas(validated, sampler, width, height, padding, scale, sharpness);
   const pixelCount = width * height;
   const color = new Uint8Array(pixelCount * 4);
   const roughness = new Uint8Array(pixelCount);
