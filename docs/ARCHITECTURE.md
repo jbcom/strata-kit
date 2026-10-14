@@ -53,6 +53,11 @@ face's outward hemisphere. Conflicting corners receive coincident vertices with
 that triangle's normal; no resampling or topology inference from separate axes is
 used. Base work is bounded before sampling, and expanded output is bounded before
 allocation. Consumers must use the returned indices rather than infer grid connectivity.
+Heightfields retain their shared grid layout instead of duplicating corners. After
+sampling and indexing, stored faces are checked against each shared normal. A
+normal outside any incident face's outward hemisphere falls back to exact up;
+positive face-Y winding guarantees it is outward for all incident triangles.
+Valid central-difference normal bytes and positions/indices remain unchanged.
 
 ## Data ownership
 
