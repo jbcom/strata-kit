@@ -34,8 +34,8 @@ buffer encoding and decoding.
 ## Geometry and numerical output
 
 Mesh indices are local references into a generated mesh, not persistent object
-identifiers. Changes to profiles, segmentation or cusp splitting can change vertex
-counts and index values. Persist complete mesh buffers when exact topology matters.
+identifiers. Changes to profiles, segmentation or cusp splitting (in swept, revolved,
+or sheet meshes) can change vertex counts and index values. Persist complete mesh buffers when exact topology matters.
 Normals are computed from stored coordinates; Float32 quantization can reject
 otherwise distinct input points or collapse a requested face.
 

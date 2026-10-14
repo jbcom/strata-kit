@@ -725,51 +725,164 @@ export function createSheetMesh(options: SheetMeshOptions): ProceduralMesh {
   requireRepresentablePositiveFloat32(operation, "height", height);
   requirePositiveInteger(operation, "columns", columns, 2);
   requirePositiveInteger(operation, "rows", rows, 2);
-  const vertices = columns * rows;
-  const indices = (columns - 1) * (rows - 1) * 6;
-  checkedCount(operation, vertices, indices);
-  const mesh = allocateMesh(vertices, indices);
+
+  const gridPositions = new Float32Array(columns * rows * 3);
   for (let row = 0; row < rows; row += 1) {
     const v = row / (rows - 1);
     for (let column = 0; column < columns; column += 1) {
       const u = column / (columns - 1);
-      const vertex = row * columns + column;
       const sample = heightAt(u, v);
       requireFloat32(operation, `heightAt(${u}, ${v})`, sample);
-      setPosition(mesh.positions, vertex, (u - 0.5) * width, sample, (v - 0.5) * height, operation);
-      setUv(mesh.uvs, vertex, u, v);
+      const offset = (row * columns + column) * 3;
+      gridPositions[offset] = Math.fround((u - 0.5) * width);
+      gridPositions[offset + 1] = Math.fround(sample);
+      gridPositions[offset + 2] = Math.fround((v - 0.5) * height);
     }
   }
+
+  const splitsX = new Array<boolean>(columns * rows).fill(false);
+  const splitsZ = new Array<boolean>(columns * rows).fill(false);
+  const dhdxIn = new Float32Array(columns * rows);
+  const dhdxOut = new Float32Array(columns * rows);
+  const dhdzIn = new Float32Array(columns * rows);
+  const dhdzOut = new Float32Array(columns * rows);
+
   for (let row = 0; row < rows; row += 1) {
-    const previousRow = Math.max(0, row - 1);
-    const nextRow = Math.min(rows - 1, row + 1);
     for (let column = 0; column < columns; column += 1) {
-      const previousColumn = Math.max(0, column - 1);
-      const nextColumn = Math.min(columns - 1, column + 1);
-      const left = (row * columns + previousColumn) * 3;
-      const right = (row * columns + nextColumn) * 3;
-      const before = (previousRow * columns + column) * 3;
-      const after = (nextRow * columns + column) * 3;
-      const dhdx =
-        (mesh.positions[right + 1]! - mesh.positions[left + 1]!) /
-        (mesh.positions[right]! - mesh.positions[left]!);
-      const dhdz =
-        (mesh.positions[after + 1]! - mesh.positions[before + 1]!) /
-        (mesh.positions[after + 2]! - mesh.positions[before + 2]!);
-      setNormal(mesh.normals, row * columns + column, -dhdx, 1, -dhdz);
+      const idx = row * columns + column;
+      const pos = idx * 3;
+      const x = gridPositions[pos]!;
+      const y = gridPositions[pos + 1]!;
+      const z = gridPositions[pos + 2]!;
+
+      const leftIdx = (row * columns + Math.max(0, column - 1)) * 3;
+      const rightIdx = (row * columns + Math.min(columns - 1, column + 1)) * 3;
+      const dxIn = x - gridPositions[leftIdx]!;
+      const dxOut = gridPositions[rightIdx]! - x;
+      const sxIn = dxIn === 0 ? 0 : (y - gridPositions[leftIdx + 1]!) / dxIn;
+      const sxOut = dxOut === 0 ? 0 : (gridPositions[rightIdx + 1]! - y) / dxOut;
+      dhdxIn[idx] = column === 0 ? sxOut : sxIn;
+      dhdxOut[idx] = column === columns - 1 ? sxIn : sxOut;
+      if (column > 0 && column < columns - 1 && 1 + sxIn * sxOut < 0) {
+        splitsX[idx] = true;
+      }
+
+      const backIdx = (Math.max(0, row - 1) * columns + column) * 3;
+      const frontIdx = (Math.min(rows - 1, row + 1) * columns + column) * 3;
+      const dzIn = z - gridPositions[backIdx + 2]!;
+      const dzOut = gridPositions[frontIdx + 2]! - z;
+      const szIn = dzIn === 0 ? 0 : (y - gridPositions[backIdx + 1]!) / dzIn;
+      const szOut = dzOut === 0 ? 0 : (gridPositions[frontIdx + 1]! - y) / dzOut;
+      dhdzIn[idx] = row === 0 ? szOut : szIn;
+      dhdzOut[idx] = row === rows - 1 ? szIn : szOut;
+      if (row > 0 && row < rows - 1 && 1 + szIn * szOut < 0) {
+        splitsZ[idx] = true;
+      }
     }
   }
+
+  const nodeVerts = new Uint32Array(columns * rows * 4);
+  let vertexCount = 0;
+  for (let row = 0; row < rows; row += 1) {
+    for (let column = 0; column < columns; column += 1) {
+      const idx = row * columns + column;
+      const splitX = splitsX[idx]!;
+      const splitZ = splitsZ[idx]!;
+      const baseMap = idx * 4;
+      if (!splitX && !splitZ) {
+        const vIdx = vertexCount++;
+        nodeVerts[baseMap] = vIdx;
+        nodeVerts[baseMap + 1] = vIdx;
+        nodeVerts[baseMap + 2] = vIdx;
+        nodeVerts[baseMap + 3] = vIdx;
+      } else if (splitX && !splitZ) {
+        const vInX = vertexCount++;
+        const vOutX = vertexCount++;
+        nodeVerts[baseMap] = vInX;
+        nodeVerts[baseMap + 1] = vOutX;
+        nodeVerts[baseMap + 2] = vInX;
+        nodeVerts[baseMap + 3] = vOutX;
+      } else if (!splitX && splitZ) {
+        const vInZ = vertexCount++;
+        const vOutZ = vertexCount++;
+        nodeVerts[baseMap] = vInZ;
+        nodeVerts[baseMap + 1] = vInZ;
+        nodeVerts[baseMap + 2] = vOutZ;
+        nodeVerts[baseMap + 3] = vOutZ;
+      } else {
+        nodeVerts[baseMap] = vertexCount++;
+        nodeVerts[baseMap + 1] = vertexCount++;
+        nodeVerts[baseMap + 2] = vertexCount++;
+        nodeVerts[baseMap + 3] = vertexCount++;
+      }
+    }
+  }
+
+  const indicesCount = (columns - 1) * (rows - 1) * 6;
+  checkedCount(operation, vertexCount, indicesCount);
+  const mesh = allocateMesh(vertexCount, indicesCount);
+
+  for (let row = 0; row < rows; row += 1) {
+    const v = row / (rows - 1);
+    for (let column = 0; column < columns; column += 1) {
+      const idx = row * columns + column;
+      const u = column / (columns - 1);
+      const pos = idx * 3;
+      const x = gridPositions[pos]!;
+      const y = gridPositions[pos + 1]!;
+      const z = gridPositions[pos + 2]!;
+
+      const splitX = splitsX[idx]!;
+      const splitZ = splitsZ[idx]!;
+      const baseMap = idx * 4;
+
+      const sxIn = dhdxIn[idx]!;
+      const sxOut = dhdxOut[idx]!;
+      const sxMid = column > 0 && column < columns - 1 ? (sxIn + sxOut) / 2 : sxIn;
+
+      const szIn = dhdzIn[idx]!;
+      const szOut = dhdzOut[idx]!;
+      const szMid = row > 0 && row < rows - 1 ? (szIn + szOut) / 2 : szIn;
+
+      const emitVertex = (vIdx: number, dhdx: number, dhdz: number): void => {
+        setPosition(mesh.positions, vIdx, x, y, z, operation);
+        setUv(mesh.uvs, vIdx, u, v);
+        setNormal(mesh.normals, vIdx, -dhdx, 1, -dhdz);
+      };
+
+      if (!splitX && !splitZ) {
+        emitVertex(nodeVerts[baseMap]!, sxMid, szMid);
+      } else if (splitX && !splitZ) {
+        emitVertex(nodeVerts[baseMap]!, sxIn, szMid);
+        emitVertex(nodeVerts[baseMap + 1]!, sxOut, szMid);
+      } else if (!splitX && splitZ) {
+        emitVertex(nodeVerts[baseMap]!, sxMid, szIn);
+        emitVertex(nodeVerts[baseMap + 2]!, sxMid, szOut);
+      } else {
+        emitVertex(nodeVerts[baseMap]!, sxIn, szIn);
+        emitVertex(nodeVerts[baseMap + 1]!, sxOut, szIn);
+        emitVertex(nodeVerts[baseMap + 2]!, sxIn, szOut);
+        emitVertex(nodeVerts[baseMap + 3]!, sxOut, szOut);
+      }
+    }
+  }
+
   let indexCursor = 0;
   for (let row = 0; row < rows - 1; row += 1) {
     for (let column = 0; column < columns - 1; column += 1) {
-      const lowerLeft = row * columns + column;
+      const lowerLeft = nodeVerts[(row * columns + column) * 4 + 3]!;
+      const upperLeft = nodeVerts[((row + 1) * columns + column) * 4 + 1]!;
+      const lowerRight = nodeVerts[(row * columns + column + 1) * 4 + 2]!;
+      const upperRight = nodeVerts[((row + 1) * columns + column + 1) * 4 + 0]!;
+
       mesh.indices[indexCursor++] = lowerLeft;
-      mesh.indices[indexCursor++] = lowerLeft + columns;
-      mesh.indices[indexCursor++] = lowerLeft + 1;
-      mesh.indices[indexCursor++] = lowerLeft + 1;
-      mesh.indices[indexCursor++] = lowerLeft + columns;
-      mesh.indices[indexCursor++] = lowerLeft + columns + 1;
+      mesh.indices[indexCursor++] = upperLeft;
+      mesh.indices[indexCursor++] = lowerRight;
+      mesh.indices[indexCursor++] = lowerRight;
+      mesh.indices[indexCursor++] = upperLeft;
+      mesh.indices[indexCursor++] = upperRight;
     }
   }
+
   return requireNonDegenerateStoredTriangles(operation, mesh);
 }

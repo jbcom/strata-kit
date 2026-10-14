@@ -125,8 +125,10 @@ Sharp opposing radius slopes use coincident rings with separate incoming and
 outgoing normals. This can increase the vertex count without changing positions
 or triangle count; vertex indices are not stable across profile changes.
 `createSheetMesh({ width, height, columns, rows, heightAt? })` samples an upward
-XZ sheet. Meshes are bounded to one million vertices and six million indices and
-reject indexed faces collapsed by Float32 quantization.
+XZ sheet. Sharp slope cusps duplicate vertices at crease nodes to keep incident face
+normals in outward hemispheres while preserving ordinary smoothed central normals
+on smooth surfaces. Meshes are bounded to one million vertices and six million indices
+and reject indexed faces collapsed by Float32 quantization.
 
 `analyzeUvLayout(mesh, { gridSize? })` inspects a `NeutralIndexedMesh` for missing,
 outside, degenerate, overlapping, and stretched UV charts, plus raster coverage.

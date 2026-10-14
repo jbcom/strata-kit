@@ -93,8 +93,8 @@ The [visual acceptance gate](docs/VISUAL-ACCEPTANCE.md) deliberately rejects inv
 gravity and an omitted oxide layer, then verifies exact restoration. Its diagnostic
 captures supplement direct visual review and consumer testing.
 
-Swept meshes separate shading normals at sharp radius cusps, adding coincident
-rings where needed. Positive terrain biome blends preserve relative contributions
+Swept meshes and sheet meshes separate shading normals at sharp profile cusps, adding coincident
+vertices where needed. Positive terrain biome blends preserve relative contributions
 even when normalized squared distances overflow. See the API reference for layout
 and floating-point limits.
 

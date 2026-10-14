@@ -42,7 +42,8 @@ content and must receive compatibility review plus focused regression tests.
 normalized plans, opaque callback recipes, buffer ownership and upgrade checks.
 
 Swept meshes derive normals from stored Float32 positions and split rings at sharp
-radius cusps to preserve each side's shading. Blended terrain retains relative
+radius cusps to preserve each side's shading. Sheet meshes split vertices at sharp
+height slope cusps to ensure incident normals point into outward hemispheres. Blended terrain retains relative
 biome weights through log-space evaluation when normalized distances overflow;
 the ordinary finite-distance path is unchanged. Default nearest-biome selection also
 uses stable ranking when its legacy intermediates overflow or underflow, correcting

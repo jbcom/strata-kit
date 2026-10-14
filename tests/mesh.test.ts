@@ -136,6 +136,29 @@ describe("neutral procedural meshes", () => {
     expectFiniteUnitNormals(mesh);
   });
 
+  it("splits sheet cusp normals so every incident corner normal faces into the outward hemisphere", () => {
+    let samples = 0;
+    const mesh = createSheetMesh({
+      width: 0.2,
+      height: 1,
+      columns: 3,
+      rows: 2,
+      heightAt: (u) => {
+        samples += 1;
+        return u <= 0.5 ? 6 * u : 3 - 0.4 * (u - 0.5);
+      },
+    });
+
+    expect(samples).toBe(6);
+    for (let triangle = 0; triangle < mesh.indices.length / 3; triangle += 1) {
+      const face = faceNormal(mesh, triangle);
+      for (let corner = 0; corner < 3; corner += 1) {
+        expect(dot(face, normal(mesh, mesh.indices[triangle * 3 + corner]!))).toBeGreaterThan(0);
+      }
+    }
+    expectFiniteUnitNormals(mesh);
+  });
+
   it.each([false, true])("keeps swept cusp faces outward with caps=%s", (caps) => {
     let radiusCalls = 0;
     const mesh = createSweptMesh({
