@@ -127,6 +127,11 @@ or triangle count; vertex indices are not stable across profile changes.
 `createSheetMesh({ width, height, columns, rows, heightAt? })` samples an upward
 XZ sheet. Meshes are bounded to one million vertices and six million indices and
 reject indexed faces collapsed by Float32 quantization.
+The height callback runs exactly once per grid vertex. Smooth finite-difference
+normals remain unchanged; corners pointing behind their actual stored triangle
+are duplicated with that triangle's outward normal. Position/UV values and triangle
+count are preserved, but the final vertex count and index type can increase. The
+one-million-vertex limit includes these correction vertices.
 
 `analyzeUvLayout(mesh, { gridSize? })` inspects a `NeutralIndexedMesh` for missing,
 outside, degenerate, overlapping, and stretched UV charts, plus raster coverage.
