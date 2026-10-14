@@ -47,6 +47,15 @@ runtime errors, context health, actual physical bounds and shader assembly.
 
 ## What this gate proves
 
+The separate `tests/playwright.sheet-cusp.config.ts` diagnostic builds and freezes
+the current library modules, then renders a narrow ridge and a two-dimensional
+saddle through the Three geometry adapter. Every actual indexed corner must have
+a unit normal in its stored face's outward hemisphere. Inverting the bound normal
+buffers must reject that predicate and visibly change the normal-color render;
+restoring the saved bytes must recover the exact canvas. The receipt records its
+GPU backend: Metal on macOS, SwiftShader in software CI. These are diagnostic
+surface views, not artistic-quality or interactive acceptance.
+
 The separate `tests/playwright.three-webgl1.config.ts` diagnostic packs the current
 library and installs exact Three r152 in a temporary consumer. It forces a WebGL1
 context, observes rejection of the historic one-channel RedFormat bump layout,

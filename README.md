@@ -98,6 +98,10 @@ rings where needed. Positive terrain biome blends preserve relative contribution
 even when normalized squared distances overflow. See the API reference for layout
 and floating-point limits.
 
+Sampled sheets preserve smooth finite-difference normals, but duplicate conflicting
+triangle corners at sharp relief folds so every indexed corner faces outward.
+These corrections can increase vertex counts; do not assume a fixed grid index layout.
+
 Nearest-biome selection also retains valid ranking at extreme radii. That correction
 changes previously incorrect extreme-input results while preserving ordinary output.
 

@@ -48,6 +48,12 @@ the ordinary finite-distance path is unchanged. Default nearest-biome selection 
 uses stable ranking when its legacy intermediates overflow or underflow, correcting
 extreme-input order dependence while preserving ordinary output and first-entry ties.
 
+Sheets retain stored-position derivative normals where they lie in each incident
+face's outward hemisphere. Conflicting corners receive coincident vertices with
+that triangle's normal; no resampling or topology inference from separate axes is
+used. Base work is bounded before sampling, and expanded output is bounded before
+allocation. Consumers must use the returned indices rather than infer grid connectivity.
+
 ## Data ownership
 
 The library returns plain values and typed arrays. Consumers own:

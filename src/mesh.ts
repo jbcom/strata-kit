@@ -716,7 +716,9 @@ export function createSweptMesh(options: SweptMeshOptions): ProceduralMesh {
  *
  * `columns` and `rows` count vertices, including both boundaries, and must each be at
  * least two. `heightAt` is sampled once per vertex in unit-domain `(u, v)` coordinates;
- * normals use finite differences of those samples.
+ * normals use finite differences of those samples. A corner whose normal points
+ * behind its incident triangle is duplicated with that triangle's outward normal;
+ * valid smooth normals, positions, UVs and winding remain unchanged.
  */
 export function createSheetMesh(options: SheetMeshOptions): ProceduralMesh {
   const operation = "createSheetMesh";
@@ -771,5 +773,90 @@ export function createSheetMesh(options: SheetMeshOptions): ProceduralMesh {
       mesh.indices[indexCursor++] = lowerLeft + columns + 1;
     }
   }
-  return requireNonDegenerateStoredTriangles(operation, mesh);
+  return correctSheetIncidentCorners(operation, mesh);
+}
+
+/** Retain smooth derivatives wherever possible; repair only conflicting incidence. */
+function correctSheetIncidentCorners(operation: string, mesh: ProceduralMesh): ProceduralMesh {
+  const visitBehindCorners = (
+    visit: (offset: number, nx: number, ny: number, nz: number) => void,
+  ) => {
+    for (let offset = 0; offset < mesh.indices.length; offset += 3) {
+      const a = mesh.indices[offset]! * 3;
+      const b = mesh.indices[offset + 1]! * 3;
+      const c = mesh.indices[offset + 2]! * 3;
+      const abx = mesh.positions[b]! - mesh.positions[a]!;
+      const aby = mesh.positions[b + 1]! - mesh.positions[a + 1]!;
+      const abz = mesh.positions[b + 2]! - mesh.positions[a + 2]!;
+      const acx = mesh.positions[c]! - mesh.positions[a]!;
+      const acy = mesh.positions[c + 1]! - mesh.positions[a + 1]!;
+      const acz = mesh.positions[c + 2]! - mesh.positions[a + 2]!;
+      const crossX = aby * acz - abz * acy;
+      const crossY = abz * acx - abx * acz;
+      const crossZ = abx * acy - aby * acx;
+      if (
+        !Number.isFinite(crossX) ||
+        !Number.isFinite(crossY) ||
+        !Number.isFinite(crossZ) ||
+        (crossX === 0 && crossY === 0 && crossZ === 0)
+      ) {
+        throw new Error(
+          `${operation}: triangle ${offset / 3} has zero area after Float32 quantization`,
+        );
+      }
+      let length = 0,
+        nx = 0,
+        ny = 0,
+        nz = 0;
+      for (let corner = 0; corner < 3; corner += 1) {
+        const vertex = mesh.indices[offset + corner]! * 3;
+        const xTerm = crossX * mesh.normals[vertex]!;
+        const yTerm = crossY * mesh.normals[vertex + 1]!;
+        const zTerm = crossZ * mesh.normals[vertex + 2]!;
+        // A sum of nonnegative terms with a positive term is strictly outward.
+        // Skip normalization only for that unambiguous case. Mixed signs still
+        // use the exact normalized predicate, including near-tangent corners.
+        if (xTerm >= 0 && yTerm >= 0 && zTerm >= 0 && (xTerm > 0 || yTerm > 0 || zTerm > 0))
+          continue;
+        if (length === 0) {
+          length = Math.hypot(crossX, crossY, crossZ);
+          nx = crossX / length;
+          ny = crossY / length;
+          nz = crossZ / length;
+        }
+        const alignment =
+          nx * mesh.normals[vertex]! +
+          ny * mesh.normals[vertex + 1]! +
+          nz * mesh.normals[vertex + 2]!;
+        if (alignment <= 0) visit(offset + corner, nx, ny, nz);
+      }
+    }
+  };
+  const vertices = mesh.positions.length / 3;
+  // Both passes read only the original mesh. Their callbacks change the count
+  // or separately allocated result, so they visit the same corners in order.
+  let additions = 0;
+  visitBehindCorners(() => {
+    additions += 1;
+  });
+  if (additions === 0) return mesh;
+  checkedCount(operation, vertices + additions, mesh.indices.length);
+  const result = allocateMesh(vertices + additions, mesh.indices.length);
+  result.positions.set(mesh.positions);
+  result.normals.set(mesh.normals);
+  result.uvs.set(mesh.uvs);
+  result.indices.set(mesh.indices);
+  let nextVertex = vertices;
+  visitBehindCorners((offset, nx, ny, nz) => {
+    const original = mesh.indices[offset]!;
+    for (let axis = 0; axis < 3; axis += 1) {
+      result.positions[nextVertex * 3 + axis] = mesh.positions[original * 3 + axis]!;
+    }
+    result.uvs[nextVertex * 2] = mesh.uvs[original * 2]!;
+    result.uvs[nextVertex * 2 + 1] = mesh.uvs[original * 2 + 1]!;
+    setNormal(result.normals, nextVertex, nx, ny, nz);
+    result.indices[offset] = nextVertex;
+    nextVertex += 1;
+  });
+  return result;
 }
