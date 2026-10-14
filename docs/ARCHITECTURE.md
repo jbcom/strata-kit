@@ -59,6 +59,12 @@ face's outward hemisphere. Conflicting corners receive coincident vertices with
 that triangle's normal; no resampling or topology inference from separate axes is
 used. Base work is bounded before sampling, and expanded output is bounded before
 allocation. Consumers must use the returned indices rather than infer grid connectivity.
+Optional cell selection evaluates a boolean callback once per cell in row-major
+order before sampling heights. It changes only emitted connectivity, leaving
+projection, collision and layout policy with the consumer. Worst-case grid bounds
+apply even to an empty selection; corner correction visits retained faces only.
+Empty indexed sheets keep validated attributes and can pass through the generic
+Three mesh adapter without relaxing the heightfield or UV-analysis contracts.
 
 ## Data ownership
 

@@ -131,7 +131,7 @@ callback. Duplicate and reversing path segments are rejected.
 Sharp opposing radius slopes use coincident rings with separate incoming and
 outgoing normals. This can increase the vertex count without changing positions
 or triangle count; vertex indices are not stable across profile changes.
-`createSheetMesh({ width, height, columns, rows, heightAt? })` samples an upward
+`createSheetMesh({ width, height, columns, rows, heightAt?, includeCell? })` samples an upward
 XZ sheet. Meshes are bounded to one million vertices and six million indices and
 reject indexed faces collapsed by Float32 quantization.
 The height callback runs exactly once per grid vertex. Smooth finite-difference
@@ -139,6 +139,13 @@ normals remain unchanged; corners pointing behind their actual stored triangle
 are duplicated with that triangle's outward normal. Position/UV values and triangle
 count are preserved, but the final vertex count and index type can increase. The
 one-million-vertex limit includes these correction vertices.
+Optional `includeCell(column, row)` runs once per cell in row-major order before
+height sampling and must return a boolean. Each included cell emits the original
+two triangles; omitted cells retain their sampled vertices and UVs. Worst-case
+grid bounds are checked before either callback. An all-false selection produces
+an empty index buffer with complete sampled attributes. The generic Three mesh
+adapter accepts this empty surface; the heightfield adapter and UV analysis/atlas
+contracts still require triangles. Normal correction considers retained faces only.
 
 `analyzeUvLayout(mesh, { gridSize? })` inspects a `NeutralIndexedMesh` for missing,
 outside, degenerate, overlapping, and stretched UV charts, plus raster coverage.
