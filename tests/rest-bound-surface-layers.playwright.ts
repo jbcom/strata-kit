@@ -86,9 +86,10 @@ window.runRestBoundProof=async()=>{warmRenderer();const resourcesBefore=resource
 </script>`),
   );
   const server = createServer((request, response) => {
-    const bytes = routes.get(new URL(request.url ?? "/", "http://localhost").pathname);
+    const pathname = new URL(request.url ?? "/", "http://localhost").pathname;
+    const bytes = routes.get(pathname);
     response.writeHead(bytes ? 200 : 404, {
-      "Content-Type": request.url === "/" ? "text/html" : "application/javascript",
+      "Content-Type": pathname === "/" ? "text/html" : "application/javascript",
       "Cache-Control": "no-store",
     });
     response.end(bytes ?? "Missing fixture");
@@ -111,7 +112,11 @@ window.runRestBoundProof=async()=>{warmRenderer();const resourcesBefore=resource
     page.on("console", (message) => {
       if (message.type() === "error") errors.push(message.text());
     });
-    await page.goto(`http://127.0.0.1:${address.port}/`, { waitUntil: "networkidle" });
+    const documentResponse = await page.goto(`http://127.0.0.1:${address.port}/?proof=rest-bound`, {
+      waitUntil: "networkidle",
+    });
+    assert.equal(documentResponse?.status(), 200);
+    assert.match(documentResponse?.headers()["content-type"] ?? "", /^text\/html/);
     const result = await page.evaluate(async () =>
       (window as unknown as { runRestBoundProof: () => Promise<Proof> }).runRestBoundProof(),
     );
