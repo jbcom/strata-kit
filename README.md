@@ -84,7 +84,7 @@ image files and applying them to a material remain consumer work.
 | `strata-procedural/mesh` | Revolved profiles, transported sweeps, and sampled sheets |
 | `strata-procedural/shaders` | GLSL seeded noise and checked literal shader patches |
 | `strata-procedural/surface-fields` | C1 scalar profiles, relief derivatives and frames, matching GLSL |
-| `strata-procedural/three` | Mesh geometry, copied static mesh snapshots, and disposable surface textures |
+| `strata-procedural/three` | Mesh geometry, copied static mesh snapshots, surface textures, and triplanar materials |
 | `strata-procedural/r3f` | `StrataHeightfield` React Three Fiber component |
 
 Only these package-exported paths are public API. See [docs/API.md](docs/API.md) for
@@ -215,6 +215,15 @@ groups, morph targets, and partial draw ranges are explicit errors. See the
 `strata-procedural/r3f` exports `StrataHeightfield`, which receives a precomputed
 `HeightfieldMesh` and an optional Three `Material`. Neither adapter creates terrain,
 simulation state, or a render loop.
+
+For static geometry without usable UVs, `createThreeTriplanarMaterial(textures,
+{ fieldTransform, sharpness, flipV, bumpScale })` creates a standard PBR material
+from precomputed color, roughness, bump and optional metalness maps. The copied
+affine transform maps geometry-local positions into the sampling field. The
+material borrows textures; dispose the material and texture bundle separately.
+It requires WebGLRenderer, bounded RGBA8 maps and valid static normals. WebGL1
+sRGB requires EXT_sRGB. It does not generate maps or bind animated rest coordinates.
+See the [adapter contract](docs/API.md#optional-adapters) for projection and limits.
 
 ## Develop
 

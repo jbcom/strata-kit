@@ -102,6 +102,12 @@ compatibility, views mesh arrays, and exposes explicit texture disposal; it does
 not dispose caller materials. The gallery is a consumer application, separate from
 library imports, and owns its render loop and controls.
 
+The optional triplanar material borrows prepared maps and copies an explicit
+geometry-local field transform. Its standard-material shader hook replaces map
+sampling atomically, preserving Three's native lighting and bump perturbation.
+It chooses no palette, texture generation recipe, animation binding or simulation
+state. Pure composition and CPU sampling remain independent of this renderer path.
+
 Wear fields retain at most one coordinate sample per instance, with independent
 returned objects and validation on every call. This avoids duplicate field work
 within layered sampling without introducing global state or call-order dependence.

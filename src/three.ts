@@ -14,6 +14,8 @@ import type { HeightfieldMesh } from "./terrain.js";
 
 export { snapshotThreeStaticMeshes } from "./threeSnapshot.js";
 export type { ThreeStaticMeshSnapshot, SnapshotThreeStaticMeshesOptions } from "./threeSnapshot.js";
+export { createThreeTriplanarMaterial } from "./threeTriplanar.js";
+export type { ThreeTriplanarTextures, ThreeTriplanarMaterialOptions } from "./threeTriplanar.js";
 
 type MeshBuffers = Pick<ProceduralMesh, "positions" | "normals" | "indices"> & {
   uvs?: Float32Array;
