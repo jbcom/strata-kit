@@ -39,6 +39,7 @@ jobs:
       - run: mise exec -- pnpm exec playwright install --with-deps chromium
       - run: mise exec -- pnpm test:visual
       - run: mise exec -- pnpm exec playwright test --config tests/playwright.sheet-cusp.config.ts
+      - run: mise exec -- pnpm exec playwright test --config tests/playwright.sheet-mask.config.ts
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
@@ -46,5 +47,6 @@ jobs:
           path: |
             test-results/procedural-gallery/
             test-results/sheet-cusp/
+            test-results/sheet-mask/
           if-no-files-found: warn
           retention-days: 7
