@@ -14,6 +14,44 @@
 - The root through `surface-fields` are renderer-neutral. `three` and `r3f` require
   their optional peer dependencies.
 - Built-in random generators derive from an explicit string or finite numeric seed.
+- `noise.createValueNoise2D` requires exactly one explicit seed or injected pure
+  integer lattice. Seeded lattice values are in `[-1, 1]`; injected values are not
+  remapped or clamped. It uses cubic-smoothed ordered bilinear interpolation.
+- `noise.createFractalNoise2D` uses recursive per-axis affine octave coordinates;
+  defaults: four octaves, amplitude/persistence `0.5`, scale `[2, 2]`, offset `[0, 0]`,
+  normalized output. Octaves are integer `[1, 32]`, amplitude positive finite,
+  persistence `[0, 1]`; zero persistence still samples all declared octaves.
+  `normalize: false` returns the raw ordered amplitude-weighted sum.
+- `noise.createSineLattice2D` requires seed, finite coefficients, and positive finite
+  multiplier. Numeric seeds are phase; strings use `seedToUint32` as phase. Numeric
+  `0` differs from string `'0'` here. Sine low bits may differ across engines/platforms.
+- New value-noise coordinates and sine-lattice integer coordinates must have absolute
+  magnitude below `2**52`; finite products/phases can still lose phase resolution.
+- `terrain.composeScalarField2D` captures up to 64 ordered add/multiply/blend layers.
+  Add gain defaults to one; negative gains are allowed. Blend weights must be in
+  `[0, 1]` and are not clamped; targets and weights are sampled even at endpoints.
+- `terrain.transformScalarField2D` applies per-axis scale then translation;
+  defaults `[1, 1]` and `[0, 0]`. Negative and zero scales are valid.
+- `terrain.createDirectionalField2D` preserves a supplied direction of unit length
+  within `1e-12`, adds up to 32 ordered displacements in length units, divides by
+  positive wavelength, then adds phase in cycles. It validates profile value and
+  derivative while returning only value. Projection is caller-declared XZ space.
+- `terrain.createSmoothMask2D` smoothsteps radial or box-max contours between
+  distinct finite edges. Reversed edges decrease. Positive box half-extents are
+  required; box-max is not Euclidean signed distance and ties can have creases.
+- Scalar fields copy option values, lists, records, and tuples; callback identities
+  and closure state remain borrowed. Callbacks must be pure and independent of call
+  order. Finite inputs/results are checked; nested recipes and callback execution
+  time are caller-controlled. No persistent coordinate cache or graph runtime exists.
+- `surface-fields.createPeriodicRidgeProfile` requires `0 < crest < 1` and finite
+  `risePower > 1`. It uses a sinusoidal-power rise and cubic fall with analytic
+  derivative per cycle, explicitly zero at wraps/crests. Joins are C1; C2 is not
+  promised, and the wrap is not C2 for `1 < risePower < 2`.
+- `surface-fields.sampleCosineProfile` evaluates the unreduced
+  `coordinate * Math.PI * 2` and its analytic derivative. Both periodic profiles
+  require absolute coordinate magnitude below `2**52` and finite sampled output.
+  Narrow ridge segments may overflow derivatives and throw. These profiles are
+  CPU-only; existing paired cubic-Hermite GLSL and relief frames remain separate.
 - `createHeightfield` reuses exact height coordinates only within one call: at most
   65,536 live samples across three actual Z-coordinate rows, with `-0` distinct from
   `0`; it falls back to direct sampling when full and does not change output buffers.

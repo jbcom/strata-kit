@@ -1,6 +1,15 @@
 /** Seeded, renderer-neutral noise fields. */
 
 import { requireFiniteNumber } from "./validation.js";
+import { sampleSeededLattice } from "./noiseLattice.js";
+
+export { createValueNoise2D, createFractalNoise2D, createSineLattice2D } from "./noiseFields.js";
+export type {
+  ValueNoise2DOptions,
+  FractalNoise2DOptions,
+  SineLattice2DOptions,
+  LatticeSampler2D,
+} from "./noiseFields.js";
 
 /** A stable string or finite numeric key for deterministic generation. */
 export type Seed = number | string;
@@ -45,12 +54,6 @@ function smoothstep(value: number): number {
   return value * value * (3 - 2 * value);
 }
 
-function lattice(seed: number, x: number, y: number, z: number): number {
-  let hash = seed ^ Math.imul(x, 374761393) ^ Math.imul(y, 668265263) ^ Math.imul(z, 2147483647);
-  hash = Math.imul(hash ^ (hash >>> 13), 1274126177);
-  return (((hash ^ (hash >>> 16)) >>> 0) / 4294967295) * 2 - 1;
-}
-
 /** Creates a finite-coordinate 3D value-noise sampler for one seed. */
 export function createSeededNoise(seed: Seed): (x: number, y: number, z?: number) => number {
   requireSeed("createSeededNoise", seed);
@@ -65,7 +68,8 @@ export function createSeededNoise(seed: Seed): (x: number, y: number, z?: number
     const tx = smoothstep(x - x0);
     const ty = smoothstep(y - y0);
     const tz = smoothstep(z - z0);
-    const sample = (dx: number, dy: number, dz: number) => lattice(key, x0 + dx, y0 + dy, z0 + dz);
+    const sample = (dx: number, dy: number, dz: number) =>
+      sampleSeededLattice(key, x0 + dx, y0 + dy, z0 + dz);
     const x00 = sample(0, 0, 0) * (1 - tx) + sample(1, 0, 0) * tx;
     const x10 = sample(0, 1, 0) * (1 - tx) + sample(1, 1, 0) * tx;
     const x01 = sample(0, 0, 1) * (1 - tx) + sample(1, 0, 1) * tx;
