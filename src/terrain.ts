@@ -440,6 +440,8 @@ export function createSeededTerrainField(options: SeededTerrainOptions): SeededT
  * Retains central-difference normals unless one points behind an emitted stored triangle.
  * Heightfield faces always have a positive Y component, so the upward normal is an exact
  * shared-vertex fallback for a sharp or under-resolved height change.
+ * This private helper receives only the builder's arrays: both xyz arrays have
+ * vertexCount * 3 entries and its grid loop emits indices below vertexCount.
  */
 function correctHeightfieldIncidentNormals(
   positions: Float32Array,

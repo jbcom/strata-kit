@@ -90,7 +90,9 @@ describe("heightfield incident normals", () => {
     const mesh = field.createHeightfield(options);
 
     expect(incidentDots(legacy).filter((value) => value <= 0)).toHaveLength(7);
-    expect(Math.min(...incidentDots(legacy))).toBeCloseTo(-0.331134880744995, 12);
+    expect(
+      incidentDots(legacy).reduce((minimum, dot) => Math.min(minimum, dot), Infinity),
+    ).toBeCloseTo(-0.331134880744995, 12);
     expect(incidentDots(mesh).every((value) => value > 0)).toBe(true);
     expect(mesh.positions).toEqual(legacy.positions);
     expect(mesh.indices).toEqual(legacy.indices);
