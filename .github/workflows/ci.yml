@@ -42,6 +42,7 @@ jobs:
       - run: mise exec -- pnpm exec playwright test --config tests/playwright.terrain-normals.config.ts
       - run: mise exec -- pnpm exec playwright test --config tests/playwright.sheet-mask.config.ts
       - run: mise exec -- pnpm exec playwright test --config tests/playwright.three-static-snapshot.config.ts
+      - run: mise exec -- pnpm exec playwright test --config tests/playwright.gallery-interactions.config.ts
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
@@ -52,5 +53,6 @@ jobs:
             test-results/terrain-normals/
             test-results/sheet-mask/
             test-results/three-static-snapshot/
+            test-results/gallery-interactions/
           if-no-files-found: warn
           retention-days: 7
