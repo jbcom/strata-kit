@@ -15,6 +15,10 @@ retains tiny valid triangles through clipped footprint sampling and linear-light
 blending. It preserves geometric validation and work limits; finite texel footprints
 can mix nearby islands. See [API details](docs/API.md) for filtering and memory limits.
 
+`visitUvTexelFootprints` streams raw clipped UV area and surface centroids for selected
+source triangles, without baking maps. Consumers can build coverage queries without
+confusing material alpha with area or UV coverage with physical solid space.
+
 The repository, project, and npm distribution share the name **Strata Procedural**:
 [`strata-procedural`](https://www.npmjs.com/package/strata-procedural).
 The repository was previously named `strata-kit`; GitHub preserves its redirects.

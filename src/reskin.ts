@@ -65,6 +65,26 @@ export interface UvAtlasBakeOptions extends TriplanarSurfaceOptions {
   coverage?: "pixel-center" | "area";
 }
 
+/** One positive-area UV triangle/texel intersection; area is in texel-square units. */
+export interface UvTexelFootprint {
+  triangle: number;
+  column: number;
+  row: number;
+  weight: number;
+  barycentric: readonly [number, number, number];
+  /** Interpolated position in the supplied mesh's coordinate space. */
+  position: readonly [number, number, number];
+}
+
+export interface UvTexelFootprintOptions {
+  width: number;
+  height: number;
+  /** Local source triangle IDs in declared order; duplicates are rejected. */
+  triangles?: readonly number[] | Uint16Array | Uint32Array;
+  /** Defaults to UV's bottom origin; top changes row labels, not traversal order. */
+  rowOrigin?: "bottom" | "top";
+}
+
 const MAX_PIXELS = 4_194_304;
 const MAX_GRID_SIZE = 2_048;
 const MAX_TRIANGLE_COUNT = 1_000_000;
@@ -179,9 +199,13 @@ function estimateRasterWork(
   width: number,
   height: number,
   operation: string,
+  selected?: Uint32Array,
+  origin: "top" | "bottom" = "top",
 ): number {
   let work = 0;
-  for (let triangle = 0; triangle < mesh.triangleCount; triangle += 1) {
+  const count = selected?.length ?? mesh.triangleCount;
+  for (let index = 0; index < count; index += 1) {
+    const triangle = selected ? selected[index] : index;
     const uv = uvOf(mesh, triangle);
     const minU = Math.min(uv[0], uv[2], uv[4]);
     const maxU = Math.max(uv[0], uv[2], uv[4]);
@@ -189,8 +213,11 @@ function estimateRasterWork(
     const maxV = Math.max(uv[1], uv[3], uv[5]);
     const left = Math.max(0, Math.floor(minU * width));
     const right = Math.min(width - 1, Math.ceil(maxU * width));
-    const top = Math.max(0, Math.floor((1 - maxV) * height));
-    const bottom = Math.min(height - 1, Math.ceil((1 - minV) * height));
+    const top = Math.max(0, Math.floor((origin === "bottom" ? minV : 1 - maxV) * height));
+    const bottom = Math.min(
+      height - 1,
+      Math.ceil((origin === "bottom" ? maxV : 1 - minV) * height),
+    );
     if (right >= left && bottom >= top) work += (right - left + 1) * (bottom - top + 1);
     if (work > MAX_RASTER_WORK)
       throw new Error(`${operation}: triangle raster work exceeds ${MAX_RASTER_WORK}`);
@@ -752,22 +779,26 @@ function sampleTriplanarLinear(
   };
 }
 
-function validateAtlasDimensions(options: UvAtlasBakeOptions): {
+function validateAtlasDimensions(
+  options: UvAtlasBakeOptions,
+  operation = "bakeUvAtlas",
+): {
   width: number;
   height: number;
   padding: number;
 } {
   const { width, height } = options;
   if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0)
-    throw new Error("bakeUvAtlas: width and height must be positive integers");
+    throw new Error(`${operation}: width and height must be positive integers`);
   if (!Number.isSafeInteger(width * height) || width * height > MAX_PIXELS)
-    throw new Error(`bakeUvAtlas: pixel count must not exceed ${MAX_PIXELS}`);
+    throw new Error(`${operation}: pixel count must not exceed ${MAX_PIXELS}`);
   const padding = options.padding ?? 4;
   if (!Number.isInteger(padding) || padding < 0)
-    throw new Error("bakeUvAtlas: padding must be a non-negative integer");
+    throw new Error(`${operation}: padding must be a non-negative integer`);
   if (padding > Math.max(width, height))
-    throw new Error("bakeUvAtlas: padding must not exceed the largest atlas dimension");
-  if (padding > MAX_PADDING) throw new Error(`bakeUvAtlas: padding must not exceed ${MAX_PADDING}`);
+    throw new Error(`${operation}: padding must not exceed the largest atlas dimension`);
+  if (padding > MAX_PADDING)
+    throw new Error(`${operation}: padding must not exceed ${MAX_PADDING}`);
   return { width, height, padding };
 }
 
@@ -888,6 +919,19 @@ function clipAtlasPolygon(
   return result;
 }
 
+function polygonFanArea(polygon: Float64Array, count: number, offset: number): number {
+  let sum = 0;
+  for (let vertex = 1; vertex + 1 < count; vertex += 1) {
+    const p = ((offset / 5 + vertex) % count) * 5;
+    const q = ((offset / 5 + vertex + 1) % count) * 5;
+    sum += Math.abs(
+      (polygon[p] - polygon[offset]) * (polygon[q + 1] - polygon[offset + 1]) -
+        (polygon[q] - polygon[offset]) * (polygon[p + 1] - polygon[offset + 1]),
+    );
+  }
+  return sum;
+}
+
 /** Positive-area texel intersections, with centroid barycentrics carried through clipping. */
 function rasterizeArea(
   uv: readonly number[],
@@ -896,9 +940,13 @@ function rasterizeArea(
   first: Float64Array,
   second: Float64Array,
   visit: (texel: number, area: number, a: number, b: number, c: number) => void,
+  origin: "top" | "bottom" = "top",
 ): number {
   const xs = [uv[0] * width, uv[2] * width, uv[4] * width];
-  const ys = [(1 - uv[1]) * height, (1 - uv[3]) * height, (1 - uv[5]) * height];
+  const ys =
+    origin === "top"
+      ? [(1 - uv[1]) * height, (1 - uv[3]) * height, (1 - uv[5]) * height]
+      : [uv[1] * height, uv[3] * height, uv[5] * height];
   const left = Math.max(0, Math.floor(Math.min(...xs)));
   const right = Math.min(width - 1, Math.ceil(Math.max(...xs)) - 1);
   const top = Math.max(0, Math.floor(Math.min(...ys)));
@@ -921,18 +969,50 @@ function rasterizeArea(
       let a = 0;
       let b = 0;
       let c = 0;
+      // Raw footprints admit smaller triangles than atlas-quality validation.
+      // A canonical fan origin avoids cyclic-index-dependent cancellation near zero.
+      // Keep the existing atlas arithmetic unchanged.
+      let anchor = 0;
+      if (origin === "bottom")
+        for (let vertex = 1; vertex < count; vertex += 1) {
+          const offset = vertex * 5;
+          if (
+            first[offset] < first[anchor] ||
+            (first[offset] === first[anchor] && first[offset + 1] < first[anchor + 1])
+          )
+            anchor = offset;
+        }
+      // Retry a collapsed fan with the remaining bounded polygon anchors. A
+      // representable area may survive at another anchor even when subtraction
+      // erased it at the canonical one. This does not promise exact integration.
+      if (origin === "bottom" && polygonFanArea(first, count, anchor) === 0) {
+        let best = 0;
+        for (let vertex = 0; vertex < count; vertex += 1) {
+          const offset = vertex * 5;
+          const candidate = polygonFanArea(first, count, offset);
+          if (
+            candidate > best ||
+            (candidate === best &&
+              (first[offset] < first[anchor] ||
+                (first[offset] === first[anchor] && first[offset + 1] < first[anchor + 1])))
+          ) {
+            best = candidate;
+            anchor = offset;
+          }
+        }
+      }
       for (let vertex = 1; vertex + 1 < count; vertex += 1) {
-        const p = vertex * 5;
-        const q = (vertex + 1) * 5;
+        const p = ((anchor / 5 + vertex) % count) * 5;
+        const q = ((anchor / 5 + vertex + 1) % count) * 5;
         const piece =
           Math.abs(
-            (first[p] - first[0]) * (first[q + 1] - first[1]) -
-              (first[q] - first[0]) * (first[p + 1] - first[1]),
+            (first[p] - first[anchor]) * (first[q + 1] - first[anchor + 1]) -
+              (first[q] - first[anchor]) * (first[p + 1] - first[anchor + 1]),
           ) * 0.5;
         area += piece;
-        a += piece * (first[2] + first[p + 2] + first[q + 2]);
-        b += piece * (first[3] + first[p + 3] + first[q + 3]);
-        c += piece * (first[4] + first[p + 4] + first[q + 4]);
+        a += piece * (first[anchor + 2] + first[p + 2] + first[q + 2]);
+        b += piece * (first[anchor + 3] + first[p + 3] + first[q + 3]);
+        c += piece * (first[anchor + 4] + first[p + 4] + first[q + 4]);
       }
       if (area > 0) {
         visit(row * width + column, area, a / (3 * area), b / (3 * area), c / (3 * area));
@@ -940,6 +1020,85 @@ function rasterizeArea(
       }
     }
   return reached;
+}
+
+/**
+ * Visits raw clipped UV footprints without sampling materials or allocating atlas maps.
+ * Traversal follows selected triangles then bottom-origin rows/columns. Geometry and
+ * UVs are borrowed synchronously; do not mutate them in callbacks. This is UV area,
+ * not a world-space occupancy/solid-volume test. It does not judge chart overlaps or stretch.
+ */
+export function visitUvTexelFootprints(
+  mesh: NeutralIndexedMesh,
+  options: UvTexelFootprintOptions,
+  visit: (footprint: UvTexelFootprint) => void,
+): { triangles: number; footprints: number } {
+  const operation = "visitUvTexelFootprints";
+  if (options === null || typeof options !== "object")
+    throw new Error(`${operation}: options must be an object`);
+  const { width, height } = validateAtlasDimensions(
+    { width: options.width, height: options.height, padding: 0 },
+    operation,
+  );
+  const origin = options.rowOrigin === undefined ? "bottom" : options.rowOrigin;
+  if (origin !== "bottom" && origin !== "top")
+    throw new Error(`${operation}: rowOrigin must be bottom or top`);
+  if (typeof visit !== "function") throw new Error(`${operation}: visit must be a function`);
+  const validated = validateMesh(operation, mesh, true);
+  const input = options.triangles;
+  if (
+    input !== undefined &&
+    !(Array.isArray(input) || input instanceof Uint16Array || input instanceof Uint32Array)
+  )
+    throw new Error(`${operation}: triangles must be an array of source triangle IDs`);
+  if (input && input.length > validated.triangleCount)
+    throw new Error(`${operation}: selection exceeds source triangle count`);
+  const selected = new Uint32Array(input?.length ?? validated.triangleCount);
+  const seen = input ? new Uint8Array(validated.triangleCount) : undefined;
+  for (let index = 0; index < selected.length; index += 1) {
+    const triangle = input === undefined ? index : input[index];
+    if (!Number.isInteger(triangle) || triangle < 0 || triangle >= validated.triangleCount)
+      throw new Error(`${operation}: triangle ID must be an in-range integer`);
+    if (seen?.[triangle]) throw new Error(`${operation}: duplicate triangle ID`);
+    if (seen) seen[triangle] = 1;
+    selected[index] = triangle;
+    const uv = uvOf(validated, triangle);
+    if (uv.some((coordinate) => coordinate < 0 || coordinate > 1))
+      throw new Error(`${operation}: selected UV triangle extends outside the unit tile`);
+    if (orient2dSign(uv[0], uv[1], uv[2], uv[3], uv[4], uv[5]) === 0)
+      throw new Error(`${operation}: selected UV triangle is degenerate`);
+  }
+  estimateRasterWork(validated, width, height, operation, selected, "bottom");
+  const first = new Float64Array(80),
+    second = new Float64Array(80);
+  let footprints = 0;
+  for (const triangle of selected) {
+    const reached = rasterizeArea(
+      uvOf(validated, triangle),
+      width,
+      height,
+      first,
+      second,
+      (texel, weight, a, b, c) => {
+        const bottomRow = Math.floor(texel / width);
+        visit({
+          triangle,
+          column: texel % width,
+          row: origin === "bottom" ? bottomRow : height - 1 - bottomRow,
+          weight,
+          barycentric: [a, b, c],
+          position: interpolatePoint(validated, triangle, a, b, c),
+        });
+        footprints += 1;
+      },
+      "bottom",
+    );
+    if (reached === 0)
+      throw new Error(
+        `${operation}: numerical footprint computation failed for a positive UV triangle`,
+      );
+  }
+  return { triangles: selected.length, footprints };
 }
 
 function bakeAreaAtlas(

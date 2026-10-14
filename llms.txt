@@ -27,6 +27,10 @@
   samples clipped positive-area centroids and blends unrounded linear channels.
   Alpha averages over covered geometry; footprint filtering can mix disjoint islands.
   Geometric/work guards remain; area accumulators cost 64 extra bytes per pixel.
+- `visitUvTexelFootprints` streams raw positive UV area, barycentric centroids and
+  model-space positions for selected source triangles, without atlas maps. Default
+  bottom-origin traversal has optional top-origin row labels. Overlap aggregation
+  and world-space occupancy remain caller policies; alpha is not area coverage.
 - Exact UV overlap uses two-axis bounding-box candidates and positive-area
   Float32 triangle tests. Shared edges are not overlap; the 8,388,608 candidate
   budget remains, and exhaustion is not an actual-overlap verdict.
