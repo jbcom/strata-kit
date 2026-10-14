@@ -11,6 +11,7 @@ import {
   ShaderLib,
   Texture,
 } from "three";
+import * as ThreePeer from "three";
 import * as adapters from "../src/three.ts";
 
 type Textures = {
@@ -346,4 +347,12 @@ it("rejects overridden, render-target, malformed, and unloaded map data", () => 
     expect(() => factory()(input)).toThrow();
     input.dispose();
   }
+});
+
+it("rejects the legacy r152 sRGB numeric format when the installed peer does not export it", () => {
+  expect((ThreePeer as { _SRGBAFormat?: number })._SRGBAFormat).toBeUndefined();
+  const input = textures();
+  input.map.format = 1035;
+  expect(() => factory()(input)).toThrow();
+  input.dispose();
 });
