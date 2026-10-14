@@ -73,6 +73,10 @@ const biomeKinds = new Set<BiomeKind>([
 const maximumHeightfieldVertices = 1_000_000;
 const maximumHeightfieldIndexEntries = 6_000_000;
 const maximumScatterPoints = 1_000_000;
+type HeightfieldCoordinateKey = number | "negative-zero";
+
+/** Bounds the operation-local cache independently of heightfield aspect ratio. */
+const maximumHeightfieldCachedSamples = 65_536;
 
 function requireBiomes(biomes: readonly Biome[]): void {
   if (biomes.length === 0) throw new Error("createSeededTerrainField: biomes cannot be empty");
@@ -208,6 +212,27 @@ function requireDistinctFloat32AxisSamples(axis: "x" | "z", size: number, cellSi
   }
 }
 
+function heightfieldCoordinateKey(value: number): HeightfieldCoordinateKey {
+  // Map uses SameValueZero and would otherwise merge the only two distinct zero values.
+  return Object.is(value, -0) ? "negative-zero" : value;
+}
+
+function retainHeightfieldRows(
+  rows: Map<HeightfieldCoordinateKey, Map<HeightfieldCoordinateKey, number>>,
+  lower: HeightfieldCoordinateKey,
+  current: HeightfieldCoordinateKey,
+  upper: HeightfieldCoordinateKey,
+): number {
+  let removedSamples = 0;
+  for (const key of rows.keys()) {
+    if (key !== lower && key !== current && key !== upper) {
+      removedSamples += rows.get(key)!.size;
+      rows.delete(key);
+    }
+  }
+  return removedSamples;
+}
+
 /** Creates a finite, seeded terrain and continuous cave distance field. */
 export function createSeededTerrainField(options: SeededTerrainOptions): SeededTerrainField {
   if (typeof options.seed === "number") {
@@ -308,14 +333,50 @@ export function createSeededTerrainField(options: SeededTerrainOptions): SeededT
       const positions = new Float32Array(vertexCount * 3);
       const normals = new Float32Array(vertexCount * 3);
       const indices = new Uint32Array(indexEntryCount);
+      const cachedHeightRows = new Map<
+        HeightfieldCoordinateKey,
+        Map<HeightfieldCoordinateKey, number>
+      >();
+      let cachedHeightEntryCount = 0;
+      const cachedHeightAt = (x: number, z: number): number => {
+        // Preserve heightAt's validation on cache hits as well as misses.
+        requireFiniteNumber("heightAt", "x", x);
+        requireFiniteNumber("heightAt", "z", z);
+        const zKey = heightfieldCoordinateKey(z);
+        const xKey = heightfieldCoordinateKey(x);
+        let row = cachedHeightRows.get(zKey);
+        if (!row) {
+          row = new Map();
+          cachedHeightRows.set(zKey, row);
+        }
+        const cached = row.get(xKey);
+        if (cached !== undefined || row.has(xKey)) return cached!;
+
+        // Keep the optimization's retained memory fixed even for a permitted
+        // wide, shallow heightfield. Direct sampling retains the exact request.
+        if (cachedHeightEntryCount >= maximumHeightfieldCachedSamples) return heightAt(x, z);
+
+        const height = heightAt(x, z);
+        row.set(xKey, height);
+        cachedHeightEntryCount += 1;
+        return height;
+      };
       for (let z = 0; z < depth; z += 1) {
+        const worldZ = (z - (depth - 1) / 2) * cellSize;
+        cachedHeightEntryCount -= retainHeightfieldRows(
+          cachedHeightRows,
+          heightfieldCoordinateKey(worldZ - cellSize),
+          heightfieldCoordinateKey(worldZ),
+          heightfieldCoordinateKey(worldZ + cellSize),
+        );
         for (let x = 0; x < width; x += 1) {
           const offset = (z * width + x) * 3;
           const worldX = (x - (width - 1) / 2) * cellSize;
-          const worldZ = (z - (depth - 1) / 2) * cellSize;
-          const heightValue = heightAt(worldX, worldZ);
-          const slopeX = heightAt(worldX + cellSize, worldZ) - heightAt(worldX - cellSize, worldZ);
-          const slopeZ = heightAt(worldX, worldZ + cellSize) - heightAt(worldX, worldZ - cellSize);
+          const heightValue = cachedHeightAt(worldX, worldZ);
+          const slopeX =
+            cachedHeightAt(worldX + cellSize, worldZ) - cachedHeightAt(worldX - cellSize, worldZ);
+          const slopeZ =
+            cachedHeightAt(worldX, worldZ + cellSize) - cachedHeightAt(worldX, worldZ - cellSize);
           const magnitude = Math.hypot(-slopeX, 2 * cellSize, -slopeZ);
           if (!Number.isFinite(magnitude) || magnitude === 0) {
             throw new Error("createHeightfield: normal magnitude must be finite and non-zero");

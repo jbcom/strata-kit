@@ -40,6 +40,12 @@ The same seed and inputs produce the same field, heightfield, and scatter sequen
 `HeightfieldMesh` is plain typed-array data, so it can be consumed by any renderer or
 asset pipeline.
 
+While constructing a heightfield, the terrain field reuses exact requested `(x, z)`
+height samples for central-difference normals. This operation-local cache holds at
+most 65,536 live samples across at most three actual Z-coordinate rows, treats
+signed zero distinctly, and falls back to direct sampling when full. It does not
+change the returned buffers or their layout.
+
 ## Bake a surface layer
 
 ```ts
