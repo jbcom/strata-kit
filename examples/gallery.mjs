@@ -161,6 +161,8 @@ function render() {
   window.__proceduralDemo={...window.__proceduralDemo,ready:true,muted:true,mode,scale,seed,
     gpu:extension?gl.getParameter(extension.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),
     triangles:renderer.info.render.triangles,drawCalls:renderer.info.render.calls,
+    camera:{position:camera.position.toArray(),target:controls.target.toArray(),distance:camera.position.distanceTo(controls.target)},
+    resources:{geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,programs:renderer.info.programs?.length??0},
     shaderCompileCount,contextLost:gl.isContextLost(),physicalBounds:new THREE.Box3().setFromObject(content).getSize(new THREE.Vector3()).toArray(),
     proceduralGeometry:renderedGeometryEvidence(),readBakeBytes:bakeBytes,readBoundTextureMetadata:boundTextureMetadata,readBoundTextureChunk:boundTextureChunk};
 }
