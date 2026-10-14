@@ -30,6 +30,9 @@
   before height sampling. Omitted cells retain sampled vertices/UVs; all-false
   returns empty indices supported by the generic Three mesh adapter.
 - Mesh generators produce typed arrays; Three textures expose explicit disposal.
+- Heightfields preserve their grid vertex/index layout. Only shared normals pointing
+  behind an incident stored face fall back to `[0, 1, 0]`; valid normal bytes remain
+  unchanged. This is an upward fallback, not face-normal averaging.
 - Three scalar textures use linear grayscale RGBA, including bump, for WebGL1
   compatibility at the r152 peer floor; expansion uses four bytes per texel.
 - Swept radius cusps may add coincident rings with separate shading normals;

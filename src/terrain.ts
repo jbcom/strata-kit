@@ -407,6 +407,7 @@ export function createSeededTerrainField(options: SeededTerrainOptions): SeededT
           cursor += 6;
         }
       }
+      correctHeightfieldIncidentNormals(positions, normals, indices);
       return { positions, normals, indices, width, depth };
     },
     scatter({ count, area, seed: scatterSeed = seed }) {
@@ -433,4 +434,66 @@ export function createSeededTerrainField(options: SeededTerrainOptions): SeededT
       });
     },
   };
+}
+
+/**
+ * Retains central-difference normals unless one points behind an emitted stored triangle.
+ * Heightfield faces always have a positive Y component, so the upward normal is an exact
+ * shared-vertex fallback for a sharp or under-resolved height change.
+ * This private helper receives only the builder's arrays: both xyz arrays have
+ * vertexCount * 3 entries and its grid loop emits indices below vertexCount.
+ */
+function correctHeightfieldIncidentNormals(
+  positions: Float32Array,
+  normals: Float32Array,
+  indices: Uint32Array,
+): void {
+  let repairs: Uint8Array | undefined;
+  for (let offset = 0; offset < indices.length; offset += 3) {
+    const a = indices[offset]! * 3;
+    const b = indices[offset + 1]! * 3;
+    const c = indices[offset + 2]! * 3;
+    const abx = positions[b]! - positions[a]!;
+    const aby = positions[b + 1]! - positions[a + 1]!;
+    const abz = positions[b + 2]! - positions[a + 2]!;
+    const acx = positions[c]! - positions[a]!;
+    const acy = positions[c + 1]! - positions[a + 1]!;
+    const acz = positions[c + 2]! - positions[a + 2]!;
+    const crossX = aby * acz - abz * acy;
+    const crossY = abz * acx - abx * acz;
+    const crossZ = abx * acy - aby * acx;
+    const scale = Math.max(Math.abs(crossX), Math.abs(crossY), Math.abs(crossZ));
+    if (!(scale > 0) || !Number.isFinite(scale)) {
+      throw new Error(
+        `createHeightfield: triangle ${offset / 3} has zero area after Float32 quantization`,
+      );
+    }
+    const scaledX = crossX / scale;
+    const scaledY = crossY / scale;
+    const scaledZ = crossZ / scale;
+    const inverseLength = 1 / Math.hypot(scaledX, scaledY, scaledZ);
+    const normalX = scaledX * inverseLength;
+    const normalY = scaledY * inverseLength;
+    const normalZ = scaledZ * inverseLength;
+    for (let corner = 0; corner < 3; corner += 1) {
+      const vertex = indices[offset + corner]!;
+      const normalOffset = vertex * 3;
+      const alignment =
+        normalX * normals[normalOffset]! +
+        normalY * normals[normalOffset + 1]! +
+        normalZ * normals[normalOffset + 2]!;
+      if (!(alignment > 0)) {
+        if (!repairs) repairs = new Uint8Array(normals.length / 3);
+        repairs[vertex] = 1;
+      }
+    }
+  }
+  if (!repairs) return;
+  for (let vertex = 0; vertex < repairs.length; vertex += 1) {
+    if (repairs[vertex] === 0) continue;
+    const offset = vertex * 3;
+    normals[offset] = 0;
+    normals[offset + 1] = 1;
+    normals[offset + 2] = 0;
+  }
 }

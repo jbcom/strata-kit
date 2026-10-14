@@ -63,6 +63,11 @@ weights; distinctions below coordinate precision cannot be recovered.
 Heightfields are limited to one million vertices and six million indices, and reject
 cell spacing that collapses at their centered Float32 coordinates. Scatter is limited
 to one million points.
+Heightfield normals use central differences. A shared normal outside an incident
+stored face's outward hemisphere is replaced by `[0, 1, 0]`, which faces outward
+for every upward-wound heightfield triangle. This selective fallback preserves the
+`width * depth` vertex layout, positions, indices and already-valid normal bytes;
+it does not average face normals or add vertices.
 
 During a `createHeightfield` call, terrain caches exact requested height coordinates
 only for that operation. The cache holds at most 65,536 live samples over at most

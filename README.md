@@ -39,6 +39,9 @@ const placements = terrain.scatter({ count: 40, area: 120 });
 The same seed and inputs produce the same field, heightfield, and scatter sequence.
 `HeightfieldMesh` is plain typed-array data, so it can be consumed by any renderer or
 asset pipeline.
+Heightfields retain their grid layout at sharp height changes. If a shared
+central-difference normal points behind any actual stored triangle, it falls back
+to the upward normal. Other normals, positions and indices remain unchanged.
 
 While constructing a heightfield, the terrain field reuses exact requested `(x, z)`
 height samples for central-difference normals. This operation-local cache holds at
