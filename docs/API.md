@@ -16,7 +16,7 @@ consumers keep their dependency boundary explicit.
 | `strata-procedural/mesh` | `createRevolvedMesh`, `createSweptMesh`, `createSheetMesh`, and mesh types | none |
 | `strata-procedural/shaders` | `seededSurfaceNoiseGlsl`, `replaceOrThrow`, `applyShaderPatches` | none |
 | `strata-procedural/surface-fields` | Scalar-profile, relief-frame, uniform-packing, and GLSL APIs | none |
-| `strata-procedural/three` | `createThreeHeightfieldGeometry`, `createThreeMeshGeometry`, `createThreeSurfaceTextures` | `three` peer |
+| `strata-procedural/three` | `createThreeHeightfieldGeometry`, `createThreeMeshGeometry`, `createThreeSurfaceTextures`, `snapshotThreeStaticMeshes` | `three` peer |
 | `strata-procedural/r3f` | `StrataHeightfield` and `StrataHeightfieldProps` | React, Three, and R3F peers |
 
 ## Seeded primitives
@@ -204,7 +204,36 @@ It expects a `HeightfieldMesh` produced or validated by the consumer.
 
 `createThreeMeshGeometry(mesh)` validates a portable mesh and creates a geometry
 whose attributes view the input arrays; keep those arrays immutable while in use.
-The caller disposes the geometry.
+Positions, normals, and indices are required; UVs are optional and produce no UV
+attribute when absent. The caller disposes the geometry.
+
+`snapshotThreeStaticMeshes(root, { space? })` copies a caller-prepared `Object3D`
+hierarchy into `ThreeStaticMeshSnapshot[]` in deterministic preorder, including a
+mesh at the root. Call `root.updateWorldMatrix(true, true)` before taking a snapshot;
+the function reads `matrixWorld` and never updates matrices, attributes, geometry,
+materials, or scene state. `space` defaults to `"root"`, removing the prepared root
+transform; `"world"` retains prepared world coordinates.
+
+Each snapshot contains `name`, copied Float32 `positions` and `normals`, copied
+Uint16 or Uint32 `indices`, and optional copied Float32 `uvs`. Interleaved and
+normalized CPU-readable attributes are read through their accessors. Nonindexed
+triangles receive sequential indices. Supplied normals use the inverse transpose
+and normalize nonzero vectors; authored zero normals stay zero. Missing normals
+use area-weighted incident faces in the stored transformed coordinates, leaving
+unused or cancelling vertices at zero. A reflected transform reverses each
+triangle's winding. The result keeps no source scene or material references and
+can feed portable mesh analysis, UV bakes, or `createThreeMeshGeometry`.
+
+Transforms must be finite, affine, and invertible. Position/normal/UV layouts must
+be complete, indices must reference existing vertices, and each stored triangle
+must have finite nonzero area. Allocation limits across the whole hierarchy are
+100,000 nodes, 1,000,000 vertices, and 6,000,000 index entries; counts are checked
+before output allocation. Skinned, instanced or batched meshes, lines, points, sprites,
+skin attributes, populated morph attributes, material arrays, geometry groups,
+instanced buffer geometries, partial draw ranges, and cyclic or shared-node hierarchies are rejected. Visibility,
+custom attributes, animation, material state, and textures are not exported.
+An empty hierarchy of ordinary objects returns an empty array. The options type is
+`SnapshotThreeStaticMeshesOptions`; both types are exported only from `three`.
 
 `createThreeSurfaceTextures(bake, { flipY? })` copies bake buffers and returns `map`,
 `roughnessMap`, `bumpMap`, optional `metalnessMap`, and idempotent `dispose()`.

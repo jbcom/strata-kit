@@ -84,7 +84,7 @@ image files and applying them to a material remain consumer work.
 | `strata-procedural/mesh` | Revolved profiles, transported sweeps, and sampled sheets |
 | `strata-procedural/shaders` | GLSL seeded noise and checked literal shader patches |
 | `strata-procedural/surface-fields` | C1 scalar profiles, relief derivatives and frames, matching GLSL |
-| `strata-procedural/three` | Mesh geometry and explicitly disposable surface textures |
+| `strata-procedural/three` | Mesh geometry, copied static mesh snapshots, and disposable surface textures |
 | `strata-procedural/r3f` | `StrataHeightfield` React Three Fiber component |
 
 Only these package-exported paths are public API. See [docs/API.md](docs/API.md) for
@@ -193,6 +193,24 @@ const geometry = createThreeHeightfieldGeometry(mesh);
 // Dispose the geometry when the consumer no longer uses it.
 geometry.dispose();
 ```
+
+Static authored meshes can enter the same portable mesh and UV-bake pipeline:
+
+```ts
+import { snapshotThreeStaticMeshes } from 'strata-procedural/three';
+
+// authoredRoot is a caller-owned Three Object3D hierarchy.
+authoredRoot.updateWorldMatrix(true, true);
+const snapshots = snapshotThreeStaticMeshes(authoredRoot);
+// Each snapshot owns copied positions, normals, indices, and optional UVs.
+// Coordinates are relative to authoredRoot; use { space: 'world' } for world space.
+```
+
+The snapshot operation reads prepared matrices without updating the scene. It handles
+nonuniform scale, reflected winding, and indexed or nonindexed triangles. Missing
+normals are area-weighted from transformed triangles. Skins, instances, batches, material
+groups, morph targets, and partial draw ranges are explicit errors. See the
+[API contract](docs/API.md#optional-adapters) for limits.
 
 `strata-procedural/r3f` exports `StrataHeightfield`, which receives a precomputed
 `HeightfieldMesh` and an optional Three `Material`. Neither adapter creates terrain,

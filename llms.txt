@@ -30,6 +30,11 @@
   before height sampling. Omitted cells retain sampled vertices/UVs; all-false
   returns empty indices supported by the generic Three mesh adapter.
 - Mesh generators produce typed arrays; Three textures expose explicit disposal.
+- `three.snapshotThreeStaticMeshes` copies caller-prepared static Object3D triangles
+  into neutral buffers in root-relative or world coordinates without scene mutation.
+  It applies inverse-transpose normals and reflected winding; missing normals are
+  area-weighted. Aggregate limits: 100,000 nodes, 1,000,000 vertices, 6,000,000 indices.
+  Skins, instances, batches, morphs, material groups/arrays, and partial draw ranges are rejected.
 - Heightfields preserve their grid vertex/index layout. Only shared normals pointing
   behind an incident stored face fall back to `[0, 1, 0]`; valid normal bytes remain
   unchanged. This is an upward fallback, not face-normal averaging.
