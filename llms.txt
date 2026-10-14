@@ -23,6 +23,9 @@
 - Sheets sample each height once and preserve valid smooth normals; conflicting
   incident corners are duplicated with outward face normals. Returned vertex count
   and index width may increase within the one-million-vertex bound.
+- Optional sheet `includeCell(column, row)` selects cells once in row-major order
+  before height sampling. Omitted cells retain sampled vertices/UVs; all-false
+  returns empty indices supported by the generic Three mesh adapter.
 - Mesh generators produce typed arrays; Three textures expose explicit disposal.
 - Three scalar textures use linear grayscale RGBA, including bump, for WebGL1
   compatibility at the r152 peer floor; expansion uses four bytes per texel.

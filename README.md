@@ -101,6 +101,10 @@ and floating-point limits.
 Sampled sheets preserve smooth finite-difference normals, but duplicate conflicting
 triangle corners at sharp relief folds so every indexed corner faces outward.
 These corrections can increase vertex counts; do not assume a fixed grid index layout.
+Use `includeCell(column, row)` to select sheet cells for openings. It runs once per
+cell before height sampling and must return a boolean. Sampled vertices and UVs are
+retained, including when all cells are omitted; the generic Three adapter accepts
+the resulting empty indexed surface.
 
 Nearest-biome selection also retains valid ranking at extreme radii. That correction
 changes previously incorrect extreme-input results while preserving ordinary output.

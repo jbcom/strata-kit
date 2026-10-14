@@ -14,6 +14,7 @@ import type { HeightfieldMesh } from "./terrain.js";
 
 function validateMeshBuffers(
   mesh: Pick<ProceduralMesh, "positions" | "normals" | "indices"> & { uvs?: Float32Array },
+  allowEmpty = false,
 ): number {
   if (
     !(mesh.positions instanceof Float32Array) ||
@@ -35,7 +36,7 @@ function validateMeshBuffers(
   }
   if (
     !(mesh.indices instanceof Uint16Array || mesh.indices instanceof Uint32Array) ||
-    mesh.indices.length === 0 ||
+    (!allowEmpty && mesh.indices.length === 0) ||
     mesh.indices.length % 3 !== 0 ||
     mesh.indices.length > 6_000_000
   ) {
@@ -72,7 +73,7 @@ function geometryFromBuffers(
  * Dispose the returned geometry when its consumer no longer needs it.
  */
 export function createThreeMeshGeometry(mesh: ProceduralMesh): BufferGeometry {
-  validateMeshBuffers(mesh);
+  validateMeshBuffers(mesh, true);
   return geometryFromBuffers(mesh);
 }
 
