@@ -1,6 +1,8 @@
 /** Renderer-neutral scalar profiles and differential relief frames. */
 
 import type { Vec3 } from './sdf.js';
+export { createPeriodicRidgeProfile, sampleCosineProfile } from './periodicProfiles.js';
+export type { ScalarProfileSampler } from './fieldTypes.js';
 import { requireFiniteNumber, requireFiniteVector3 } from './validation.js';
 
 /** The maximum knot count accepted by the bounded GLSL evaluator. */

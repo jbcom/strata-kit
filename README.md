@@ -2,7 +2,7 @@
 
 Strata Procedural is a small, renderer-neutral TypeScript library for deterministic
 procedural layering in 3D space. It supplies seeded noise, signed-distance
-composition, biome-shaped terrain fields, coherent surface layers, portable meshes,
+composition, caller-defined and biome-shaped terrain fields, coherent surface layers, portable meshes,
 UV atlas bakes, scalar relief profiles, and optional Three.js and React Three Fiber views.
 
 UV overlap analysis uses a deterministic two-axis candidate search with exact-sign
@@ -14,6 +14,10 @@ UV atlas baking defaults to strict pixel-centre sampling. Optional `coverage: 'a
 retains tiny valid triangles through clipped footprint sampling and linear-light
 blending. It preserves geometric validation and work limits; finite texel footprints
 can mix nearby islands. See [API details](docs/API.md) for filtering and memory limits.
+
+`visitUvTexelFootprints` streams raw clipped UV area and surface centroids for selected
+source triangles, without baking maps. Consumers can build coverage queries without
+confusing material alpha with area or UV coverage with physical solid space.
 
 The repository, project, and npm distribution share the name **Strata Procedural**:
 [`strata-procedural`](https://www.npmjs.com/package/strata-procedural).
@@ -59,6 +63,51 @@ most 65,536 live samples across at most three actual Z-coordinate rows, treats
 signed zero distinctly, and falls back to direct sampling when full. It does not
 change the returned buffers or their layout.
 
+## Compose a directional field
+
+Fields are callable `(x, z) => number` samplers in caller-declared coordinates.
+Build a recipe from seeded noise, a scalar profile, ordered arithmetic, and a mask:
+
+```ts
+import { createFractalNoise2D, createValueNoise2D } from 'strata-procedural/noise';
+import { createPeriodicRidgeProfile } from 'strata-procedural/surface-fields';
+import {
+  composeScalarField2D,
+  createDirectionalField2D,
+  createSmoothMask2D,
+  transformScalarField2D,
+} from 'strata-procedural/terrain';
+
+const noise = createFractalNoise2D({ noise: createValueNoise2D({ seed: 'relief-01' }) });
+const displacement = transformScalarField2D(noise, { scale: [0.05, 0.05] });
+const ridge = createDirectionalField2D({
+  direction: [1, 0],
+  wavelength: 12,
+  displacement: [displacement], // Length units, before division by wavelength.
+  phase: 0.1, // Cycles, after division by wavelength.
+  profile: createPeriodicRidgeProfile({ crest: 0.65, risePower: 2 }),
+});
+const fade = createSmoothMask2D({
+  shape: { kind: 'radial', center: [0, 0] },
+  edges: [4, 10],
+});
+const raised = composeScalarField2D(ridge, [{ operation: 'multiply', field: 3 }]);
+const heightAt = composeScalarField2D(0, [{ operation: 'blend', field: raised, weight: fade }]);
+const height = heightAt(8, -2);
+```
+
+Changing layer order changes the result. Constructors capture numeric options and
+copy recipe lists; injected callbacks remain caller-owned and must be pure,
+deterministic, and independent of call order. Composition accepts at most 64 layers,
+directional projection at most 32 displacements, and fractal noise at most 32
+octaves. These bounds do not limit callback time or nested recipe cost.
+
+The ridge returns values in `[0, 1]` and derivatives per cycle with C1 joins;
+curvature continuity is not promised. It and `sampleCosineProfile` are CPU-only
+profiles. Directional projection belongs to `terrain`; scalar profiles do not choose
+a spatial projection or deform geometry. See [API details](docs/API.md) for noise
+seed semantics, finite-coordinate limits, mask contours, and normalization.
+
 ## Bake a surface layer
 
 ```ts
@@ -89,12 +138,12 @@ image files and applying them to a material remain consumer work.
 | `strata-procedural` | Root API: noise, SDFs, terrain, material bakes, and scalar relief |
 | `strata-procedural/noise` | Seed normalization, random streams, value noise, and fractal sums |
 | `strata-procedural/sdf` | Sphere, plane, box, and boolean/smooth distance operations |
-| `strata-procedural/terrain` | Seeded terrain fields, heightfields, and scatter data |
+| `strata-procedural/terrain` | Ordered scalar fields, directional projection, smooth masks, seeded terrain, heightfields, and scatter |
 | `strata-procedural/materials` | Surface plans, samples, bakes, and bake manifests |
 | `strata-procedural/mesh` | Revolved profiles and section surfaces, transported sweeps, and height or parametric sheets |
 | `strata-procedural/shaders` | GLSL seeded noise and checked literal shader patches |
-| `strata-procedural/surface-fields` | C1 scalar profiles, relief derivatives and frames, matching GLSL |
-| `strata-procedural/three` | Mesh geometry, copied static mesh snapshots, and disposable surface textures |
+| `strata-procedural/surface-fields` | Periodic and clamped scalar profiles, relief frames, and cubic-Hermite GLSL |
+| `strata-procedural/three` | Mesh geometry, copied static mesh snapshots, surface textures, and triplanar materials |
 | `strata-procedural/r3f` | `StrataHeightfield` React Three Fiber component |
 
 Only these package-exported paths are public API. See [docs/API.md](docs/API.md) for
@@ -274,6 +323,15 @@ groups, morph targets, and partial draw ranges are explicit errors. See the
 `strata-procedural/r3f` exports `StrataHeightfield`, which receives a precomputed
 `HeightfieldMesh` and an optional Three `Material`. Neither adapter creates terrain,
 simulation state, or a render loop.
+
+For static geometry without usable UVs, `createThreeTriplanarMaterial(textures,
+{ fieldTransform, sharpness, flipV, bumpScale })` creates a standard PBR material
+from precomputed color, roughness, bump and optional metalness maps. The copied
+affine transform maps geometry-local positions into the sampling field. The
+material borrows textures; dispose the material and texture bundle separately.
+It requires WebGLRenderer, bounded RGBA8 maps and valid static normals. WebGL1
+sRGB requires EXT_sRGB. It does not generate maps or bind animated rest coordinates.
+See the [adapter contract](docs/API.md#optional-adapters) for projection and limits.
 
 ## Develop
 
