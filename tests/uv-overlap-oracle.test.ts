@@ -5,6 +5,10 @@ import { analyzeUvLayout, type NeutralIndexedMesh } from "../src/reskin.ts";
 type UvTriangle = readonly [number, number, number, number, number, number];
 type Point = readonly [number, number];
 
+function stored(triangle: UvTriangle): UvTriangle {
+  return triangle.map(Math.fround) as UvTriangle;
+}
+
 function mesh(triangles: readonly UvTriangle[]): NeutralIndexedMesh {
   const positions = new Float32Array(triangles.length * 9);
   const uvs = new Float32Array(triangles.length * 6);
@@ -76,14 +80,21 @@ function positiveIntersection(first: UvTriangle, second: UvTriangle): boolean {
 }
 
 function bruteOverlapFraction(triangles: readonly UvTriangle[]): number {
+  const storedTriangles = triangles.map(stored);
   const overlapping = new Set<number>();
-  for (let left = 0; left < triangles.length; left += 1)
-    for (let right = left + 1; right < triangles.length; right += 1)
-      if (positiveIntersection(triangles[left]!, triangles[right]!)) {
+  for (let left = 0; left < storedTriangles.length; left += 1)
+    for (let right = left + 1; right < storedTriangles.length; right += 1)
+      if (positiveIntersection(storedTriangles[left]!, storedTriangles[right]!)) {
         overlapping.add(left);
         overlapping.add(right);
       }
-  return overlapping.size / triangles.length;
+  return overlapping.size / storedTriangles.length;
+}
+
+function assertMatchesOracle(triangles: readonly UvTriangle[]): void {
+  expect(analyzeUvLayout(mesh(triangles), { gridSize: 64 }).overlap).toBe(
+    bruteOverlapFraction(triangles),
+  );
 }
 
 describe("UV overlap broad-phase oracle", () => {
@@ -111,10 +122,46 @@ describe("UV overlap broad-phase oracle", () => {
     ];
 
     for (const triangles of [dense, sharedEdge, sliver, reversedWinding, extremeFloat32]) {
-      expect(analyzeUvLayout(mesh(triangles), { gridSize: 64 }).overlap).toBe(
-        bruteOverlapFraction(triangles),
-      );
+      assertMatchesOracle(triangles);
     }
+  });
+
+  it("matches changing U expiry and varied V active intervals", () => {
+    const triangles: UvTriangle[] = [
+      [0.0, 0.05, 0.62, 0.05, 0.0, 0.14],
+      [0.1, 0.7, 0.68, 0.7, 0.1, 0.82],
+      [0.18, 0.08, 0.34, 0.08, 0.18, 0.22],
+      [0.28, 0.1, 0.45, 0.1, 0.28, 0.24],
+      [0.47, 0.52, 0.78, 0.52, 0.47, 0.69],
+      [0.6, 0.55, 0.84, 0.55, 0.6, 0.74],
+      [0.81, 0.03, 0.98, 0.03, 0.81, 0.18],
+      [0.86, 0.76, 0.99, 0.76, 0.86, 0.94],
+    ];
+    assertMatchesOracle(triangles);
+  });
+
+  it("matches a deterministic mixed-overlap grid without relying on call order", () => {
+    let state = 0x51f15e;
+    const random = (): number => {
+      state = (Math.imul(state, 1_664_525) + 1_013_904_223) >>> 0;
+      return state / 2 ** 32;
+    };
+    const triangles: UvTriangle[] = [];
+    for (let row = 0; row < 4; row += 1)
+      for (let column = 0; column < 4; column += 1) {
+        const u = column * 0.24 + random() * 0.01;
+        const v = row * 0.115 + random() * 0.01;
+        triangles.push([u, v, u + 0.14, v, u, v + 0.09]);
+        triangles.push([u + 0.025, v + 0.0125, u + 0.15, v + 0.0125, u + 0.025, v + 0.1025]);
+      }
+    for (let column = 0; column < 8; column += 1) {
+      const u = column * 0.12 + random() * 0.002;
+      triangles.push([u, 0.7, u + 0.08, 0.7, u, 0.78]);
+    }
+    const expected = bruteOverlapFraction(triangles);
+    expect(expected).toBeGreaterThan(0);
+    expect(expected).toBeLessThan(1);
+    assertMatchesOracle(triangles);
   });
 
   it("filters UV-degenerate triangles before candidate enumeration", () => {
