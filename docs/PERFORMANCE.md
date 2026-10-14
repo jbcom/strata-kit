@@ -18,6 +18,7 @@ deadline on arbitrary callback code.
 | `fractalNoise` | 1 through 32 octaves |
 | `bakeSurface` | 4,194,304 pixels |
 | Portable mesh builders | 1,000,000 vertices and 6,000,000 index entries |
+| `snapshotThreeStaticMeshes` | 100,000 hierarchy nodes; 1,000,000 aggregate vertices; 6,000,000 aggregate index entries |
 | Terrain heightfield | 1,000,000 vertices and 6,000,000 index entries |
 | Terrain scatter | 1,000,000 points |
 | UV layout analysis | 1,000,000 triangles; diagnostic grid at most 2048 per axis and 4,194,304 cells |
@@ -26,6 +27,12 @@ deadline on arbitrary callback code.
 
 Float32 output coordinates must remain finite and distinguishable after quantization.
 UV atlas baking also rejects outside, degenerate, overlapping, or zero-texel charts.
+
+Static snapshots return owned copies. At the aggregate limits, positions and
+normals occupy 24 MB, optional UVs add 8 MB, and Uint32 indices add up to 24 MB
+(decimal bytes). These output capacities exclude source objects and JavaScript
+overhead; they are neither process-peak nor GPU-memory measurements. Hierarchy
+limits are validation bounds, not supported-performance targets.
 
 ## Terrain heightfield sampling
 
