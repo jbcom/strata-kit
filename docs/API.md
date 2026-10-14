@@ -69,6 +69,13 @@ for every upward-wound heightfield triangle. This selective fallback preserves t
 `width * depth` vertex layout, positions, indices and already-valid normal bytes;
 it does not average face normals or add vertices.
 
+During a `createHeightfield` call, terrain caches exact requested height coordinates
+only for that operation. The cache holds at most 65,536 live samples over at most
+three actual Z-coordinate rows, treats `-0` and `0` as distinct coordinates, and
+uses direct sampling for uncached coordinates when it is full. This is an internal
+work bound; it does not change `HeightfieldMesh` buffers, layout, or deterministic
+output for equal inputs.
+
 ## Surface bakes
 
 [Performance guidance](PERFORMANCE.md) collects allocation and work limits and

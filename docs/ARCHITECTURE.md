@@ -34,6 +34,12 @@ does not alter an already-created terrain field or surface plan. The public seed
 field, surface-plan, SDF, and scalar-profile APIs validate documented finite inputs
 before they enter generated output.
 
+`createHeightfield` uses an operation-local exact-coordinate cache while it derives
+central-difference normals. It retains no more than 65,536 live samples in at most
+three actual Z-coordinate rows; signed zero remains distinct. The cache is discarded
+before the method returns and falls back to direct height sampling when full, so it
+does not add global state or alter the returned typed-array values or layout.
+
 Determinism applies to a fixed release and equal inputs. A change to seed hashing,
 random draw order, noise arithmetic, or a documented output layout changes generated
 content and must receive compatibility review plus focused regression tests.

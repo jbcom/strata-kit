@@ -43,6 +43,12 @@ Heightfields retain their grid layout at sharp height changes. If a shared
 central-difference normal points behind any actual stored triangle, it falls back
 to the upward normal. Other normals, positions and indices remain unchanged.
 
+While constructing a heightfield, the terrain field reuses exact requested `(x, z)`
+height samples for central-difference normals. This operation-local cache holds at
+most 65,536 live samples across at most three actual Z-coordinate rows, treats
+signed zero distinctly, and falls back to direct sampling when full. It does not
+change the returned buffers or their layout.
+
 ## Bake a surface layer
 
 ```ts

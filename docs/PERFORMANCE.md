@@ -27,6 +27,15 @@ deadline on arbitrary callback code.
 Float32 output coordinates must remain finite and distinguishable after quantization.
 UV atlas baking also rejects outside, degenerate, overlapping, or zero-texel charts.
 
+## Terrain heightfield sampling
+
+`createHeightfield` has an operation-local cache for exact `(x, z)` height requests
+made while constructing central-difference normals. It stores at most 65,536 live
+samples across at most three actual Z-coordinate rows and keeps `-0` separate from
+`0`. Once full, uncached requests sample the field directly. The cache is discarded
+when the call returns; it does not change the output buffers or establish a timing or
+allocation guarantee for a workload.
+
 ## Reproducible CPU benchmarking
 
 `scripts/benchmark-procedural.mjs` is a maintainer tool. Run it against a freshly
