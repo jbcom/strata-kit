@@ -10,6 +10,7 @@ import {
   MeshStandardMaterial,
   NoColorSpace,
   RGBAFormat,
+  ShaderChunk,
   type Side,
   SRGBColorSpace,
   type Texture,
@@ -17,6 +18,27 @@ import {
 } from "three";
 import * as ThreePeer from "three";
 import { applyShaderPatches } from "./shaderPatches.js";
+
+/** The color replacement declares values consumed by later scalar/bump replacements. */
+function requireStandardFragmentLayout(source: string): void {
+  const map = "#include <map_fragment>";
+  // Missing/duplicate literals retain the existing exact-occurrence patch errors.
+  if (source.split(map).length === 2) {
+    for (const name of ["roughnessmap_fragment", "metalnessmap_fragment", "normal_fragment_maps"]) {
+      const anchor = `#include <${name}>`;
+      if (source.split(anchor).length === 2 && source.indexOf(anchor) < source.indexOf(map))
+        fail(`fragment shader requires map_fragment before ${name}`);
+    }
+  }
+  for (const [chunk, factor, uniform] of [
+    ["roughnessmap_fragment", "roughnessFactor", "roughness"],
+    ["metalnessmap_fragment", "metalnessFactor", "metalness"],
+  ] as const) {
+    const declaration = new RegExp(`\\bfloat\\s+${factor}\\s*=\\s*${uniform}\\s*;`, "g");
+    if ((ShaderChunk[chunk].match(declaration) ?? []).length !== 1)
+      fail(`unsupported native ${chunk} factor declaration`);
+  }
+}
 
 /** Precomputed RGBA8 maps owned and disposed separately by the caller. */
 export interface ThreeTriplanarTextures {
@@ -309,6 +331,7 @@ export function createThreeTriplanarMaterial(
       !renderer.extensions.has("EXT_sRGB")
     )
       fail("WebGL1 sRGB textures require EXT_sRGB");
+    requireStandardFragmentLayout(shader.fragmentShader);
     const vertexShader = applyShaderPatches(shader.vertexShader, [
       { anchor: "#include <common>", replacement: `#include <common>\n${VERTEX}` },
       {

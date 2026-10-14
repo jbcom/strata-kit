@@ -297,7 +297,11 @@ have default offset/repeat/center/rotation and an identity texture matrix; use
 unchanged while the material uses them. Field transforms must
 be finite, affine and invertible after Float32 conversion. Shader integration
 requires WebGLRenderer and the supported standard-material chunk anchors; missing
-anchors fail before shader mutation. WebGL1 sRGB requires EXT_sRGB. The r152
+anchors fail before shader mutation. The color include must precede dependent
+roughness, metalness and normal-map includes; native scalar-factor declarations
+must remain in their corresponding chunks. Unsupported layouts fail before any
+source or uniform assignment. This is a bounded compatibility check, not support
+for arbitrary future shader semantics. WebGL1 sRGB requires EXT_sRGB. The r152
 renderer-owned legacy sRGB upload format is accepted only with its native metadata
 and WebGL1 extension; it cannot be reused on WebGL2. The material replaces native
 map sampling chunks without adding a second UV sampling path or owning a renderer.

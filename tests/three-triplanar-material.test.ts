@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import {
-  BackSide,
-  Color,
+  type BackSide,
+  type Color,
   DoubleSide,
   FrontSide,
   Matrix3,
@@ -9,7 +9,8 @@ import {
   MeshStandardMaterial,
   NoColorSpace,
   ShaderLib,
-  Texture,
+  ShaderChunk,
+  type Texture,
 } from "three";
 import * as ThreePeer from "three";
 import * as adapters from "../src/three.ts";
@@ -116,6 +117,63 @@ it("returns fresh materials without mutating or disposing caller textures", () =
   first.dispose();
   second.dispose();
   expect(disposed).toBe(0);
+  input.dispose();
+});
+
+it("rejects reordered but unique dependent includes without shader or uniform mutation", () => {
+  const input = textures();
+  const material = factory()(input);
+  for (const name of ["roughnessmap_fragment", "metalnessmap_fragment", "normal_fragment_maps"]) {
+    const shader = actualStandardShader();
+    const anchor = `#include <${name}>`;
+    shader.fragmentShader = shader.fragmentShader
+      .replace(anchor, "")
+      .replace("#include <map_fragment>", `${anchor}\n#include <map_fragment>`);
+    const vertex = shader.vertexShader,
+      fragment = shader.fragmentShader;
+    shader.uniforms.keep = { value: 17 };
+    expect(() => material.onBeforeCompile(shader as never, webgl2Renderer as never)).toThrow(
+      /requires map_fragment before/,
+    );
+    expect(shader.vertexShader).toBe(vertex);
+    expect(shader.fragmentShader).toBe(fragment);
+    expect(shader.uniforms).toEqual({ keep: { value: 17 } });
+  }
+  material.dispose();
+  input.dispose();
+});
+
+it("rejects relocated native scalar declarations and supports harmless whitespace", () => {
+  const input = textures();
+  const material = factory()(input);
+  for (const [chunk, factor, uniform] of [
+    ["roughnessmap_fragment", "roughnessFactor", "roughness"],
+    ["metalnessmap_fragment", "metalnessFactor", "metalness"],
+  ] as const) {
+    const original = ShaderChunk[chunk];
+    try {
+      ShaderChunk[chunk] = original.replace(`float ${factor} = ${uniform};`, "");
+      const shader = actualStandardShader();
+      const vertex = shader.vertexShader,
+        fragment = shader.fragmentShader;
+      expect(() => material.onBeforeCompile(shader as never, webgl2Renderer as never)).toThrow(
+        /unsupported native/,
+      );
+      expect(shader.vertexShader).toBe(vertex);
+      expect(shader.fragmentShader).toBe(fragment);
+      expect(shader.uniforms).toEqual({});
+      ShaderChunk[chunk] = original.replace(
+        `float ${factor} = ${uniform};`,
+        `float\n ${factor}\t= ${uniform} ;`,
+      );
+      expect(() =>
+        material.onBeforeCompile(actualStandardShader() as never, webgl2Renderer as never),
+      ).not.toThrow();
+    } finally {
+      ShaderChunk[chunk] = original;
+    }
+  }
+  material.dispose();
   input.dispose();
 });
 
