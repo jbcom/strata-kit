@@ -99,6 +99,15 @@ Three mesh adapter without relaxing the heightfield or UV-analysis contracts.
 
 ## Data ownership
 
+Mapped parametric sheets are renderer-neutral numeric constructors. Callers own
+the parameterization, authored outward normals, inside-point policy, masks, UVs,
+materials and scene lifecycle. The constructor copies sampled values, validates
+finite bounded geometry and coherent patch orientation, and emits `sourceVertex`
+correspondence for caller attributes. It does not weld separate strip boundaries
+or carry material/skin metadata. Contradictory folded patches require caller-side
+partitioning; orientation and strictly outward raw corner incidence are enforced.
+Existing rectangular-sheet, revolve and sweep APIs remain independent.
+
 The library returns plain values and typed arrays. Consumers own:
 
 - image-file encoding and renderer integration for surface bakes;
