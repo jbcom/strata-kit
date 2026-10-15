@@ -140,7 +140,7 @@ image files and applying them to a material remain consumer work.
 | `strata-procedural/sdf` | Sphere, plane, box, and boolean/smooth distance operations |
 | `strata-procedural/terrain` | Ordered scalar fields, directional projection, smooth masks, seeded terrain, heightfields, and scatter |
 | `strata-procedural/materials` | Surface plans, samples, bakes, and bake manifests |
-| `strata-procedural/mesh` | Revolved profiles, transported sweeps, and sampled sheets |
+| `strata-procedural/mesh` | Revolved profiles, transported sweeps, sampled sheets, and mapped parametric sheets |
 | `strata-procedural/shaders` | GLSL seeded noise and checked literal shader patches |
 | `strata-procedural/surface-fields` | Periodic and clamped scalar profiles, relief frames, and cubic-Hermite GLSL |
 | `strata-procedural/three` | Mesh geometry, copied static mesh snapshots, surface textures, and triplanar materials |
@@ -173,6 +173,13 @@ Use `includeCell(column, row)` to select sheet cells for openings. It runs once 
 cell before height sampling and must return a boolean. Sampled vertices and UVs are
 retained, including when all cells are omitted; the generic Three adapter accepts
 the resulting empty indexed surface.
+
+`createParametricSheetMesh` maps a unit-domain grid into caller-defined 3D positions,
+UVs and optional authored normals. Cell and vertex masks can separate disconnected
+strips without welding their boundary samples; `sourceVertex` retains numeric sample
+correspondence when generated-normal corner repair adds vertices. Its root and
+`mesh` exports are renderer-neutral. A patch must have coherent triangle orientation;
+partition folded or contradictory patches rather than disabling validation.
 
 Nearest-biome selection also retains valid ranking at extreme radii. That correction
 changes previously incorrect extreme-input results while preserving ordinary output.

@@ -41,12 +41,19 @@ export {
 } from "./materials.js";
 export type {
   ProceduralMesh,
+  ParametricSheetMesh,
+  ParametricSheetMeshOptions,
   RevolveProfilePoint,
   RevolvedMeshOptions,
   SheetMeshOptions,
   SweptMeshOptions,
 } from "./mesh.js";
-export { createRevolvedMesh, createSheetMesh, createSweptMesh } from "./mesh.js";
+export {
+  createParametricSheetMesh,
+  createRevolvedMesh,
+  createSheetMesh,
+  createSweptMesh,
+} from "./mesh.js";
 export { applyShaderPatches, replaceOrThrow, seededSurfaceNoiseGlsl } from "./shaders.js";
 export type { Random, Seed } from "./noise.js";
 export { createSeededNoise, createSeededRandom, fractalNoise, seedToUint32 } from "./noise.js";

@@ -13,7 +13,7 @@ consumers keep their dependency boundary explicit.
 | `strata-procedural/sdf` | `sdSphere`, `sdPlane`, `sdBox`, `opUnion`, `opIntersection`, `opSubtraction`, `opSmoothUnion`, `opSmoothSubtraction` | none |
 | `strata-procedural/terrain` | `createSeededTerrainField`, `composeScalarField2D`, `transformScalarField2D`, `createDirectionalField2D`, `createSmoothMask2D`, and terrain/field types | none |
 | `strata-procedural/materials` | Surface plans, samplers, composition, wear, UV diagnostics, triplanar sampling, and atlas bakes | none |
-| `strata-procedural/mesh` | `createRevolvedMesh`, `createSweptMesh`, `createSheetMesh`, and mesh types | none |
+| `strata-procedural/mesh` | `createRevolvedMesh`, `createSweptMesh`, `createSheetMesh`, `createParametricSheetMesh`, and mesh types | none |
 | `strata-procedural/shaders` | `seededSurfaceNoiseGlsl`, `replaceOrThrow`, `applyShaderPatches` | none |
 | `strata-procedural/surface-fields` | Scalar-profile, relief-frame, uniform-packing, and GLSL APIs | none |
 | `strata-procedural/three` | `createThreeHeightfieldGeometry`, `createThreeMeshGeometry`, `createThreeSurfaceTextures`, `snapshotThreeStaticMeshes`, `createThreeTriplanarMaterial` | `three` peer |
@@ -278,6 +278,70 @@ grid bounds are checked before either callback. An all-false selection produces
 an empty index buffer with complete sampled attributes. The generic Three mesh
 adapter accepts this empty surface; the heightfield adapter and UV analysis/atlas
 contracts still require triangles. Normal correction considers retained faces only.
+
+### Mapped parametric sheets
+
+`createParametricSheetMesh(options)` is available from the root and `mesh` entrypoints,
+with `ParametricSheetMesh` and `ParametricSheetMeshOptions` types. It returns the
+standard mesh buffers plus `sourceVertex: Uint32Array`.
+
+```ts
+import { createParametricSheetMesh } from 'strata-procedural/mesh';
+
+const ribbon = createParametricSheetMesh({
+  columns: 17,
+  rows: 3,
+  positionAt: (u, v) => ({ x: u * 4, y: v, z: 0.2 * u * v }),
+  uvAt: (u, v) => [u * 2, v],
+});
+```
+
+`columns` and `rows` count samples, both at least two. Column U and row V span
+`[0,1]`; generated grid normals follow row-cross-column secants. `positionAt(u,v)`
+returns a finite Vec3. Optional `uvAt` returns two finite Float32-representable
+numbers, defaulting to `[u,v]`; coordinates outside the unit tile are retained.
+Callbacks must be deterministic and independent of call order. Returned scratch
+objects are copied immediately; the constructor retains no callback objects.
+
+Choose `normalAt(u,v)` for finite nonzero authored vectors, normalized by the
+constructor, or generated normals via `normalMode: 'grid' | 'area-weighted'`
+(default `grid`). Grid normals use the complete sampled surface; area-weighted
+normals use only retained triangles. `insideAt(u,v)` can orient generated normals
+away from a point in the same coordinate frame. It is not a direction vector.
+Authored normals are mutually exclusive with `insideAt` and explicit `normalMode`.
+
+`includeCell(column,row)` and `includeVertex(column,row)` run before sampling, in
+row-major order, and must return booleans. A triangle is retained only when its cell
+and all three vertices are selected. Omitted samples remain in the buffers; an
+all-false selection yields empty indices. Masks do not create connecting triangles
+between separated strips. Singular generated normals on unreferenced samples use
+the deterministic `[0,1,0]` fallback; referenced singular samples are rejected.
+
+`closedColumns: true` requires at least four columns including the seam endpoint.
+The final column copies first-column positions, authored normals and inside points
+without sampling those callbacks at U=1. Its UVs and selection remain independently
+sampled. Generated neighbors wrap over the unique columns; no extra closing strip
+is added. Coincident samples remain distinct vertices, not welded topology.
+
+Each retained stored triangle must be nondegenerate and consistently oriented
+across the patch. Winding may reverse coherently for the entire patch. Authored
+normals must point strictly outward at every indexed corner; tangent/opposing
+incidence is rejected using raw stored-face arithmetic. Generated corners may be
+duplicated with face normals, subject to the same inside-point agreement. A folded
+surface whose orientation changes across the patch is unsupported: partition it
+into coherent patches. The constructor does not discard triangles or relax the
+orientation guard to admit such input.
+
+`sourceVertex[i]` identifies the original `row * columns + column` sample, including
+independent seam endpoints. Added generated-normal repair corners repeat that ID;
+caller-owned attributes can use it to retain correspondence. It is not a skinning,
+material or scene-ownership API. Limits precede callbacks: at most 1,000,000 base
+vertices and 6,000,000 candidate indices even when masked out; repaired vertices
+must also fit the vertex limit. Inputs and stored Float32 geometry must remain
+finite. Final vertex counts up to 65,536 use Uint16 indices, otherwise Uint32;
+`sourceVertex` always uses Uint32.
+
+### UV analysis and reskinning
 
 `analyzeUvLayout(mesh, { gridSize? })` inspects a `NeutralIndexedMesh` for missing,
 outside, degenerate, overlapping, and stretched UV charts, plus raster coverage.
