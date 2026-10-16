@@ -293,6 +293,20 @@ explicit numeric limits. These functions do not choose height interpolation,
 projection into 3D, thickness, ridges, normals, volume, or curve metrics. Their
 parameterization is distinct from the existing revolved mesh's true polar angle.
 
+## Curve metric boundary
+
+The root/mesh adaptive metric snapshots a deterministic Vec3 callback into owned,
+frozen scalar parameter/length knots. Bounded quarter probes inspect cumulative
+chord deficits and uneven parameter progress; returned diagnostics describe only
+observed residuals, never certified arbitrary-curve error. A deterministic heap
+selects refinement intervals without recursion. Callback counts bound sampled
+storage and work; queries binary-search the data and retain no callback or points.
+Descending traversal, closed curves with resolved edges, and explicit failures
+for degeneracy, exhausted budgets or unrepresentable increments preserve an
+invertible sampled polyline. Coordinate units, baseline sampling, wrapping,
+spline family, transported frames, cache lifetime and physical acceptance remain
+caller-owned.
+
 ## Raw vector storage boundary
 
 The root/terrain signed-vector codec maps flat bounded XYZ streams to owned
