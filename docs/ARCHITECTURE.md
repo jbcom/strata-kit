@@ -317,6 +317,16 @@ invertible sampled polyline. Coordinate units, baseline sampling, wrapping,
 spline family, transported frames, cache lifetime and physical acceptance remain
 caller-owned.
 
+## Height-grid normal bake boundary
+
+The root/materials normal bake snapshots a finite row-major scalar grid, computes
+physical wrap/clamp secants with explicit green-channel sign and signed height
+scale, then emits RGBA8 through the existing internal signed-component rule.
+It owns neither texture state nor geometry projection. A bounded Float64 snapshot
+ensures each height is read once; stable slope arithmetic and normalized vectors
+precede quantization. Input periodicity, upload orientation and material use remain
+caller decisions.
+
 ## Raw vector storage boundary
 
 The root/terrain signed-vector codec maps flat bounded XYZ streams to owned

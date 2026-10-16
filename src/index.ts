@@ -1,6 +1,7 @@
 /** Pure, seeded procedural fields and surface bakes. Renderer adapters are explicit subpaths. */
 
 export type {
+  TangentNormalMapOptions,
   SegmentSample2D,
   BandCoverageSample,
   SurfaceBake,
@@ -28,6 +29,7 @@ export type {
   WearSample,
 } from "./materials.js";
 export {
+  bakeTangentNormalMap,
   sampleSegment2D,
   projectPixelFootprint2D,
   sampleBandCoverage,
