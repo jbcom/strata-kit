@@ -282,6 +282,17 @@ are one-sided. It owns neither parameter wrapping nor a normal, geometry, clock,
 or error-estimation policy. Zero derivatives remain valid until a consumer requires
 a nondegenerate frame; finite arithmetic failures reject explicitly.
 
+## Continuous section geometry
+
+The root/mesh superellipse kernels evaluate a two-dimensional signed-power section
+and its unridged positive half-depth. They validate finite positive extents and
+powers at least two, own no state, and return independent numeric results. Named
+quarter-turn cardinals within one signed turn use exact axis points; fractional angles use quadrant-local
+trigonometry. Subnormal product underflow and high-power corner conditioning are
+explicit numeric limits. These functions do not choose height interpolation,
+projection into 3D, thickness, ridges, normals, volume, or curve metrics. Their
+parameterization is distinct from the existing revolved mesh's true polar angle.
+
 ## Intentional limits
 
 The package currently provides the APIs documented in [API.md](API.md). It does not
