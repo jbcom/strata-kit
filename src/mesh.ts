@@ -10,6 +10,8 @@
 import type { Vec3 } from "./sdf.js";
 
 export type { Vec3 } from "./sdf.js";
+export { superellipsePoint2D, superellipseHalfDepth2D } from "./superellipseSections.js";
+export type { SuperellipseSection2D } from "./superellipseSections.js";
 export { createParametricSheetMesh } from "./parametricSheet.js";
 export type { ParametricSheetMesh, ParametricSheetMeshOptions } from "./parametricSheet.js";
 export { createRevolvedSurfaceMesh } from "./revolvedSurface.js";

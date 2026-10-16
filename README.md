@@ -235,6 +235,14 @@ the resulting empty indexed surface.
 Nearest-biome selection also retains valid ranking at extreme radii. That correction
 changes previously incorrect extreme-input results while preserving ordinary output.
 
+Continuous sections can use `superellipsePoint2D({halfWidth, halfDepth, power}, angle)`
+and `superellipseHalfDepth2D(section, x)` from `strata-procedural/mesh`. These pure
+Float64 helpers evaluate an eccentric signed-power curve and its unridged half-depth.
+They keep height interpolation, 3D placement, inset and ridge recipes caller-owned.
+Their angle is not the polar angle used by the revolved-section mesh; see the
+[API contract](docs/API.md#signed-power-superellipse-sections) for cardinal-axis and
+finite-precision limits.
+
 ## Compose surface layers
 
 ```ts

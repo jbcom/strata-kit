@@ -13,7 +13,7 @@ consumers keep their dependency boundary explicit.
 | `strata-procedural/sdf` | `sdSphere`, `sdPlane`, `sdBox`, `opUnion`, `opIntersection`, `opSubtraction`, `opSmoothUnion`, `opSmoothSubtraction` | none |
 | `strata-procedural/terrain` | `createSeededTerrainField`, `composeScalarField2D`, `transformScalarField2D`, `createDirectionalField2D`, `createSmoothMask2D`, and terrain/field types | none |
 | `strata-procedural/materials` | Surface plans, samplers, composition, wear, UV diagnostics, triplanar sampling, and atlas bakes | none |
-| `strata-procedural/mesh` | `createRevolvedMesh`, `createRevolvedSurfaceMesh`, `createSweptMesh`, `createSheetMesh`, `createParametricSheetMesh`, and mesh types | none |
+| `strata-procedural/mesh` | `createRevolvedMesh`, `createRevolvedSurfaceMesh`, `createSweptMesh`, `createSheetMesh`, `createParametricSheetMesh`, `superellipsePoint2D`, `superellipseHalfDepth2D`, and mesh types | none |
 | `strata-procedural/shaders` | `seededSurfaceNoiseGlsl`, `replaceOrThrow`, `applyShaderPatches` | none |
 | `strata-procedural/surface-fields` | Scalar-profile, relief-frame, uniform-packing, and GLSL APIs | none |
 | `strata-procedural/three` | `createThreeHeightfieldGeometry`, `createThreeMeshGeometry`, `createThreeSurfaceTextures`, `snapshotThreeStaticMeshes`, `createThreeTriplanarMaterial` | `three` peer |
@@ -485,6 +485,43 @@ follow the same global sign; stored-face corner repairs, pole and degeneracy
 checks, seam correspondence and allocation limits still apply. No per-face
 radial flipping, caps, containment or intersection detection is added. Omitting
 `winding` retains the radial orientation policy described above.
+
+### Signed-power superellipse sections
+
+`superellipsePoint2D(section, angle)` and `superellipseHalfDepth2D(section, x)`
+are exported from the root and `strata-procedural/mesh`. A `SuperellipseSection2D`
+contains readonly `halfWidth`, `halfDepth`, and `power`: positive finite half-extents
+and a finite exponent at least two. Inputs and outputs use Float64 arithmetic.
+
+The point sampler returns a fresh `[first, second]` tuple with the eccentric,
+signed-power parameterization `a*sign(cos(t))*abs(cos(t))**(2/n)` and
+`b*sign(sin(t))*abs(sin(t))**(2/n)`. Angle zero is the positive first axis;
+`Math.PI/2` is the positive second axis. The named quarter-turn cardinals within `[-2*Math.PI, 2*Math.PI]` reduce to
+exact axis points, with zero components returned as positive zero. Nearest-quadrant
+reduction preserves tiny signed offsets without an epsilon snap. Arbitrarily large
+angles use floating remainder; mathematical periodicity does not imply bit-identical
+results for rounded angle sums. Even a rounded multi-turn cardinal such as
+`11*Math.PI/2` can retain a nonzero local offset; it is not snapped to an axis.
+
+The half-depth sampler returns the nonnegative second-axis extent at a first-axis
+coordinate: zero at or outside `abs(x)>=a`, `b` at zero, and otherwise
+`b*(1-(abs(x)/a)**n)**(1/n)`. Its boundary calculation preserves small represented
+differences from `a`. Outputs remain within the supplied extents; final subnormal
+products may round to zero. At high powers a point's first coordinate can round to
+`a` while its second coordinate remains nonzero, so a point-to-inverse round trip
+is not guaranteed at ill-conditioned represented corners.
+
+```ts
+import { superellipsePoint2D, superellipseHalfDepth2D } from 'strata-procedural/mesh';
+const section = { halfWidth: 2, halfDepth: 1, power: 4 };
+const [x, z] = superellipsePoint2D(section, Math.PI / 4);
+const positiveDepth = superellipseHalfDepth2D(section, x);
+```
+
+These functions choose no height profile, 3D embedding, inset, ridge, liquid policy,
+normal or arc-length metric. Their eccentric parameter differs from the true polar
+angle of `createRevolvedSurfaceMesh`, even for unequal-axis ellipses. They do not
+change existing mesh sampling or provide a constant-speed parameterization.
 
 ### UV analysis and reskinning
 
