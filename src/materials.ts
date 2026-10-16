@@ -3,6 +3,14 @@ import { requireFiniteNumber, requirePositiveFiniteNumber } from "./validation.j
 
 export { bakeTangentNormalMap } from "./tangentNormalBake.js";
 export type { TangentNormalMapOptions } from "./tangentNormalBake.js";
+export { createHexTileConfig, sampleHexTile2D } from "./hexTiling.js";
+export type {
+  HexTileOptions,
+  HexTileConfig,
+  HexTileRequest,
+  HexTilePair,
+  HexTileResult,
+} from "./hexTiling.js";
 
 export { sampleSegment2D, projectPixelFootprint2D, sampleBandCoverage } from "./segmentCoverage.js";
 export type { SegmentSample2D, BandCoverageSample } from "./segmentCoverage.js";

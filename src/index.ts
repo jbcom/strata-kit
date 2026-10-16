@@ -2,6 +2,11 @@
 
 export type {
   TangentNormalMapOptions,
+  HexTileOptions,
+  HexTileConfig,
+  HexTileRequest,
+  HexTilePair,
+  HexTileResult,
   SegmentSample2D,
   BandCoverageSample,
   SurfaceBake,
@@ -30,6 +35,8 @@ export type {
 } from "./materials.js";
 export {
   bakeTangentNormalMap,
+  createHexTileConfig,
+  sampleHexTile2D,
   sampleSegment2D,
   projectPixelFootprint2D,
   sampleBandCoverage,
@@ -83,6 +90,7 @@ export {
   segmentCoverageGlsl,
   signedVector8Glsl,
   scalarGrid16Glsl,
+  hexTilingGlsl,
 } from "./shaders.js";
 export type { Random, Seed } from "./noise.js";
 export { createSeededNoise, createSeededRandom, fractalNoise, seedToUint32 } from "./noise.js";

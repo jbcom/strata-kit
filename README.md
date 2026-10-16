@@ -284,6 +284,15 @@ grid to RGBA8 normals using explicit physical spacing, edge modes and green-chan
 sign. It leaves texture upload and appearance with the caller. See the
 [normal-map contract](docs/API.md#tangent-normal-maps-from-heights).
 
+## Seeded stochastic tiling
+
+`createHexTileConfig` and `sampleHexTile2D` blend paired surface/normal samples
+across seeded triangular cells. `hexTilingGlsl` supplies complete 2D and array
+texture samplers with explicit gradients. Coordinate projection, textures and
+material policy stay with the consumer; channel layout and normal Y convention
+are explicit. See [the API](docs/API.md#seeded-stochastic-texture-tiling) for
+Float32 bounds, normal transport and ownership.
+
 ## Packed scalar grids
 
 ```ts

@@ -387,6 +387,143 @@ differences or spans. Finite arithmetic can still round a small slope to zero;
 there is no exact-real derivative promise. A wrapped discontinuous input remains
 discontinuous: wrapping alone does not make an authored grid seamless.
 
+## Seeded stochastic texture tiling
+
+Root and `strata-procedural/materials` export `createHexTileConfig`,
+`sampleHexTile2D`, `HexTileOptions`, `HexTileConfig`, `HexTileRequest`,
+`HexTilePair` and `HexTileResult`. Root and `strata-procedural/shaders` export
+one `hexTilingGlsl` string containing both `strataSampleHex2D` and
+`strataSampleHexArray` for highp GLSL ES 3.00. The array function takes an explicit
+integer layer; array bounds, texture ownership, wrap/filter/mipmap/upload policy
+and projection remain caller-owned.
+
+The string has an include guard and no `#version` declaration. Set highp float,
+int and sampler precision in the host shader. Its public declarations are:
+
+```glsl
+struct StrataHexConfig {
+  uint seedKey;
+  float tileScale, rotationStrength, offsetScale, luminanceInfluence, gainExponent;
+  int normalChannels; // 0: RG, 1: RA
+  float inputNormalYSign; // +1 or -1
+};
+struct StrataHexResult { vec4 surface; vec2 normalXY; vec3 weights; };
+StrataHexResult strataSampleHex2D(sampler2D surfaceSampler, sampler2D normalSampler,
+  vec2 uv, vec2 dUVdx, vec2 dUVdy, StrataHexConfig config);
+StrataHexResult strataSampleHexArray(sampler2DArray surfaceSampler,
+  sampler2DArray normalSampler, int layer,
+  vec2 uv, vec2 dUVdx, vec2 dUVdy, StrataHexConfig config);
+```
+
+Copy the constructor's compiled scalar fields into the shader config, translating
+packing to its integer code. Do not upload the descriptive `mode` or `contrast`.
+The array layer must be nonnegative, within both array depths and exactly
+representable as Float32. Internal GLSL helper names are implementation details.
+
+```ts
+import { createHexTileConfig, sampleHexTile2D } from 'strata-procedural/materials';
+const config = createHexTileConfig({ seed: 'field', tileScale: 1.6 });
+const result = sampleHexTile2D(config, [0.3, -0.2], [0.01, 0], [0, 0.01],
+  ({ uv, dUVdx, dUVdy }) => sampleOwnTexturePair(uv, dUVdx, dUVdy));
+// result.surface: linear RGBA; result.normalXY: original planar +U,+V;
+// result.weights: three final blend weights in triangle-vertex order.
+```
+
+Supply a string or finite numeric `seed` and positive `tileScale`. Optional
+`rotationStrength` defaults to 1 and `luminanceInfluence` to 0.6, both in `[0,1]`;
+`offsetScale` defaults to 3 and must be nonnegative. Strict `(0,1)` `contrast`
+defaults to 0.6. The constructor snapshots controls, returns an owned frozen
+`integer-v1` config and compiles `gainExponent` from the raw contrast with
+`fround(log1p(-contrast)/log(0.5))`. The exponent must be positive normal Float32.
+Contrast is descriptive CPU metadata; the shader uses the compiled exponent.
+Other numeric controls normalize to Float32 before use. Upload `seedKey` with
+a uint uniform; numeric `0` and string `'0'` intentionally share a key.
+
+`normalChannels` independently chooses `'rg'` (default) or `'ra'`;
+`inputNormalYSign` is `1` (default, decoded Y follows increasing source V) or
+`-1` (opposite source V). The output always follows the original orthonormal
+planar +U,+V axes. Each cell rotates UVs and both explicit gradient rows together;
+normal XY receives the inverse rotation after its input Y convention is applied.
+Tile scale changes patch spacing, not the source-texture UV frequency: gradients
+are never divided by tile scale. No world axis or texture orientation is inferred.
+
+The CPU sampler takes arrays of exactly two finite UV/gradient components and a
+deterministic, call-order-independent paired sampler. After validating all three
+plans, it invokes that callback exactly three times, including zero-weight cells,
+with fresh frozen request records/tuples. Each return has `surface` and `normal`
+arrays of exactly four finite channels in `[0,1]`; RGB surface values are linear,
+normal channels are numeric, and alpha has no assigned material meaning. All
+returned components are copied before the next call. Callback exceptions retain
+their cause. No state or callback data is cached. Results and tuples are fresh and
+frozen. The shader performs three surface and three normal `textureGrad` reads;
+callers obtain derivatives before divergent control flow.
+
+Luminance biases barycentric weights before piecewise contrast gain and final
+normalization. Zero total gain falls back to normalized base barycentrics.
+Weighted normal XY is neither normalized nor a reconstructed Z/world normal,
+and does not include derivatives of changing blend weights. Non-height-derived
+or strongly tilted input normal maps can expose the method's visual limitations.
+There is no whole-material seamlessness or unchanged-appearance guarantee.
+
+The versioned computation explicitly represents controls, queries and elementary
+sampling arithmetic in Float32. Tiny query components can round to zero. With
+`H = Float32_MAX / 16`, uploaded tile scale must lie in `[2**-126,H]`, offset scale
+and its product with tile scale in `[0,H]`; query/gradient components and all
+three planned centres, offsets, sample UVs and rotated gradients must have
+absolute value at most H. Skewed grid coordinates must lie in `[-4096,4096]`.
+Nonfinite intermediate arithmetic rejects before callbacks. GLSL cannot validate
+these preconditions. These bounds provide arithmetic headroom, not fine spatial
+resolution at large coordinates. CPU and GPU need not select identical triangles
+at rounded grid boundaries; exact hash parity is conditional on identical cell
+IDs. Trigonometry, filtering, compression and subnormal preservation remain
+backend-dependent. Numerical readbacks and actual material images are separate
+forms of evidence.
+
+### Integer-v1 field identity
+
+This mode fixes the seed conversion, grid and integer hash. Seed conversion uses
+FNV-1a over JavaScript UTF-16 code units of the stringified seed: initial
+`2166136261`, XOR each code unit, multiply by `16777619` modulo `2**32`.
+Seed collisions are possible; this is not a cryptographic generator.
+
+Let `F` denote Float32 rounding. Divide the represented UV by tile scale, then
+skew it as `gx=F(F(3.464101552963257*tu)-F(2*tv))`, `gy=F(4*tv)`.
+Let `(ix,iy)=floor(gx,gy)`, `(fx,fy)` be the rounded fractional parts and
+`r=F(F(1-fx)-fy)`. For `r>0`, ordered cells are
+`[(ix,iy),(ix,iy+1),(ix+1,iy)]` with base weights `[r,fy,fx]`.
+Otherwise, including zero, cells are `[(ix+1,iy+1),(ix+1,iy),(ix,iy+1)]`
+with base weights `[-r,F(1-fy),F(1-fx)]`. Normalize by their rounded sum.
+No boundary epsilon or zero-weight sample removal is applied.
+
+For each cell `(cx,cy)`, unsigned 32-bit arithmetic computes:
+
+```text
+h = key XOR low32(uint32(cx)*374761393)
+        XOR low32(domain*668265263) XOR low32(uint32(cy)*2147483647)
+h = low32((h XOR (h >>> 13))*1274126177)
+h = uint32(h XOR (h >>> 16))
+unit = (h AND 0x00ffffff)/16777216
+```
+
+Domains 0, 1 and 2 select U offset, V offset and rotation. For key 0/cell (0,0),
+their full hashes are `0x00000000`, `0xc4ada425`, `0x895a484a`. The cell centre
+is `F(F(F(cx+F(0.5*cy))*0.28867512941360474)*tileScale)` in U and
+`F(F(0.25*cy)*tileScale)` in V. Each cell rotates the original UV about its
+centre by `F(F(F(unit2*6.2831854820251465)-3.1415927410125732)*rotationStrength)`,
+then adds independent offsets `F(unit0*F(tileScale*offsetScale))` and
+`F(unit1*F(tileScale*offsetScale))`. The rotation maps `(u,v)` to
+`(u*cos-v*sin,u*sin+v*cos)`; the normal uses its inverse.
+
+Linear RGB luminance uses Float32 coefficients `(0.299,0.587,0.114)`.
+Each base weight is multiplied by `(1-influence)+2*influence*luminance`,
+then passed through gain: 0 for x<=0, 1 for x>=1, exactly 0.5 at x=0.5,
+`0.5*(2*x)**gainExponent` below 0.5 and
+`1-0.5*(2*(1-x))**gainExponent` above it. Normalize these gained weights,
+falling back to the base weights if their sum is zero. CPU elementary operations
+round to Float32 in the stated grouping; GPU compiler and transcendental
+variation remain subject to the limitations above. Future field versions must
+use a distinct mode rather than silently changing this identity.
+
 ## Packed scalar grids
 
 Root and `strata-procedural/terrain` export `packScalarGrid16`,
