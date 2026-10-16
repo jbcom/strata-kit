@@ -52,6 +52,12 @@
   require absolute coordinate magnitude below `2**52` and finite sampled output.
   Narrow ridge segments may overflow derivatives and throw. These profiles are
   CPU-only; existing paired cubic-Hermite GLSL and relief frames remain separate.
+- `surface-fields.createMonotoneCubicProfile` owns and freezes 2–65,536 scalar points,
+  with secant endpoint and weighted harmonic interior slopes. Sampling returns
+  analytic value/derivative; exact knots preserve values/slopes, strictly outside
+  clamps with derivative 0, exact endpoints report interior one-sided derivatives.
+  Joins are internally C1, exterior clamp generally C0. CPU-only distinct points/domain
+  representation does not extend bounded GLSL Hermite. Finite arithmetic required.
 - `createHeightfield` reuses exact height coordinates only within one call: at most
   65,536 live samples across three actual Z-coordinate rows, with `-0` distinct from
   `0`; it falls back to direct sampling when full and does not change output buffers.

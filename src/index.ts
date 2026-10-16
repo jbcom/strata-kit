@@ -89,6 +89,8 @@ export type {
   CubicHermiteProfile,
   CubicHermiteProfileKnot,
   CubicHermiteProfileUniforms,
+  MonotoneCubicProfile,
+  MonotoneCubicProfilePoint,
   ProjectedReliefSample,
   ReliefDerivatives,
   ReliefFrame,
@@ -98,10 +100,12 @@ export type {
 } from "./surfaceFields.js";
 export {
   createCubicHermiteProfile,
+  createMonotoneCubicProfile,
   deriveReliefFrame,
   MAX_CUBIC_HERMITE_PROFILE_KNOTS,
   projectScalarProfileDerivative,
   sampleCubicHermiteProfile,
+  sampleMonotoneCubicProfile,
   surfaceFieldsGlsl,
   toCubicHermiteProfileUniforms,
 } from "./surfaceFields.js";

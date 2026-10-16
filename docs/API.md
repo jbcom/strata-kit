@@ -629,6 +629,33 @@ finite segments can produce an overflowing derivative and throw when sampled.
 These guards do not impose an arbitrary upper exponent limit or change the existing
 cubic-Hermite coordinate domain.
 
+`createMonotoneCubicProfile(points)` owns and deeply freezes 2–65,536
+`MonotoneCubicProfilePoint` records `{ coordinate, value }`. Coordinates must be
+strictly increasing and all coordinates, values, interval spans, value differences
+and secants finite; a nonzero difference whose secant underflows to zero is
+rejected. It returns `MonotoneCubicProfile` with a frozen `[first,last]`
+`domain` and frozen `points` containing the derived `derivative` at each input.
+The endpoint slopes are the adjacent secants. Interior slopes are zero at plateaus
+or sign changes, otherwise the interval-weighted harmonic mean. This endpoint
+policy differs from interpolators using a three-point endpoint estimator.
+For neighboring spans `h0,h1` and same-sign nonzero secants `d0,d1`, the
+[weighted harmonic rule](https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.PchipInterpolator.html)
+uses `w0=2*h1+h0`, `w1=h1+2*h0` and `(w0+w1)/(w0/d0+w1/d1)`.
+Evaluation normalizes these weights and enforces the mathematical neighboring
+slope bounds to avoid avoidable overflow; it does not multiply secants to test
+their signs.
+
+`sampleMonotoneCubicProfile(profile, coordinate)` returns `ScalarFieldSample`.
+It returns exact stored values and slopes at knots and uses binary search between
+them. Strictly exterior samples clamp value and return derivative zero; exact
+endpoints return the interior one-sided derivative. Interior joins are C1, but the
+constant exterior extension is generally only C0. It preserves each interval's
+value bounds subject to floating-point rounding, without an epsilon slope cutoff.
+Nonfinite derived coefficients or sample results throw; arbitrary-range precision
+and byte identity with other evaluation orderings are not promised. Input arrays
+and records are copied, and each sampled result is fresh. This is CPU-only; its
+distinct `points` representation is not the bounded GLSL Hermite format.
+
 `createCubicHermiteProfile(knots)` creates an immutable clamped C1 profile with two
 to eight strictly increasing knots. Each knot has `coordinate`, `value`, and
 `derivative`; endpoint derivatives must be zero. `sampleCubicHermiteProfile` returns

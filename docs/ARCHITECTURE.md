@@ -205,6 +205,13 @@ cubic-Hermite profile, carries its analytic derivative through a caller-supplied
 coordinate gradient, and derives a local frame from caller-supplied surface
 differentials. The uniform packer and shader evaluator share the eight-knot bound.
 
+The CPU-only monotone cubic profile computes interval-weighted harmonic interior
+slopes and secant endpoint slopes from owned scalar points. Its constant exterior
+extension is generally C0 at the boundaries; exact endpoint derivatives are
+one-sided. Binary-search sampling and immutable compiled data avoid hidden mutable
+caches. Its distinct points/domain type cannot be passed to the eight-knot GLSL
+uniform packer. It chooses no height axis, shape family or rendering policy.
+
 The same subpath exposes CPU-only unit-period ridge and cosine samplers with
 analytic derivatives per cycle. The ridge is C1 for `risePower > 1`; it does not
 promise C2 joins, and the wrap is not C2 for powers between one and two. These
