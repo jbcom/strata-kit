@@ -350,6 +350,7 @@ reject. Input coordinates and stored Float32 values must be finite;
 million and six million before callbacks, and repaired output stays within
 the vertex cap. Callbacks must be deterministic and independent of call order
 for repeatable output.
+Vertex counts up to 65,536 use Uint16 indices; larger valid outputs use Uint32.
 
 ### Revolved section surfaces
 
@@ -417,6 +418,8 @@ follow the same global sign; stored-face corner repairs, pole and degeneracy
 checks, seam correspondence and allocation limits still apply. No per-face
 radial flipping, caps, containment or intersection detection is added. Omitting
 `winding` retains the radial orientation policy described above.
+
+### UV analysis and reskinning
 
 `analyzeUvLayout(mesh, { gridSize? })` inspects a `NeutralIndexedMesh` for missing,
 outside, degenerate, overlapping, and stretched UV charts, plus raster coverage.

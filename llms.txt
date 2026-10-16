@@ -98,6 +98,14 @@
 - Optional sheet `includeCell(column, row)` selects cells once in row-major order
   before height sampling. Omitted cells retain sampled vertices/UVs; all-false
   returns empty indices supported by the generic Three mesh adapter.
+- `mesh.createParametricSheetMesh` maps column-U/row-V samples to caller-owned Vec3,
+  UV and authored/generated normals, with cell/vertex masks and optional copied
+  closed-column seams. It is also exported at the root. `sourceVertex` is original
+  sample correspondence, including generated-normal repair duplicates. Coherent
+  patch orientation, strictly outward raw corner incidence, finite Float32 values
+  and bounded allocation are enforced. Conflicting orientation hints require
+  partitioning or a coherent explicit winding without those hints.
+  It does not own materials, skinning, render state or a game loop.
 - Mesh generators produce typed arrays; Three textures expose explicit disposal.
 - `three.snapshotThreeStaticMeshes` copies caller-prepared static Object3D triangles
   into neutral buffers in root-relative or world coordinates without scene mutation.

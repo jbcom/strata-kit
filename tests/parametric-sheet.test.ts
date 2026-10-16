@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
+import { createParametricSheetMesh as rootSheet } from "../src/index.ts";
+import { createParametricSheetMesh as meshSheet } from "../src/mesh.ts";
 import {
   createParametricSheetMesh,
   type ParametricSheetMesh,
@@ -42,6 +44,124 @@ function expectAligned(mesh: ParametricSheetMesh): void {
 function cylinder(u: number, v: number) {
   return { x: Math.cos(u * Math.PI * 2), y: v, z: Math.sin(u * Math.PI * 2) };
 }
+
+/** Independently authored box-rim strips with interleaved top/bottom reference vertices. */
+function segmentedStrips(samples: number) {
+  const rims = [
+    { x: -2, z: -1, dx: 4, dz: 0, normal: { x: 0, y: 0, z: -1 } },
+    { x: 2, z: 1, dx: -4, dz: 0, normal: { x: 0, y: 0, z: 1 } },
+    { x: -2, z: 1, dx: 0, dz: -2, normal: { x: -1, y: 0, z: 0 } },
+    { x: 2, z: -1, dx: 0, dz: 2, normal: { x: 1, y: 0, z: 0 } },
+  ];
+  const positions: number[] = [],
+    normals: number[] = [],
+    uvs: number[] = [],
+    indices: number[] = [];
+  for (let rim = 0; rim < rims.length; rim += 1) {
+    const edge = rims[rim];
+    for (let k = 0; k < samples; k += 1) {
+      const t = k / (samples - 1),
+        x = edge.x + edge.dx * t,
+        z = edge.z + edge.dz * t;
+      const height = 1 + 0.1 * x + 0.1 * z;
+      positions.push(x, height, z, x, 0, z);
+      normals.push(
+        edge.normal.x,
+        edge.normal.y,
+        edge.normal.z,
+        edge.normal.x,
+        edge.normal.y,
+        edge.normal.z,
+      );
+      uvs.push(Math.hypot(edge.dx, edge.dz) * t, height, Math.hypot(edge.dx, edge.dz) * t, 0);
+      if (k < samples - 1) {
+        const top = 2 * (rim * samples + k);
+        indices.push(top, top + 2, top + 1, top + 2, top + 3, top + 1);
+      }
+    }
+  }
+  const at = (u: number) => {
+    const q = Math.round(u * (4 * samples - 1));
+    const edge = rims[Math.floor(q / samples)];
+    const t = (q % samples) / (samples - 1);
+    const x = edge.x + edge.dx * t,
+      z = edge.z + edge.dz * t;
+    return { edge, t, x, z, height: 1 + 0.1 * x + 0.1 * z };
+  };
+  const options: ParametricSheetMeshOptions = {
+    columns: 4 * samples,
+    rows: 2,
+    includeCell: (column) => (column + 1) % samples !== 0,
+    positionAt: (u, v) => {
+      const p = at(u);
+      return { x: p.x, y: v === 0 ? p.height : 0, z: p.z };
+    },
+    normalAt: (u) => at(u).edge.normal,
+    uvAt: (u, v) => {
+      const p = at(u);
+      return [Math.hypot(p.edge.dx, p.edge.dz) * p.t, v === 0 ? p.height : 0];
+    },
+  };
+  return {
+    options,
+    reference: {
+      positions: Float32Array.from(positions),
+      normals: Float32Array.from(normals),
+      uvs: Float32Array.from(uvs),
+      indices,
+    },
+  };
+}
+
+describe("parametric sheet public and segmented-strip contracts", () => {
+  it("exports the same constructor from the renderer-neutral root and mesh entrypoints", () => {
+    expect(rootSheet).toBe(createParametricSheetMesh);
+    expect(meshSheet).toBe(createParametricSheetMesh);
+  });
+  it("matches four independent rim strips with exact mapped attributes and ordered topology", () => {
+    const samples = 193,
+      columns = samples * 4;
+    const { options, reference } = segmentedStrips(samples);
+    const mesh = meshSheet(options);
+    expect(mesh.positions.length / 3).toBe(1544);
+    expect(mesh.indices).toBeInstanceOf(Uint16Array);
+    expect(mesh.indices.length).toBe(4608);
+    const mapped = (id: number) => 2 * (id % columns) + Math.floor(id / columns);
+    for (let id = 0; id < mesh.positions.length / 3; id += 1) {
+      expect(mesh.sourceVertex[id]).toBe(id);
+      for (const [name, stride] of [
+        ["positions", 3],
+        ["normals", 3],
+        ["uvs", 2],
+      ] as const)
+        expect(Array.from(mesh[name].subarray(id * stride, (id + 1) * stride))).toEqual(
+          Array.from(reference[name].subarray(mapped(id) * stride, (mapped(id) + 1) * stride)),
+        );
+    }
+    expect(Array.from(mesh.indices, mapped)).toEqual(reference.indices);
+    for (let offset = 0; offset < mesh.indices.length; offset += 3) {
+      const strips = Array.from(mesh.indices.subarray(offset, offset + 3), (id) =>
+        Math.floor((mesh.sourceVertex[id] % columns) / samples),
+      );
+      expect(new Set(strips).size).toBe(1);
+    }
+    expectAligned(mesh);
+  });
+  it("keeps late-patch contradictory orientation rejected rather than discarding its faces", () => {
+    expect(() =>
+      createParametricSheetMesh({
+        columns: 7,
+        rows: 17,
+        positionAt: plane,
+        normalAt: (u, v) => ({
+          x: 0,
+          y: 0,
+          z: v === 1 && [1, 2].includes(Math.round(u * 6)) ? 1 : -1,
+        }),
+      }),
+    ).toThrow(/inconsistent orientation at triangle 183; partition the surface/);
+  });
+});
 
 describe("parametric sheet analytic geometry", () => {
   it("uses column U, row V, and row-cross-column normals on an independent plane", () => {
