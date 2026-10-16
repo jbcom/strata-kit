@@ -275,6 +275,11 @@ Layers share a deterministic coordinate domain. Color blends in linear sRGB;
 roughness, bump, and optional metalness use the same alpha weights. Wear fields
 provide correlated masks without choosing a palette or material for the consumer.
 
+`bakeTangentNormalMap` from `strata-procedural/materials` converts a scalar height
+grid to RGBA8 normals using explicit physical spacing, edge modes and green-channel
+sign. It leaves texture upload and appearance with the caller. See the
+[normal-map contract](docs/API.md#tangent-normal-maps-from-heights).
+
 ## Packed scalar grids
 
 ```ts

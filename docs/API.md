@@ -12,7 +12,7 @@ consumers keep their dependency boundary explicit.
 | `strata-procedural/noise` | `seedToUint32`, `createSeededRandom`, `createSeededNoise`, `fractalNoise`, `createValueNoise2D`, `createFractalNoise2D`, `createSineLattice2D` | none |
 | `strata-procedural/sdf` | `sdSphere`, `sdPlane`, `sdBox`, `opUnion`, `opIntersection`, `opSubtraction`, `opSmoothUnion`, `opSmoothSubtraction` | none |
 | `strata-procedural/terrain` | `createSeededTerrainField`, `composeScalarField2D`, `transformScalarField2D`, `createDirectionalField2D`, `createSmoothMask2D`, scalar-grid and signed-vector codecs, and terrain/field types | none |
-| `strata-procedural/materials` | Surface plans, samplers, composition, wear, UV diagnostics, triplanar sampling, and atlas bakes | none |
+| `strata-procedural/materials` | Surface plans, samplers, composition, wear, UV diagnostics, triplanar sampling, atlas bakes, and `bakeTangentNormalMap` | none |
 | `strata-procedural/mesh` | `createRevolvedMesh`, `createRevolvedSurfaceMesh`, `createSweptMesh`, `createSheetMesh`, `createParametricSheetMesh`, `createCurveArcLengthTable`, `curveArcLengthAt`, `curveParameterAtArcLength`, `superellipsePoint2D`, `superellipseHalfDepth2D`, and mesh types | none |
 | `strata-procedural/shaders` | `seededSurfaceNoiseGlsl`, `segmentCoverageGlsl`, `scalarGrid16Glsl`, `signedVector8Glsl`, `replaceOrThrow`, `applyShaderPatches` | none |
 | `strata-procedural/surface-fields` | Scalar-profile, explicit differential, relief-frame, uniform-packing, and GLSL APIs | none |
@@ -283,6 +283,54 @@ describes plan inputs only; it cannot serialize arbitrary callback recipes.
 `broad`, `mid`, `fine`, `chip`, `steel`, `oxide`, and `drip` values. Scale is positive;
 the three controls lie in `[0, 1]`. Mask bias uses clamped unit coordinates with
 positive v downward; scale affects noise frequency. Zero amount disables wear masks.
+
+### Tangent normal maps from heights
+
+Root and `strata-procedural/materials` export `bakeTangentNormalMap(options)` and
+`TangentNormalMapOptions`. This pure bake accepts row-major `heights`, positive
+integer `width`/`height`, explicit positive finite physical texel spacing
+`spacingX`/`spacingY`, explicit `edgeX`/`edgeY` (`'wrap'` or `'clamp'`), and
+`normalYSign` (`-1` or `1`). Optional finite signed `heightScale` defaults to 1:
+it converts each source-height unit into the spacing's physical length unit.
+Zero produces neutral normals after validating the entire grid; negative values
+invert relief. No coordinate projection or renderer convention is inferred.
+
+```ts
+import { bakeTangentNormalMap } from 'strata-procedural/materials';
+const normal = bakeTangentNormalMap({
+  width: 3, height: 2, heights: [0, 0.1, 0.2, 0, 0.1, 0.2],
+  spacingX: 0.1, spacingY: 0.2,
+  edgeX: 'clamp', edgeY: 'clamp', normalYSign: -1,
+});
+```
+
+For each axis, wrapped central neighbors use a span of two texel steps; clamped
+neighbors use their actual index span (one step at an edge, two in the interior).
+Singleton axes and coincident wrapped neighbors have zero slope. Consequently a
+two-sample wrapped axis has zero slope, while a clamped one uses a one-sided
+secant. With scaled slopes `sx` and `sy`, the normalized vector is
+`(-sx, normalYSign * sy, 1)`: `-1` gives green opposite increasing-row height
+slope, and `+1` flips only green. This describes channel signs, not a world axis.
+
+The result is fresh mutable RGBA8, length `width*height*4`, with alpha 255 and
+the same signed-component byte rule as `packSignedVector8`. Flat or zero-scale
+regions are `[128,128,255,255]`. Quantization occurs after normalization; neither
+the source heights nor the resulting channels are silently clamped. The bake
+does not construct textures, generate mipmaps, choose upload orientation or
+color space, or retain inputs.
+
+Controls and exact `heights.length` validate before sample reads/allocation;
+length is read once. Each finite height is copied once into owned Float64 scratch
+before stencils, so reused or getter-backed inputs cannot change earlier samples.
+Callers synchronize concurrent mutation. Pixel count is capped at 4,194,304:
+output is at most 16,777,216 bytes and scratch at most 33,554,432 bytes.
+Finite differences, required physical spans and slopes must be representable;
+failed arithmetic throws. Product/division ordering avoids gratuitous intermediate
+overflow when a finite slope can be computed. Normalization rescales finite slopes
+if their norm would overflow. Zero scale and unused stencils form no unnecessary
+differences or spans. Finite arithmetic can still round a small slope to zero;
+there is no exact-real derivative promise. A wrapped discontinuous input remains
+discontinuous: wrapping alone does not make an authored grid seamless.
 
 ## Packed scalar grids
 
