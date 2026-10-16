@@ -40,6 +40,7 @@ Add focused tests for behavior or public-contract changes. Update `README.md`,
 limits change. Use Conventional Commits. Releases are prepared from `main`; do not
 manually edit versions or the changelog as part of ordinary feature work.
 
-`mise exec -- pnpm test:gpu` is the muted WebGL2 readback check for the paired
-CPU/GLSL scalar-relief implementation. Run it through the configured hardware test
-path when that module changes.
+`mise exec -- pnpm test:gpu` runs muted WebGL2 readback checks for the paired
+CPU/GLSL scalar-relief and segment-coverage implementations, including independent
+band witnesses with an injected shader defect. Use the configured hardware test
+path when either paired module changes.

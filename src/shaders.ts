@@ -22,3 +22,4 @@ float strataKitNoise(vec3 point, float seed) {
   return mix(lower, upper, local.z);
 }
 `;
+export { segmentCoverageGlsl } from "./segmentCoverageGlsl.js";

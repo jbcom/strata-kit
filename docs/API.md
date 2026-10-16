@@ -248,6 +248,67 @@ describes plan inputs only; it cannot serialize arbitrary callback recipes.
 the three controls lie in `[0, 1]`. Mask bias uses clamped unit coordinates with
 positive v downward; scale affects noise frequency. Zero amount disables wear masks.
 
+## Segment samples and filtered bands
+
+The root and `strata-procedural/materials` export `sampleSegment2D`,
+`projectPixelFootprint2D`, `sampleBandCoverage`, `SegmentSample2D` and
+`BandCoverageSample`. All 2D inputs are arrays of exactly two finite numbers,
+typed as `readonly [number, number]`; typed arrays are not tuple inputs.
+
+`sampleSegment2D(point, start, end)` returns fresh `nearest` and `tangent` tuples,
+clamped fraction `t`, unsigned `distance`, segment `length`, and
+`along = t * length`. A nonzero segment has a unit tangent from start to end.
+Coincident endpoints produce a point sample with zero tangent, length, t and
+along. Exact input endpoints are returned exactly, even when normalization would
+round a projection just inside the segment. Other projections clamp before
+dividing by length. No epsilon threshold or squared-length denominator erases
+short segments. Inputs are copied, no output is cached, and unrepresentable
+derived differences, lengths, projections or distances throw. These are ordinary
+floating-point calculations, not exact geometric predicates.
+
+`projectPixelFootprint2D(direction, perPixelX, perPixelY)` returns the full extent
+of a local pixel parallelogram along a normalized caller direction:
+`abs(dot(axis, perPixelX)) + abs(dot(axis, perPixelY))`. Direction magnitude does
+not change the result. For exactly zero direction, it uses the larger length of
+`perPixelX + perPixelY` and `perPixelX - perPixelY`, a conservative diameter.
+Zero derivatives return zero. Nonfinite or unrepresentable arithmetic rejects.
+The caller supplies the coordinate changes per screen pixel in the same units.
+An across-segment direction is `[-tangent[1], tangent[0]]`; a radial endpoint
+filter can instead choose `point - nearest`. That choice is explicit: neither
+projection is inferred or presented as exact pixel-area integration.
+
+`sampleBandCoverage(distance, halfWidth, feather, footprint = 0)` requires finite
+nonnegative scalars in one length unit. With `H = max(halfWidth, footprint/2)`
+and `E = max(feather, footprint/2)`, it returns:
+
+- `effectiveHalfWidth: H`;
+- `edgeCoverage`: one minus cubic smoothstep across `[H-E, H+E]`;
+- `widthCoverage: halfWidth/H`, or zero when H is zero;
+- `coverage: edgeCoverage * widthCoverage`.
+
+The calculation avoids overflowing edge endpoints. When E is zero the edge is
+exactly 1 inside, 0.5 on and 0 outside the boundary. Zero authored half-width
+always yields zero coverage. Positive subpixel widths have widened support and
+attenuated opacity, continuously approaching zero. A feather wider than H can
+reduce center opacity. This is a local one-dimensional band approximation,
+including when distance describes rounded caps; it is not an exact area filter.
+Selection, ties, segment identity, arc-length prefixes, joins, compositing and
+material appearance remain caller-owned. To impose a visibility floor without
+duplicating filtering, a caller can use `halfWidth > 0 ? band.edgeCoverage *
+Math.max(band.widthCoverage, ownFloor) : 0`.
+
+The root and `strata-procedural/shaders` export `segmentCoverageGlsl`, defining
+`StrataSegmentSample2D`, `StrataBandCoverageSample`, `strataSampleSegment2D`,
+`strataProjectPixelFootprint2D` and `strataSampleBandCoverage`. Struct fields match
+the CPU results; the GLSL band function takes all four scalar arguments, which
+must be nonnegative. Use
+highp GLSL ES 3.00 and local coordinates whose important differences survive
+Float32 storage. Inputs and intermediate arithmetic must remain finite without
+depending on subnormal preservation. GLSL helpers do not perform CPU validation.
+Derivatives are passed explicitly: compute `dFdx`/`dFdy` before divergent control
+flow. No undefined equal-edge `smoothstep` is used. Float64 CPU and Float32 GPU
+outputs are compared with scale-aware tolerances, not promised byte-identical.
+
 ## Portable meshes and reskinning
 
 The [visual acceptance gate](VISUAL-ACCEPTANCE.md) describes checked material bytes,

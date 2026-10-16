@@ -235,6 +235,24 @@ This is first-order relief shading. It intentionally omits the curvature term fr
 derivative of a physically offset curved surface. Consumers that alter curved geometry
 need a curvature-aware differential implementation of their own.
 
+## Segment coverage boundary
+
+`materials` owns finite-segment nearest-point sampling, explicit directional
+pixel-footprint projection and scalar band filtering. These kernels return fresh
+numeric samples and separate edge smoothing from width attenuation. They do not
+choose a segment list, topology, spatial index, coordinate projection or minimum
+visibility policy. Coincident segments are point samples, and zero authored band
+width remains invisible. A caller can select perpendicular or radial cap axes
+without changing the distance kernel.
+
+`shaders` exposes paired highp GLSL ES 3.00 functions. The shader takes coordinate
+derivatives as data; it creates no texture, material or render pass. CPU finite
+validation and GPU representable local-coordinate requirements are distinct:
+Float64 arithmetic is not a promise of Float32 bit identity or exact area
+integration. The `surface-fields` profile/frame module remains independent of
+these coordinate-bearing coverage kernels. World planning, candidate search,
+terrain semantics and simulation remain consumer or upstream-package concerns.
+
 ## Intentional limits
 
 The package currently provides the APIs documented in [API.md](API.md). It does not

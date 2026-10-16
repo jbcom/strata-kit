@@ -342,6 +342,26 @@ It requires WebGLRenderer, bounded RGBA8 maps and valid static normals. WebGL1
 sRGB requires EXT_sRGB. It does not generate maps or bind animated rest coordinates.
 See the [adapter contract](docs/API.md#optional-adapters) for projection and limits.
 
+## Filter narrow surface bands
+
+```ts
+import { sampleSegment2D, projectPixelFootprint2D, sampleBandCoverage } from 'strata-procedural/materials';
+
+const segment = sampleSegment2D([0.5, 0.1], [0, 0], [1, 0]);
+const across = [-segment.tangent[1], segment.tangent[0]] as const;
+const footprint = projectPixelFootprint2D(across, [0.01, 0], [0, 0.02]);
+const band = sampleBandCoverage(segment.distance, 0.005, 0.001, footprint);
+// Feed band.coverage to a caller-owned layer mask.
+```
+
+Coordinates, widths and pixel displacements share one caller-selected unit.
+Coincident endpoints become a point sample. Positive subpixel bands widen their
+support and attenuate their contribution; zero authored width remains invisible.
+The returned edge and width factors let consumers apply their own visibility
+policy. No spatial index, world projection, material or renderer is created.
+`segmentCoverageGlsl` from `strata-procedural/shaders` provides matching highp
+GLSL ES 3.00 helpers with explicitly supplied pixel derivatives.
+
 ## Develop
 
 ```sh
@@ -353,7 +373,7 @@ mise exec -- pnpm verify
 
 `pnpm verify` runs Biome, TypeScript, unit tests, the build, and package-consumer
 checks. Run `mise exec -- pnpm test:gpu` separately when changing the CPU/GLSL
-scalar-relief pair; it is a muted WebGL2 readback test and belongs on the configured
+scalar-relief or segment-coverage pairs; these muted WebGL2 readback tests belong on the configured
 hardware test path.
 
 From a source checkout, run `mise exec -- pnpm build` then

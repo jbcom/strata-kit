@@ -1,6 +1,9 @@
 import { createSeededNoise, type Seed, seedToUint32 } from "./noise.js";
 import { requireFiniteNumber, requirePositiveFiniteNumber } from "./validation.js";
 
+export { sampleSegment2D, projectPixelFootprint2D, sampleBandCoverage } from "./segmentCoverage.js";
+export type { SegmentSample2D, BandCoverageSample } from "./segmentCoverage.js";
+
 export {
   analyzeUvLayout,
   bakeUvAtlas,
