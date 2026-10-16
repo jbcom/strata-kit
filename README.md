@@ -105,7 +105,11 @@ octaves. These bounds do not limit callback time or nested recipe cost.
 The ridge returns values in `[0, 1]` and derivatives per cycle with C1 joins;
 curvature continuity is not promised. It and `sampleCosineProfile` are CPU-only
 profiles. Directional projection belongs to `terrain`; scalar profiles do not choose
-a spatial projection or deform geometry. See [API details](docs/API.md) for noise
+a spatial projection or deform geometry. Seeded cell patterns can use
+`createJitteredCellField2D` from `strata-procedural/noise`: it supplies stable
+nearest/runner-up cell identities, distances and a boundary indicator from a
+bounded complete search. Callers choose each cell's appearance. See
+[cell field limits](docs/API.md#jittered-two-nearest-cell-fields) and [API details](docs/API.md) for noise
 seed semantics, finite-coordinate limits, mask contours, and normalization.
 
 ## Bake a surface layer
@@ -136,7 +140,7 @@ image files and applying them to a material remain consumer work.
 | Import | Use it for |
 | --- | --- |
 | `strata-procedural` | Root API: noise, SDFs, terrain, material bakes, and scalar relief |
-| `strata-procedural/noise` | Seed normalization, random streams, value noise, and fractal sums |
+| `strata-procedural/noise` | Seed normalization, random streams, value/fractal noise, and two-nearest cell fields |
 | `strata-procedural/sdf` | Sphere, plane, box, and boolean/smooth distance operations |
 | `strata-procedural/terrain` | Ordered scalar fields, directional projection, smooth masks, seeded terrain, heightfields, and scatter |
 | `strata-procedural/materials` | Surface plans, samples, bakes, and bake manifests |
