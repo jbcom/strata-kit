@@ -150,6 +150,14 @@
   Keep GPU inputs/intermediates finite in local Float32 coordinates. No subnormal,
   bit-portability, exact area-filter or geometric predicate guarantee is made.
 
+- `superellipsePoint2D(section, angle)` and `superellipseHalfDepth2D(section, x)`
+  are pure root/mesh Float64 section kernels. Positive finite half-extents, power>=2;
+  eccentric signed-power angle0=+first axis, PI/2=+second; named cardinals within one signed turn have exact axes.
+  Half-depth clamps outside halfWidth. No height profile, ridge/inset, 3D embedding,
+  normals or arc-length metric; high-power represented corners can lose inverse
+  round trips, and subnormal products may round to zero. Not the revolved mesh's
+  true polar parameterization.
+
 - Root/terrain `packScalarGrid16` encodes explicit-range scalar samples as tightly
   packed high/low RG8 bytes; dimensions 1..4097, exact finite sample count, positive
   finite range and representably distinct finite endpoints. Metadata is owned and

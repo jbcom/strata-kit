@@ -57,6 +57,7 @@ export type {
   RevolvedMeshOptions,
   SheetMeshOptions,
   SweptMeshOptions,
+  SuperellipseSection2D,
 } from "./mesh.js";
 export {
   createParametricSheetMesh,
@@ -64,6 +65,8 @@ export {
   createRevolvedSurfaceMesh,
   createSheetMesh,
   createSweptMesh,
+  superellipsePoint2D,
+  superellipseHalfDepth2D,
 } from "./mesh.js";
 export {
   applyShaderPatches,
