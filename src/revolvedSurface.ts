@@ -1,4 +1,4 @@
-/** Renderer-neutral radially oriented section surfaces, without end caps. */
+/** Renderer-neutral sampled section surfaces, without end caps. */
 import type { ProceduralMesh } from "./mesh.js";
 import { requireFiniteNumber } from "./validation.js";
 
@@ -22,6 +22,8 @@ export type RevolvedSurfaceOptions = RevolvedSectionSource & {
   /** Polar superellipse exponent, finite and >= 2; defaults to 2. */
   power?: number;
   angular?: RevolvedAngularDomain;
+  /** Whole-grid parameter winding; omission retains local radial orientation. */
+  winding?: "forward" | "reverse";
   /** Length offsets sampled once per unique grid point in row-major order. */
   radialOffset?: (s: number, theta: number) => number;
   axialOffset?: (s: number, theta: number) => number;
@@ -129,13 +131,22 @@ function offset(
  * possible. Closed seam parameters copy the first column, while normalized U is 1.
  * Radial offsets clamp negative resulting radii to zero; only analytically collapsed
  * triangles are omitted. Positive-area faces erased by Float32 quantization reject.
- * Normals use local radial orientation, not hollow-meridian/solid-volume semantics.
- * Inconsistent face orientation across a shared patch edge is rejected.
+ * Omitted winding uses local radial orientation and rejects inconsistent face
+ * orientation across a shared patch edge. Explicit forward winding uses
+ * dP/dtheta cross dP/ds; reverse negates it and reverses every retained face.
+ * Neither mode infers hollow-meridian/solid-volume semantics.
  * Base work is bounded to one million grid vertices and six million potential
  * indices before callbacks; final admission counts actual repaired vertices.
  */
 export function createRevolvedSurfaceMesh(options: RevolvedSurfaceOptions): RevolvedSurfaceMesh {
   if (!options || typeof options !== "object") throw new Error(`${OP}: options are required`);
+  const parameterWinding = options.winding;
+  if (
+    parameterWinding !== undefined &&
+    parameterWinding !== "forward" &&
+    parameterWinding !== "reverse"
+  )
+    throw new Error(`${OP}: winding must be forward or reverse`);
   const hasSections = Object.hasOwn(options, "sections");
   const hasSampler = Object.hasOwn(options, "sectionAt");
   if (hasSections === hasSampler)
@@ -317,13 +328,18 @@ export function createRevolvedSurfaceMesh(options: RevolvedSurfaceOptions): Revo
       );
       const radial = reference(vertex);
       const gradient = cross(angularDelta, axialDelta);
-      if (dot(gradient, radial) < 0) {
+      if (
+        parameterWinding === "reverse" ||
+        (parameterWinding === undefined && dot(gradient, radial) < 0)
+      ) {
         gradient[0] *= -1;
         gradient[1] *= -1;
         gradient[2] *= -1;
       }
-      let normal = normalize(...gradient) ?? normalize(...radial);
-      if (!normal && (row === 0 || row === rows - 1)) {
+      let normal =
+        normalize(...gradient) ??
+        (parameterWinding === undefined ? normalize(...radial) : undefined);
+      if (!normal && parameterWinding === undefined && (row === 0 || row === rows - 1)) {
         const neighbor = sections[row === 0 ? 1 : rows - 2];
         const section = sections[row];
         normal = normalize(
@@ -343,6 +359,7 @@ export function createRevolvedSurfaceMesh(options: RevolvedSurfaceOptions): Revo
 
   const triangleCount = maximumIndices / 3;
   const winding = new Uint8Array(triangleCount); // 0 omitted, 1 parameter order, 2 reversed.
+  const rowFallbacks: (Triple | undefined)[] = [];
   const verticesOf = (triangle: number): Triple => {
     const cell = Math.floor(triangle / 2);
     const row = Math.floor(cell / segments);
@@ -365,23 +382,35 @@ export function createRevolvedSurfaceMesh(options: RevolvedSurfaceOptions): Revo
     const storedFace = normalize(...face(stored, a, b, c));
     if (!storedFace)
       throw new Error(`${OP}: triangle ${triangle} collapses after Float32 quantization`);
-    const references = [reference(a), reference(b), reference(c)];
-    const radial: Triple = [0, 0, 0];
-    const smooth: Triple = [0, 0, 0];
-    for (let i = 0; i < 3; i += 1) {
-      radial[i] = references[0][i] + references[1][i] + references[2][i];
-      smooth[i] = normals[a * 3 + i] + normals[b * 3 + i] + normals[c * 3 + i];
+    let flip = parameterWinding === "reverse";
+    if (parameterWinding === undefined) {
+      const references = [reference(a), reference(b), reference(c)];
+      const radial: Triple = [0, 0, 0];
+      const smooth: Triple = [0, 0, 0];
+      for (let i = 0; i < 3; i += 1) {
+        radial[i] = references[0][i] + references[1][i] + references[2][i];
+        smooth[i] = normals[a * 3 + i] + normals[b * 3 + i] + normals[c * 3 + i];
+      }
+      const orientation = dot(exact, radial);
+      flip = orientation < 0 || (orientation === 0 && dot(exact, smooth) < 0);
     }
-    const orientation = dot(exact, radial);
-    const flip = orientation < 0 || (orientation === 0 && dot(exact, smooth) < 0);
     winding[triangle] = flip ? 2 : 1;
     emitted += 1;
     const oriented: Triple = flip ? [-storedFace[0], -storedFace[1], -storedFace[2]] : storedFace;
     for (const vertex of [a, b, c]) {
       if (!normalize(...read(normals, vertex))) normals.set(oriented, vertex * 3);
+      if (parameterWinding !== undefined) rowFallbacks[Math.floor(vertex / stride)] ??= oriented;
     }
   }
   if (emitted === 0) throw new Error(`${OP}: surface has no nondegenerate triangles`);
+  if (parameterWinding !== undefined) {
+    // An analytic pole's redundant angular endpoint may belong only to omitted
+    // faces. Give unused samples the same deterministic oriented fan fallback.
+    for (let vertex = 0; vertex < gridCount; vertex += 1) {
+      const fallback = rowFallbacks[Math.floor(vertex / stride)];
+      if (fallback && !normalize(...read(normals, vertex))) normals.set(fallback, vertex * 3);
+    }
+  }
   if (closed) {
     for (let row = 0; row < rows; row += 1)
       normals.set(

@@ -175,6 +175,10 @@ automatically added caps. `shell.parameters` retains each vertex's normalized
 row parameter and wrapped angle, including vertices duplicated to repair normals.
 Section dimensions, offsets and angular bounds must form a coherent radial
 surface; this constructor does not infer a solid interior.
+For a folded meridian whose underside points radially inward, declare
+`winding: 'forward'` or `'reverse'` to orient the entire parameter grid.
+Generated normals follow that same orientation; individual faces are not flipped
+to face away from the axis.
 
 For a surface that maps both unit coordinates to 3D, use
 `createParametricSheetMesh`:
@@ -195,6 +199,8 @@ const panel = createParametricSheetMesh({
 `sourceVertex`, which maps every returned vertex to its original grid sample
 after any corner-normal repair. Optional `includeCell` and `includeVertex`
 callbacks remove connectivity, while sampled positions and UVs remain available.
+Mapped sheets also accept an explicit `winding` for coherent folded surfaces;
+it cannot be combined with the point-based `insideAt` orientation hint.
 See the [mesh contract](docs/API.md#portable-meshes-and-reskinning) for normal,
 seam, validation and resource limits. These pure constructors do not choose
 placement, skinning, materials, collision or renderer policy.

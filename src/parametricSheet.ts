@@ -15,6 +15,8 @@ export interface ParametricSheetMeshOptions {
   normalAt?: (u: number, v: number) => Vec3;
   insideAt?: (u: number, v: number) => Vec3;
   normalMode?: "grid" | "area-weighted";
+  /** Set one parameter-grid winding instead of inferring orientation from normals. */
+  winding?: "forward" | "reverse";
   includeCell?: (column: number, row: number) => boolean;
   includeVertex?: (column: number, row: number) => boolean;
   /** Copy the first column into a distinct final seam column; never add a strip. */
@@ -41,12 +43,21 @@ function scalar(name: string, value: number, float32 = false): number {
   return value;
 }
 
-function point(value: Vec3, name: string, output: Float32Array | Float64Array, id: number): void {
+function point(
+  value: Vec3,
+  name: string,
+  output: Float32Array | Float64Array,
+  id: number,
+): readonly [number, number, number] {
   if (value === null || typeof value !== "object") fail(`${name} must return a Vec3`);
   const float32 = output instanceof Float32Array;
-  output[id * 3] = scalar(`${name}.x`, value.x, float32);
-  output[id * 3 + 1] = scalar(`${name}.y`, value.y, float32);
-  output[id * 3 + 2] = scalar(`${name}.z`, value.z, float32);
+  const x = scalar(`${name}.x`, value.x, float32);
+  const y = scalar(`${name}.y`, value.y, float32);
+  const z = scalar(`${name}.z`, value.z, float32);
+  output[id * 3] = x;
+  output[id * 3 + 1] = y;
+  output[id * 3 + 2] = z;
+  return [x, y, z];
 }
 
 function unit(x: number, y: number, z: number): readonly [number, number, number] | undefined {
@@ -91,6 +102,15 @@ export function createParametricSheetMesh(
     options;
   const mode = options.normalMode === undefined ? "grid" : options.normalMode;
   const closed = options.closedColumns === undefined ? false : options.closedColumns;
+  const declaredWinding = options.winding;
+  if (
+    declaredWinding !== undefined &&
+    declaredWinding !== "forward" &&
+    declaredWinding !== "reverse"
+  )
+    fail("winding must be forward or reverse");
+  if (declaredWinding !== undefined && insideAt !== undefined)
+    fail("winding and insideAt are mutually exclusive");
   if (typeof closed !== "boolean") fail("closedColumns must be boolean");
   if (mode !== "grid" && mode !== "area-weighted") fail("normalMode must be grid or area-weighted");
   if (!Number.isSafeInteger(columns) || columns < (closed ? 4 : 2)) fail("invalid columns");
@@ -133,6 +153,7 @@ export function createParametricSheetMesh(
   const accumulated =
     !normalAt && mode === "area-weighted" ? new Float64Array(count * 3) : undefined;
   const uvs = new Float32Array(count * 2);
+  // Source-frame position-minus-inside directions, not rounded inside points.
   const inside = insideAt ? new Float64Array(count * 3) : undefined;
   for (let row = 0; row < rows; row += 1)
     for (let column = 0; column < columns; column += 1) {
@@ -140,9 +161,10 @@ export function createParametricSheetMesh(
       const u = column / (columns - 1),
         v = row / (rows - 1);
       const seam = closed && column === columns - 1;
+      let sourcePoint: readonly [number, number, number] = [0, 0, 0];
       if (seam) {
         positions.set(positions.subarray(row * columns * 3, row * columns * 3 + 3), id * 3);
-      } else point(positionAt(u, v), "positionAt", positions, id);
+      } else sourcePoint = point(positionAt(u, v), "positionAt", positions, id);
       const uv = uvAt === undefined ? [u, v] : uvAt(u, v);
       if (!Array.isArray(uv) || uv.length !== 2) fail("uvAt must return two numbers");
       uvs[id * 2] = scalar("uvAt[0]", uv[0], true);
@@ -163,7 +185,17 @@ export function createParametricSheetMesh(
       }
       if (inside && insideAt) {
         if (seam) inside.set(inside.subarray(row * columns * 3, row * columns * 3 + 3), id * 3);
-        else point(insideAt(u, v), "insideAt", inside, id);
+        else {
+          const insidePoint = point(insideAt(u, v), "insideAt", inside, id);
+          // This direction belongs to the caller's frame before storage quantization.
+          // Mixing a Float32 position with an unrounded point can turn exact tangency
+          // into an arbitrary positive or negative orientation hint.
+          for (let axis = 0; axis < 3; axis += 1)
+            inside[id * 3 + axis] = scalar(
+              "insideAt direction",
+              sourcePoint[axis] - insidePoint[axis],
+            );
+        }
       }
     }
 
@@ -251,16 +283,13 @@ export function createParametricSheetMesh(
           n = [0, 1, 0];
         }
         if (inside && needed) {
-          const reference = unit(
-            positions[id * 3] - inside[id * 3],
-            positions[id * 3 + 1] - inside[id * 3 + 1],
-            positions[id * 3 + 2] - inside[id * 3 + 2],
-          );
+          const reference = unit(inside[id * 3], inside[id * 3 + 1], inside[id * 3 + 2]);
           if (!reference) fail(`insideAt coincides with sample ${id}`);
           const direction = n[0] * reference[0] + n[1] * reference[1] + n[2] * reference[2];
           if (direction === 0) fail(`insideAt is tangent at sample ${id}`);
           if (direction < 0) n = [-n[0], -n[1], -n[2]];
         }
+        if (declaredWinding === "reverse") n = [-n[0], -n[1], -n[2]];
         normals.set(n, id * 3);
       }
   }
@@ -276,7 +305,8 @@ export function createParametricSheetMesh(
     for (const id of ids)
       direction +=
         raw[0] * normals[id * 3] + raw[1] * normals[id * 3 + 1] + raw[2] * normals[id * 3 + 2];
-    const sign = Math.sign(direction);
+    const sign =
+      declaredWinding === "forward" ? 1 : declaredWinding === "reverse" ? -1 : Math.sign(direction);
     if (sign === 0) fail(`ambiguous winding at triangle ${offset / 3}`);
     if (winding && sign !== winding)
       fail(`inconsistent orientation at triangle ${offset / 3}; partition the surface`);
@@ -300,11 +330,7 @@ export function createParametricSheetMesh(
       if (dot <= 0) {
         if (normalAt) fail(`authored normal opposes triangle ${offset / 3} at sample ${id}`);
         if (inside) {
-          const reference = unit(
-            positions[id * 3] - inside[id * 3],
-            positions[id * 3 + 1] - inside[id * 3 + 1],
-            positions[id * 3 + 2] - inside[id * 3 + 2],
-          );
+          const reference = unit(inside[id * 3], inside[id * 3 + 1], inside[id * 3 + 2]);
           if (
             !reference ||
             raw[0] * reference[0] + raw[1] * reference[1] + raw[2] * reference[2] <= 0

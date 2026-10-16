@@ -116,6 +116,10 @@ position/normal data across distinct seam vertices; UVs and vertex selection
 can differ at the endpoints. A `sourceVertex` array maps repaired corners
 back to original grid samples so consumers can propagate their own
 attributes without assuming a fixed index layout.
+An explicit whole-grid winding can replace normal-derived orientation for a
+folded parameter patch. It is incompatible with inside-point hints, whose
+direction is computed before Float32 position rounding. Generated normals and
+triangles share the declared sign; authored normals retain their strict checks.
 
 Revolved section surfaces sample separate X widths and positive/negative Z
 depths along Y. They support open or closed angular domains, local section
@@ -126,6 +130,10 @@ rejects inconsistent meridian orientation and Float32 face collapse, and
 repairs individual corners when a shared normal would face behind a stored
 triangle. Its interleaved Float64 `parameters` preserve normalized row
 position and wrapped angle independently of the chosen UV mode.
+Explicit forward/reverse parameter winding also allows a folded meridian's
+underside to face the axis without per-face radial flips. The default radial
+inference remains available. Neither policy establishes a solid or resolves
+self-intersections.
 
 Both new builders check grid work before invoking callbacks and bound output
 to one million vertices and six million indices, including any corner

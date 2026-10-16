@@ -511,3 +511,270 @@ describe("sampled revolved surfaces", () => {
     ).toThrow();
   });
 });
+
+describe("explicit revolved parameter winding", () => {
+  const folded: RevolvedSurfaceOptions = {
+    sections: [section(0), section(-0.2, 2), section(0.1, 2.2), section(0.7, 1.2)],
+    segments: 12,
+    axialOffset: (s, theta) => 0.07 * Math.sin(theta) * (1 + 0.1 * s),
+  };
+
+  function expectGridWinding(
+    mesh: RevolvedSurfaceMesh,
+    rows: number,
+    segments: number,
+    winding: "forward" | "reverse",
+  ): void {
+    const gridVertex = (vertex: number): number =>
+      Math.round(mesh.parameters[vertex * 2] * (rows - 1)) * (segments + 1) +
+      Math.round(mesh.uvs[vertex * 2] * segments);
+    let offset = 0;
+    for (let row = 0; row < rows - 1; row++) {
+      for (let column = 0; column < segments; column++) {
+        const a = row * (segments + 1) + column;
+        const c = a + 1;
+        const b = a + segments + 1;
+        for (const expected of [
+          [a, c, b],
+          [c, b + 1, b],
+        ]) {
+          if (winding === "reverse") [expected[1], expected[2]] = [expected[2], expected[1]];
+          expect(Array.from(mesh.indices.subarray(offset, offset + 3), gridVertex)).toEqual(
+            expected,
+          );
+          offset += 3;
+        }
+      }
+    }
+    expect(offset).toBe(mesh.indices.length);
+  }
+
+  function expectCoherentEdges(
+    mesh: RevolvedSurfaceMesh,
+    rows: number,
+    segments: number,
+    closed: boolean,
+  ): void {
+    const source = (vertex: number): number => {
+      const row = Math.round(mesh.parameters[vertex * 2] * (rows - 1));
+      const column = Math.round(mesh.uvs[vertex * 2] * segments);
+      return row * (segments + 1) + (closed ? column % segments : column);
+    };
+    const edges = new Map<string, number[]>();
+    for (let offset = 0; offset < mesh.indices.length; offset += 3) {
+      const vertices = Array.from(mesh.indices.subarray(offset, offset + 3), source);
+      for (let corner = 0; corner < 3; corner++) {
+        const a = vertices[corner];
+        const b = vertices[(corner + 1) % 3];
+        const key = `${Math.min(a, b)},${Math.max(a, b)}`;
+        const directions = edges.get(key) ?? [];
+        directions.push(a < b ? 1 : -1);
+        edges.set(key, directions);
+      }
+    }
+    let boundaries = 0;
+    for (const directions of edges.values()) {
+      expect(directions.length).toBeLessThanOrEqual(2);
+      if (directions.length === 1) boundaries++;
+      else expect(directions[0] + directions[1]).toBe(0);
+    }
+    expect(boundaries).toBe(2 * segments + (closed ? 0 : 2 * (rows - 1)));
+  }
+
+  it("preserves omitted radial orientation and its folded-meridian rejection", () => {
+    const options = { sections: [section(1), section(0)], segments: 8 };
+    expect(createRevolvedSurfaceMesh({ ...options, winding: undefined })).toEqual(
+      createRevolvedSurfaceMesh(options),
+    );
+    for (const options of [folded, { ...folded, winding: undefined }])
+      expect(() => createRevolvedSurfaceMesh(options)).toThrow(/inconsistent orientation/);
+  });
+
+  it.each(["forward", "reverse"] as const)(
+    "retains a complete folded grid with coherent %s faces and repaired corner normals",
+    (winding) => {
+      const mesh = createRevolvedSurfaceMesh({ ...folded, winding });
+      expect(mesh.indices).toHaveLength(3 * 12 * 6);
+      expectGridWinding(mesh, 4, 12, winding);
+      expectCoherentEdges(mesh, 4, 12, true);
+      expectStoredSurface(mesh);
+      // The lower band points radially inward under forward parameter order.
+      // The upper band points outward; one grid sign preserves both sides.
+      expect(mesh.normals[2] * (winding === "forward" ? 1 : -1)).toBeLessThan(0);
+      expect(mesh.normals[3 * 13 * 3 + 2] * (winding === "forward" ? 1 : -1)).toBeGreaterThan(0);
+      for (let row = 0; row < 4; row++) {
+        const first = row * 13;
+        expect(point(mesh.positions, first + 12)).toEqual(point(mesh.positions, first));
+        expect(point(mesh.normals, first + 12)).toEqual(point(mesh.normals, first));
+        expect(mesh.parameters[(first + 12) * 2 + 1]).toBe(mesh.parameters[first * 2 + 1]);
+        expect(mesh.uvs[first * 2]).toBe(0);
+        expect(mesh.uvs[(first + 12) * 2]).toBe(1);
+      }
+    },
+  );
+
+  it("reverses normals and connectivity without changing sampled attributes", () => {
+    const forward = createRevolvedSurfaceMesh({ ...folded, winding: "forward" });
+    const reverse = createRevolvedSurfaceMesh({ ...folded, winding: "reverse" });
+    expect(reverse.positions.length).toBe(forward.positions.length);
+    expect(reverse.positions.subarray(0, 4 * 13 * 3)).toEqual(
+      forward.positions.subarray(0, 4 * 13 * 3),
+    );
+    expect(reverse.uvs.subarray(0, 4 * 13 * 2)).toEqual(forward.uvs.subarray(0, 4 * 13 * 2));
+    expect(reverse.parameters.subarray(0, 4 * 13 * 2)).toEqual(
+      forward.parameters.subarray(0, 4 * 13 * 2),
+    );
+    for (let vertex = 0; vertex < 4 * 13; vertex++)
+      expectPoint(
+        point(reverse.normals, vertex),
+        point(forward.normals, vertex).map((v) => -v),
+      );
+    for (let offset = 0; offset < forward.indices.length; offset += 3) {
+      for (const [forwardCorner, reverseCorner] of [
+        [0, 0],
+        [1, 2],
+        [2, 1],
+      ]) {
+        const a = forward.indices[offset + forwardCorner];
+        const b = reverse.indices[offset + reverseCorner];
+        expect(point(reverse.positions, b)).toEqual(point(forward.positions, a));
+        expectPoint(
+          point(reverse.normals, b),
+          point(forward.normals, a).map((v) => -v),
+        );
+        expect(Array.from(reverse.uvs.subarray(b * 2, b * 2 + 2))).toEqual(
+          Array.from(forward.uvs.subarray(a * 2, a * 2 + 2)),
+        );
+        expect(Array.from(reverse.parameters.subarray(b * 2, b * 2 + 2))).toEqual(
+          Array.from(forward.parameters.subarray(a * 2, a * 2 + 2)),
+        );
+      }
+    }
+  });
+
+  it.each(["forward", "reverse"] as const)(
+    "uses %s winding on a folded patch with open angular ends",
+    (winding) => {
+      const mesh = createRevolvedSurfaceMesh({
+        ...folded,
+        winding,
+        segments: 6,
+        angular: { kind: "open", start: -Math.PI / 2, end: Math.PI / 2 },
+      });
+      expectGridWinding(mesh, 4, 6, winding);
+      expectCoherentEdges(mesh, 4, 6, false);
+      expectStoredSurface(mesh);
+    },
+  );
+
+  it.each(["forward", "reverse"] as const)(
+    "keeps analytic pole fans and raw stored-face repairs under %s winding",
+    (winding) => {
+      for (const sections of [
+        [section(0, 0), section(1)],
+        [section(0), section(1, 0)],
+        [
+          section(0, 0.643452525138855),
+          section(0.643452525138855, 1.4089385271072388),
+          section(0.7654860019683838, 0),
+        ],
+      ]) {
+        for (const angular of [undefined, { kind: "open" as const, start: 0, end: Math.PI }]) {
+          const mesh = createRevolvedSurfaceMesh({ sections, segments: 4, winding, angular });
+          expect(mesh.indices).toHaveLength((sections.length === 2 ? 4 : 12) * 3);
+          if (sections.length === 3 && angular === undefined)
+            expect(mesh.positions.length / 3).toBeGreaterThan(15);
+          for (let vertex = sections.length * 5; vertex < mesh.positions.length / 3; vertex++) {
+            const original = Array.from({ length: sections.length * 5 }, (_, index) => index).find(
+              (index) =>
+                mesh.parameters[index * 2] === mesh.parameters[vertex * 2] &&
+                mesh.parameters[index * 2 + 1] === mesh.parameters[vertex * 2 + 1] &&
+                mesh.uvs[index * 2] === mesh.uvs[vertex * 2] &&
+                mesh.uvs[index * 2 + 1] === mesh.uvs[vertex * 2 + 1],
+            );
+            expect(original).toBeDefined();
+            if (original !== undefined)
+              expect(point(mesh.positions, vertex)).toEqual(point(mesh.positions, original));
+          }
+          expectStoredSurface(mesh);
+        }
+      }
+    },
+  );
+
+  it("rejects unknown winding before any section or displacement callback", () => {
+    for (const winding of ["radial", "invalid", null, 0]) {
+      let calls = 0;
+      const sample = () => {
+        calls++;
+        return 0;
+      };
+      expect(() =>
+        createRevolvedSurfaceMesh({
+          segments: 4,
+          subdivisions: 1,
+          winding,
+          sectionAt: (s: number) => {
+            calls++;
+            return section(s);
+          },
+          radialOffset: sample,
+          axialOffset: sample,
+        } as RevolvedSurfaceOptions),
+      ).toThrow(/winding/);
+      expect(calls).toBe(0);
+    }
+  });
+
+  it("captures explicit winding before callbacks mutate the caller options", () => {
+    const options: RevolvedSurfaceOptions = {
+      segments: 4,
+      subdivisions: 1,
+      winding: "forward",
+      sectionAt(s) {
+        options.winding = "reverse";
+        return section(1 - s);
+      },
+    };
+    expect(createRevolvedSurfaceMesh(options)).toEqual(
+      createRevolvedSurfaceMesh({
+        sections: [section(1), section(0)],
+        segments: 4,
+        winding: "forward",
+      }),
+    );
+  });
+
+  it.each(["forward", "reverse"] as const)(
+    "retains quantization and pre-callback resource guards with %s winding",
+    (winding) => {
+      expect(() =>
+        createRevolvedSurfaceMesh({
+          sections: [section(1e30), section(1e30 + 1e20)],
+          segments: 4,
+          winding,
+        }),
+      ).toThrow(/Float32|quantization|zero area/);
+      expect(() =>
+        createRevolvedSurfaceMesh({
+          sections: [section(0, Number.MIN_VALUE), section(1)],
+          segments: 4,
+          winding,
+        }),
+      ).toThrow(/Float32/);
+      let calls = 0;
+      expect(() =>
+        createRevolvedSurfaceMesh({
+          segments: 3,
+          subdivisions: 250000,
+          winding,
+          sectionAt(s) {
+            calls++;
+            return section(s);
+          },
+        }),
+      ).toThrow(/vertex count|resource|1000000/);
+      expect(calls).toBe(0);
+    },
+  );
+});

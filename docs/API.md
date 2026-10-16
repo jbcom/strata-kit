@@ -311,9 +311,20 @@ triangle face crosses in Float64 before storing normalized Float32 normals.
 `positionAt`**; it guides generated normals away from that point. It is an
 orientation hint, not a solid containment or collision certificate. A
 referenced sample with a coincident or tangent inside point is rejected.
+The inside direction is computed from the source position and inside point
+before position storage is rounded to Float32.
 `normalAt(u, v)` supplies normalized authored normals and cannot be combined
 with `insideAt` or an explicit `normalMode`. Authored normals that oppose a
 retained triangle are rejected rather than silently replaced.
+
+Optional `winding: 'forward' | 'reverse'` selects one orientation for the whole
+parameter grid instead of inferring it from the normals. Forward uses
+`[a, c, b]`, `[b, c, d]` per cell; reverse swaps each triangle's final two
+corners. Generated grid or area-weighted normals receive the same global sign.
+Authored normals are kept and must agree with the selected winding. This option
+is mutually exclusive with `insideAt`. Corner repair still requires a strictly
+positive dot against each actual stored face; an explicit winding is not a
+self-intersection or solid-space certificate.
 
 `includeCell(column, row)` selects whole grid cells; `includeVertex(column,
 row)` selects each sampled vertex, so a retained cell can lose an individual
@@ -386,13 +397,26 @@ corner repairs, independent of the UV mode. Stored positions, normals and
 UVs use Float32; indices use Uint16 or Uint32. The constructor rejects
 inconsistent orientation across a shared patch edge, non-pole degenerate
 faces and positive-area faces lost to Float32 quantization. It can duplicate
-corners to give an incident face an outward normal, so output vertex count
+corners to give an incident face a compatible normal, so output vertex count
 and indices need not equal the original grid. Base grid work is bounded
 before callbacks to one million vertices and six million candidate indices;
 final repaired vertices and emitted indices are bounded again. This is a
-radially oriented surface builder, not a hollow mesh, solid volume,
+surface builder with radial orientation by default, not a hollow mesh, solid volume,
 collision, skinning or animation API. It is separate from
 `createRevolvedMesh`, whose existing closed profile/cap contract is unchanged.
+
+With optional `winding: 'forward' | 'reverse'`, the complete parameter grid uses
+one declared winding instead of radial inference. This supports folded meridians
+with coherent undersides that face toward the axis. Parameter-derived normals
+use `dP/dtheta` crossed with `dP/ds` for forward, and its negation for reverse.
+The corresponding base triangles are `[a, b, c]`, `[b, d, c]`, with `b` the
+next angular sample and `c` the next row; reverse swaps the last two corners.
+These triangles differ from the sheet constructor's forward convention.
+Generated normals
+follow the same global sign; stored-face corner repairs, pole and degeneracy
+checks, seam correspondence and allocation limits still apply. No per-face
+radial flipping, caps, containment or intersection detection is added. Omitting
+`winding` retains the radial orientation policy described above.
 
 `analyzeUvLayout(mesh, { gridSize? })` inspects a `NeutralIndexedMesh` for missing,
 outside, degenerate, overlapping, and stretched UV charts, plus raster coverage.
