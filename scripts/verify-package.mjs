@@ -170,6 +170,36 @@ try {
     pureEntrypoints,
     "pure packed consumer imports every renderer-free entrypoint",
   );
+  execFileSync(
+    process.execPath,
+    [
+      "--input-type=module",
+      "--eval",
+      `
+      import assert from 'node:assert/strict';
+      import * as root from 'strata-procedural';
+      import { createHexTileConfig, sampleHexTile2D } from 'strata-procedural/materials';
+      import { hexTilingGlsl } from 'strata-procedural/shaders';
+      assert.equal(typeof root.createHexTileConfig, 'function');
+      assert.equal(typeof root.sampleHexTile2D, 'function');
+      assert.equal(root.hexTilingGlsl, hexTilingGlsl);
+      assert(hexTilingGlsl.includes('strataSampleHex2D('));
+      assert(hexTilingGlsl.includes('strataSampleHexArray('));
+      const config = createHexTileConfig({ seed: 'packed', tileScale: 1,
+        rotationStrength: 0, luminanceInfluence: 0, contrast: 0.5 });
+      let calls = 0;
+      const result = sampleHexTile2D(config, [0,0], [0.01,0], [0,0.01], () => {
+        calls++;
+        return { surface: [0.25,0.5,0.75,1], normal: [0.5,0.5,1,1] };
+      });
+      assert.equal(calls, 3);
+      assert.deepEqual(result.surface, [0.25,0.5,0.75,1]);
+      assert.deepEqual(result.normalXY, [0,0]);
+      assert(Object.isFrozen(result) && Object.isFrozen(config));
+    `,
+    ],
+    { ...npmOptions, cwd: pureConsumerDirectory },
+  );
 
   installConsumer(adapterConsumerDirectory, [
     first.tarball,
