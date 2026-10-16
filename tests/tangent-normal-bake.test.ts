@@ -149,6 +149,7 @@ describe("tangent normal maps from explicit height grids", () => {
     const wrapped = bakeTangentNormalMap({ ...options, edgeX: "wrap" });
     expect([...wrapped.subarray(0, 4)]).toEqual(encodedUnit([1, 0, 1]));
     expect([...wrapped.subarray(4, 8)]).toEqual(encodedUnit([-1, 0, 1]));
+    expect([...wrapped.subarray(8, 12)]).toEqual(encodedUnit([-1, 0, 1]));
     expect([...wrapped.subarray(12, 16)]).toEqual(encodedUnit([1, 0, 1]));
   });
 
