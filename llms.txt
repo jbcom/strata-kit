@@ -193,6 +193,17 @@
   tilt; dimensions, frame, normal generation, filtering/blending and final normalize
   remain caller-owned. No CPU/GPU bit identity or arbitrary angular bound.
 
+- Root/mesh `createCurveArcLengthTable({pointAt,range,tolerance,initialSegments?,maxEvaluations?})`
+  snapshots finite Readonly<Vec3> callback results into deeply frozen scalar
+  parameter/length knots, with totalLength, evaluations, observedLengthDefect and
+  maxProgressResidual. Defaults8 initial segments/4097 callbacks; hard maximum65537.
+  Every callback counts. Quarter-probe chord and progress diagnostics each meet
+  tolerance/2; these are sampled indicators, not certified arbitrary-curve error.
+  `curveArcLengthAt` / `curveParameterAtArcLength` binary-search and clamp without
+  callbacks. Descending ranges supported, no implicit wrapping; unresolved budgets,
+  stationary sampled intervals and unrepresentable increments throw. Callers own
+  physical units, feature-scale sampling, spline evaluation and frames.
+
 ## Read next
 
 - [Visual acceptance](https://github.com/jbcom/strata-procedural/blob/main/docs/VISUAL-ACCEPTANCE.md):

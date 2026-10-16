@@ -239,6 +239,14 @@ the resulting empty indexed surface.
 Nearest-biome selection also retains valid ranking at extreme radii. That correction
 changes previously incorrect extreme-input results while preserving ordinary output.
 
+Use `createCurveArcLengthTable({pointAt, range, tolerance})` from
+`strata-procedural/mesh` to place samples along a continuous 3D curve by physical
+distance. `curveParameterAtArcLength` inverts the owned, frozen sampled metric;
+`curveArcLengthAt` reads distance at a parameter. Refinement checks both curvature
+and uneven parameter speed. Its reported residuals are sampled indicators, so
+choose baseline sampling for the curve's feature scale and independently verify
+placement accuracy. See the [curve metric contract](docs/API.md#curve-arc-metrics).
+
 Continuous sections can use `superellipsePoint2D({halfWidth, halfDepth, power}, angle)`
 and `superellipseHalfDepth2D(section, x)` from `strata-procedural/mesh`. These pure
 Float64 helpers evaluate an eccentric signed-power curve and its unridged half-depth.
