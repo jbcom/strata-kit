@@ -1,5 +1,6 @@
 export { applyShaderPatches, replaceOrThrow } from "./shaderPatches.js";
 export { signedVector8Glsl } from "./signedVector8Glsl.js";
+export { hexTilingGlsl } from "./hexTilingGlsl.js";
 
 /** GLSL 3D value-noise helpers parameterized by an explicit seed scalar. */
 export const seededSurfaceNoiseGlsl = /* glsl */ `

@@ -79,6 +79,12 @@ function config(patch: Partial<HexTileOptions> = {}) {
 }
 
 describe("seeded hex tile configuration", () => {
+  it("applies offset headroom after the declared Float32 upload rounding", () => {
+    const raw = H * (1 + 2 ** -26);
+    expect(raw).toBeGreaterThan(H);
+    expect(F(raw)).toBe(H);
+    expect(config({ offsetScale: raw }).offsetScale).toBe(H);
+  });
   it("exposes complete root/materials operations with owned frozen Float32 controls", () => {
     const options = { seed: "hex-v1", tileScale: 1.6 };
     const a = createFromRoot(options);

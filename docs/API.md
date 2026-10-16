@@ -349,6 +349,29 @@ one `hexTilingGlsl` string containing both `strataSampleHex2D` and
 integer layer; array bounds, texture ownership, wrap/filter/mipmap/upload policy
 and projection remain caller-owned.
 
+The string has an include guard and no `#version` declaration. Set highp float,
+int and sampler precision in the host shader. Its public declarations are:
+
+```glsl
+struct StrataHexConfig {
+  uint seedKey;
+  float tileScale, rotationStrength, offsetScale, luminanceInfluence, gainExponent;
+  int normalChannels; // 0: RG, 1: RA
+  float inputNormalYSign; // +1 or -1
+};
+struct StrataHexResult { vec4 surface; vec2 normalXY; vec3 weights; };
+StrataHexResult strataSampleHex2D(sampler2D surfaceSampler, sampler2D normalSampler,
+  vec2 uv, vec2 dUVdx, vec2 dUVdy, StrataHexConfig config);
+StrataHexResult strataSampleHexArray(sampler2DArray surfaceSampler,
+  sampler2DArray normalSampler, int layer,
+  vec2 uv, vec2 dUVdx, vec2 dUVdy, StrataHexConfig config);
+```
+
+Copy the constructor's compiled scalar fields into the shader config, translating
+packing to its integer code. Do not upload the descriptive `mode` or `contrast`.
+The array layer must be nonnegative, within both array depths and exactly
+representable as Float32. Internal GLSL helper names are implementation details.
+
 ```ts
 import { createHexTileConfig, sampleHexTile2D } from 'strata-procedural/materials';
 const config = createHexTileConfig({ seed: 'field', tileScale: 1.6 });
@@ -407,6 +430,51 @@ at rounded grid boundaries; exact hash parity is conditional on identical cell
 IDs. Trigonometry, filtering, compression and subnormal preservation remain
 backend-dependent. Numerical readbacks and actual material images are separate
 forms of evidence.
+
+### Integer-v1 field identity
+
+This mode fixes the seed conversion, grid and integer hash. Seed conversion uses
+FNV-1a over JavaScript UTF-16 code units of the stringified seed: initial
+`2166136261`, XOR each code unit, multiply by `16777619` modulo `2**32`.
+Seed collisions are possible; this is not a cryptographic generator.
+
+Let `F` denote Float32 rounding. Divide the represented UV by tile scale, then
+skew it as `gx=F(F(3.464101552963257*tu)-F(2*tv))`, `gy=F(4*tv)`.
+Let `(ix,iy)=floor(gx,gy)`, `(fx,fy)` be the rounded fractional parts and
+`r=F(F(1-fx)-fy)`. For `r>0`, ordered cells are
+`[(ix,iy),(ix,iy+1),(ix+1,iy)]` with base weights `[r,fy,fx]`.
+Otherwise, including zero, cells are `[(ix+1,iy+1),(ix+1,iy),(ix,iy+1)]`
+with base weights `[-r,F(1-fy),F(1-fx)]`. Normalize by their rounded sum.
+No boundary epsilon or zero-weight sample removal is applied.
+
+For each cell `(cx,cy)`, unsigned 32-bit arithmetic computes:
+
+```text
+h = key XOR low32(uint32(cx)*374761393)
+        XOR low32(domain*668265263) XOR low32(uint32(cy)*2147483647)
+h = low32((h XOR (h >>> 13))*1274126177)
+h = uint32(h XOR (h >>> 16))
+unit = (h AND 0x00ffffff)/16777216
+```
+
+Domains 0, 1 and 2 select U offset, V offset and rotation. For key 0/cell (0,0),
+their full hashes are `0x00000000`, `0xc4ada425`, `0x895a484a`. The cell centre
+is `F(F(F(cx+F(0.5*cy))*0.28867512941360474)*tileScale)` in U and
+`F(F(0.25*cy)*tileScale)` in V. Each cell rotates the original UV about its
+centre by `F(F(F(unit2*6.2831854820251465)-3.1415927410125732)*rotationStrength)`,
+then adds independent offsets `F(unit0*F(tileScale*offsetScale))` and
+`F(unit1*F(tileScale*offsetScale))`. The rotation maps `(u,v)` to
+`(u*cos-v*sin,u*sin+v*cos)`; the normal uses its inverse.
+
+Linear RGB luminance uses Float32 coefficients `(0.299,0.587,0.114)`.
+Each base weight is multiplied by `(1-influence)+2*influence*luminance`,
+then passed through gain: 0 for x<=0, 1 for x>=1, exactly 0.5 at x=0.5,
+`0.5*(2*x)**gainExponent` below 0.5 and
+`1-0.5*(2*(1-x))**gainExponent` above it. Normalize these gained weights,
+falling back to the base weights if their sum is zero. CPU elementary operations
+round to Float32 in the stated grouping; GPU compiler and transcendental
+variation remain subject to the limitations above. Future field versions must
+use a distinct mode rather than silently changing this identity.
 
 ## Packed scalar grids
 

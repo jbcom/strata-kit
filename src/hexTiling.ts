@@ -136,7 +136,7 @@ export function createHexTileConfig(options: HexTileOptions): HexTileConfig {
   const seedKey = seedToUint32(seed);
   if (!Number.isFinite(tileScale) || tileScale <= 0)
     throw new Error("createHexTileConfig: tileScale must be positive finite");
-  range(offsetScale, 0, HEADROOM, "offsetScale");
+  range(offsetScale, 0, Number.MAX_VALUE, "offsetScale");
   finite(contrast, "contrast");
   if (contrast <= 0 || contrast >= 1)
     throw new Error("createHexTileConfig: contrast must be in (0,1)");

@@ -8,6 +8,7 @@ export default defineConfig({
     "segment-coverage.gpu.playwright.ts",
     "scalar-grid16.gpu.playwright.ts",
     "signed-vector8.gpu.playwright.ts",
+    "hex-tiling.gpu.playwright.ts",
   ],
   timeout: 30_000,
   workers: 1,

@@ -88,6 +88,7 @@ export {
   segmentCoverageGlsl,
   signedVector8Glsl,
   scalarGrid16Glsl,
+  hexTilingGlsl,
 } from "./shaders.js";
 export type { Random, Seed } from "./noise.js";
 export { createSeededNoise, createSeededRandom, fractalNoise, seedToUint32 } from "./noise.js";
