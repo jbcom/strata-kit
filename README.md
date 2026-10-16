@@ -342,6 +342,12 @@ const dimensions = createMonotoneCubicProfile([
 const { value, derivative } = sampleMonotoneCubicProfile(dimensions, 0.5);
 ```
 
+For a continuous surface callback, `sampleParametricSurfaceDifferentials` from
+`strata-procedural/surface-fields` computes explicit-step secants with optional
+parameter bounds. It copies borrowed callback positions and returns `du`/`dv`
+vectors for `deriveReliefFrame`. The caller chooses steps, wrapping and orientation;
+this numerical approximation does not choose a normal or promise analytic accuracy.
+
 ## Optional views
 
 ```ts
