@@ -4,6 +4,11 @@ import { isUint8ArrayView, requireFiniteNumber } from "./validation.js";
 
 const MAX_VECTORS = 4097 * 4097;
 
+/** Internal byte rule shared with normal baking; callers validate the component. */
+export function encodeSignedComponent8(value: number): number {
+  return Math.round((value * 0.5 + 0.5) * 255);
+}
+
 /** Fresh mutable RGBA8 for caller-ordered XYZ triples in [-1,1]; alpha=255. No normalization. */
 export function packSignedVector8(values: ArrayLike<number>): Uint8Array {
   const operation = "packSignedVector8";
@@ -19,7 +24,7 @@ export function packSignedVector8(values: ArrayLike<number>): Uint8Array {
       const value = values[index];
       requireFiniteNumber(operation, `values[${index}]`, value);
       if (value < -1 || value > 1) throw new Error(`${operation}: components must be in [-1,1]`);
-      data[sample * 4 + channel] = Math.round((value * 0.5 + 0.5) * 255);
+      data[sample * 4 + channel] = encodeSignedComponent8(value);
     }
     data[sample * 4 + 3] = 255;
   }

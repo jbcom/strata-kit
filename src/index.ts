@@ -1,6 +1,7 @@
 /** Pure, seeded procedural fields and surface bakes. Renderer adapters are explicit subpaths. */
 
 export type {
+  TangentNormalMapOptions,
   HexTileOptions,
   HexTileConfig,
   HexTileRequest,
@@ -33,6 +34,7 @@ export type {
   WearSample,
 } from "./materials.js";
 export {
+  bakeTangentNormalMap,
   createHexTileConfig,
   sampleHexTile2D,
   sampleSegment2D,

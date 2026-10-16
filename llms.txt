@@ -204,6 +204,13 @@
   stationary sampled intervals and unrepresentable increments throw. Callers own
   physical units, feature-scale sampling, spline evaluation and frames.
 
+- Root/materials `bakeTangentNormalMap` takes width/height, row-major heights,
+  positive spacingX/Y, explicit edgeX/Y wrap|clamp and normalYSign -1|1; signed
+  heightScale defaults1. Normalize(-sx,sign*sy,1), then existing RGBA8 mapping.
+  Fresh mutable bytes, alpha255; flat=[128,128,255,255].4,194,304pixel cap,
+  one-read Float64 height snapshot. Singleton/coincident wrap neighbors slope0;
+  clamp uses actual one-sided spans. No texture/projection/mip policy.
+
 ## Stochastic texture sampling
 
 `createHexTileConfig`/`sampleHexTile2D` are renderer-neutral root/materials APIs;

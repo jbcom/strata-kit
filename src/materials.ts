@@ -1,6 +1,8 @@
 import { createSeededNoise, type Seed, seedToUint32 } from "./noise.js";
 import { requireFiniteNumber, requirePositiveFiniteNumber } from "./validation.js";
 
+export { bakeTangentNormalMap } from "./tangentNormalBake.js";
+export type { TangentNormalMapOptions } from "./tangentNormalBake.js";
 export { createHexTileConfig, sampleHexTile2D } from "./hexTiling.js";
 export type {
   HexTileOptions,
