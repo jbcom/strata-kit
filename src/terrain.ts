@@ -510,3 +510,5 @@ function correctHeightfieldIncidentNormals(
     normals[offset + 2] = 0;
   }
 }
+export { packScalarGrid16, sampleScalarGrid16 } from "./scalarGrid16.js";
+export type { ScalarGrid16Input, ScalarGrid16 } from "./scalarGrid16.js";

@@ -267,6 +267,26 @@ Layers share a deterministic coordinate domain. Color blends in linear sRGB;
 roughness, bump, and optional metalness use the same alpha weights. Wear fields
 provide correlated masks without choosing a palette or material for the consumer.
 
+## Packed scalar grids
+
+```ts
+import { packScalarGrid16, sampleScalarGrid16 } from 'strata-procedural/terrain';
+const grid = packScalarGrid16({
+  width: 3, height: 2,
+  values: [-10, 0, 10, -5, 5, 10],
+  min: -10, range: 20,
+});
+const value = sampleScalarGrid16(grid, 0.5, 0.75);
+```
+
+The codec owns tightly packed high-byte/low-byte RG8 data and frozen metadata.
+Sampling uses fractional column/row indices, bilinear interpolation and edge
+clamping, including singleton axes. The caller chooses the finite positive range,
+world transform, texture upload and filtering. There is no hidden range floor or
+terrain generator. `scalarGrid16Glsl` from `strata-procedural/shaders` supplies
+matching highp ES3 decode/sample helpers for numeric RG8 textures. Quantization
+and Float32 precision limits are documented in the API reference.
+
 ## Scalar relief profiles
 
 `surface-fields` evaluates clamped C1 cubic-Hermite profiles and their analytic

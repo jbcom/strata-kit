@@ -152,11 +152,24 @@
 
 - `superellipsePoint2D(section, angle)` and `superellipseHalfDepth2D(section, x)`
   are pure root/mesh Float64 section kernels. Positive finite half-extents, power>=2;
-  eccentric signed-power angle0=+first axis, PI/2=+second, explicit exact cardinals.
+  eccentric signed-power angle0=+first axis, PI/2=+second; named cardinals within one signed turn have exact axes.
   Half-depth clamps outside halfWidth. No height profile, ridge/inset, 3D embedding,
   normals or arc-length metric; high-power represented corners can lose inverse
   round trips, and subnormal products may round to zero. Not the revolved mesh's
   true polar parameterization.
+
+- Root/terrain `packScalarGrid16` encodes explicit-range scalar samples as tightly
+  packed high/low RG8 bytes; dimensions 1..4097, exact finite sample count, positive
+  finite range and representably distinct finite endpoints. Metadata is owned and
+  frozen, bytes newly owned and mutable. No range floor or field/world ownership.
+- `sampleScalarGrid16` clamps fractional column/row indices, decodes/interpolates
+  across columns then rows and applies min/range. Singleton axes work. Numeric
+  byte length is validated in O(1); callers synchronize mutations. Quantization
+  half-step bounds require well-conditioned metadata plus floating-point tolerance.
+- Root/shaders `scalarGrid16Glsl` supplies highp ES3 normalized RG8 decode and
+  texelFetch manual sample-index interpolation. Numeric uploads/row orientation/
+  unpack alignment/texture lifetime stay caller-owned; GPU metadata/arithmetic
+  must be representable finite normal Float32 or zero. No bit-identity promise.
 
 ## Read next
 
