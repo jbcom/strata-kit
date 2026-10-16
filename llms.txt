@@ -75,6 +75,27 @@
 - Sheets sample each height once and preserve valid smooth normals; conflicting
   incident corners are duplicated with outward face normals. Returned vertex count
   and index width may increase within the one-million-vertex bound.
+- `createParametricSheetMesh` maps a unit grid with a `Vec3` position callback,
+  optional UV/authored-normal callbacks, generated grid or retained-face
+  area-weighted normals, and cell/vertex masks. `insideAt` is an orientation
+  point, not a solid-space claim. Closed columns copy unique geometry samples
+  while UV and vertex selection remain independent at both seam endpoints.
+  `sourceVertex` maps repaired corners to their original sample IDs.
+  Optional `winding: 'forward' | 'reverse'` declares one coherent parameter-grid
+  orientation and the same sign for generated normals; it excludes `insideAt`.
+  Inside directions otherwise use source positions before Float32 rounding.
+- `createRevolvedSurfaceMesh` samples separate half-width and positive/negative Z depths
+  from sections or a section callback. It supports open/closed angles, section
+  centers, power >= 2, offsets and normalized, continuous angular-length or
+  explicitly wrapped-angular-length UVs. Physical arc length is approximate.
+  It emits no caps and makes no solid/hollow, skinning or collision promise.
+  `parameters` stores normalized row position and wrapped angle per vertex.
+  Optional forward/reverse `winding` replaces radial inference for folded
+  meridians; strict face, normal, pole, seam and resource guards remain.
+- Both new mesh builders validate finite/Float32-safe geometry and bound grid
+  work to one million vertices and six million candidate indices before
+  callbacks; repaired output is bounded again. The older
+  `createSheetMesh` and `createRevolvedMesh` contracts remain separate.
 - Optional sheet `includeCell(column, row)` selects cells once in row-major order
   before height sampling. Omitted cells retain sampled vertices/UVs; all-false
   returns empty indices supported by the generic Three mesh adapter.
@@ -83,7 +104,8 @@
   closed-column seams. It is also exported at the root. `sourceVertex` is original
   sample correspondence, including generated-normal repair duplicates. Coherent
   patch orientation, strictly outward raw corner incidence, finite Float32 values
-  and bounded allocation are enforced; partition inconsistent folded surfaces.
+  and bounded allocation are enforced. Conflicting orientation hints require
+  partitioning or a coherent explicit winding without those hints.
   It does not own materials, skinning, render state or a game loop.
 - Mesh generators produce typed arrays; Three textures expose explicit disposal.
 - `three.snapshotThreeStaticMeshes` copies caller-prepared static Object3D triangles

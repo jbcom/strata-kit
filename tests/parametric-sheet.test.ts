@@ -118,7 +118,6 @@ describe("parametric sheet public and segmented-strip contracts", () => {
     expect(rootSheet).toBe(createParametricSheetMesh);
     expect(meshSheet).toBe(createParametricSheetMesh);
   });
-
   it("matches four independent rim strips with exact mapped attributes and ordered topology", () => {
     const samples = 193,
       columns = samples * 4;
@@ -147,6 +146,20 @@ describe("parametric sheet public and segmented-strip contracts", () => {
       expect(new Set(strips).size).toBe(1);
     }
     expectAligned(mesh);
+  });
+  it("keeps late-patch contradictory orientation rejected rather than discarding its faces", () => {
+    expect(() =>
+      createParametricSheetMesh({
+        columns: 7,
+        rows: 17,
+        positionAt: plane,
+        normalAt: (u, v) => ({
+          x: 0,
+          y: 0,
+          z: v === 1 && [1, 2].includes(Math.round(u * 6)) ? 1 : -1,
+        }),
+      }),
+    ).toThrow(/inconsistent orientation at triangle 183; partition the surface/);
   });
 });
 
@@ -769,19 +782,265 @@ describe("parametric sheet numeric and resource contracts", () => {
       }),
     ).toThrow(/inconsistent orientation/);
   });
+});
 
-  it("keeps late-patch contradictory orientation rejected rather than discarding its faces", () => {
+describe("parametric sheet explicit winding", () => {
+  function expectOpposite(forward: ParametricSheetMesh, reverse: ParametricSheetMesh): void {
+    expect(reverse.positions).toHaveLength(forward.positions.length);
+    expect(reverse.uvs).toHaveLength(forward.uvs.length);
+    expect(reverse.sourceVertex).toHaveLength(forward.sourceVertex.length);
+    expect(reverse.indices).toHaveLength(forward.indices.length);
+    for (let offset = 0; offset < forward.indices.length; offset += 3) {
+      for (const [forwardCorner, reverseCorner] of [
+        [0, 0],
+        [1, 2],
+        [2, 1],
+      ]) {
+        const a = forward.indices[offset + forwardCorner];
+        const b = reverse.indices[offset + reverseCorner];
+        expect(reverse.sourceVertex[b]).toBe(forward.sourceVertex[a]);
+        expect(xyz(reverse.positions, b)).toEqual(xyz(forward.positions, a));
+        expect([...reverse.uvs.subarray(b * 2, b * 2 + 2)]).toEqual([
+          ...forward.uvs.subarray(a * 2, a * 2 + 2),
+        ]);
+        const normal = xyz(forward.normals, a);
+        for (const [axis, value] of xyz(reverse.normals, b).entries()) {
+          expect(value === -normal[axis]).toBe(true);
+        }
+      }
+    }
+    expectAligned(forward);
+    expectAligned(reverse);
+  }
+
+  it.each(["grid", "area-weighted"] as const)(
+    "keeps one topology orientation across a folded vertical terminal strip in %s mode",
+    (normalMode) => {
+      // Columns in the XY profile are (0,0), (1,3), (1,2). The final strip is
+      // vertical and its two triangle votes disagree at the shared fold.
+      const options: ParametricSheetMeshOptions = {
+        columns: 3,
+        rows: 2,
+        positionAt: (u, v) => ({
+          x: u === 0 ? 0 : 1,
+          y: u === 0 ? 0 : u === 0.5 ? 3 : 2,
+          z: v,
+        }),
+        uvAt: (u, v) => [2 * u - 1, 3 * v + 2],
+        normalMode,
+      };
+      expect(() => createParametricSheetMesh(options)).toThrow(/inconsistent orientation/);
+      expect(() => createParametricSheetMesh({ ...options, winding: undefined })).toThrow(
+        /inconsistent orientation/,
+      );
+      const forward = createParametricSheetMesh({ ...options, winding: "forward" });
+      const reverse = createParametricSheetMesh({ ...options, winding: "reverse" });
+      expect([...forward.sourceVertex]).toEqual([0, 1, 2, 3, 4, 5, 1, 4, 4]);
+      expect([...forward.indices]).toEqual([0, 3, 1, 1, 3, 4, 6, 7, 2, 2, 8, 5]);
+      expect(reverse.positions.subarray(0, 18)).toEqual(forward.positions.subarray(0, 18));
+      expect(reverse.uvs.subarray(0, 12)).toEqual(forward.uvs.subarray(0, 12));
+      expect([...reverse.sourceVertex.subarray(0, 6)]).toEqual([0, 1, 2, 3, 4, 5]);
+      expect(xyz(forward.positions, 1)[0]).toBe(xyz(forward.positions, 2)[0]);
+      expect(xyz(forward.positions, 4)[0]).toBe(xyz(forward.positions, 5)[0]);
+      for (let id = 6; id < forward.sourceVertex.length; id++) {
+        const source = forward.sourceVertex[id];
+        expect(xyz(forward.positions, id)).toEqual(xyz(forward.positions, source));
+        expect([...forward.uvs.subarray(id * 2, id * 2 + 2)]).toEqual([
+          ...forward.uvs.subarray(source * 2, source * 2 + 2),
+        ]);
+      }
+      expectOpposite(forward, reverse);
+    },
+  );
+
+  it.each(["grid", "area-weighted"] as const)(
+    "flips generated plane normals exactly once in %s mode",
+    (normalMode) => {
+      const automatic = createParametricSheetMesh({ ...basic, normalMode });
+      const forward = createParametricSheetMesh({ ...basic, normalMode, winding: "forward" });
+      const reverse = createParametricSheetMesh({ ...basic, normalMode, winding: "reverse" });
+      expect(forward).toEqual(automatic);
+      expect([...forward.indices]).toEqual([0, 2, 1, 1, 2, 3]);
+      expect([...reverse.indices]).toEqual([0, 1, 2, 1, 3, 2]);
+      for (let id = 0; id < 4; id++) {
+        expectVector(xyz(forward.normals, id), [0, 0, -1]);
+        expectVector(xyz(reverse.normals, id), [0, 0, 1]);
+      }
+      expectOpposite(forward, reverse);
+    },
+  );
+
+  it.each(["grid", "area-weighted"] as const)(
+    "preserves copied closed seam normals and independent masks in %s mode",
+    (normalMode) => {
+      const positionAt = vi.fn((u: number, v: number) => {
+        if (u === 1) throw new Error("endpoint geometry must be copied");
+        return cylinder(u, v);
+      });
+      const options: ParametricSheetMeshOptions = {
+        columns: 5,
+        rows: 3,
+        closedColumns: true,
+        positionAt,
+        normalMode,
+        uvAt: (u, v) => [4 * u - 1, 2 * v],
+        includeCell: (column, row) => column === 3 || row === 0,
+        includeVertex: (column) => column !== 0,
+      };
+      const forward = createParametricSheetMesh({ ...options, winding: "forward" });
+      const reverse = createParametricSheetMesh({ ...options, winding: "reverse" });
+      expect(positionAt).toHaveBeenCalledTimes(24);
+      expect(forward.indices).toHaveLength(24);
+      expect([...forward.indices]).not.toContain(0);
+      expect([...forward.indices]).not.toContain(5);
+      expect([...forward.indices]).not.toContain(10);
+      expect([...forward.indices]).toContain(4);
+      for (const mesh of [forward, reverse]) {
+        for (const first of [0, 5, 10]) {
+          expect(xyz(mesh.positions, first + 4)).toEqual(xyz(mesh.positions, first));
+          expect(xyz(mesh.normals, first + 4)).toEqual(xyz(mesh.normals, first));
+          expect(mesh.sourceVertex[first + 4]).toBe(first + 4);
+          expect(mesh.uvs[(first + 4) * 2] - mesh.uvs[first * 2]).toBe(4);
+        }
+      }
+      expectOpposite(forward, reverse);
+    },
+  );
+
+  it("keeps authored normals unchanged and rejects tangency or opposition to explicit winding", () => {
+    const authoredForward = () => ({ x: 0, y: 0, z: -7 });
+    const authoredReverse = () => ({ x: 0, y: 0, z: 7 });
+    const forward = createParametricSheetMesh({
+      ...basic,
+      normalAt: authoredForward,
+      winding: "forward",
+    });
+    const reverse = createParametricSheetMesh({
+      ...basic,
+      normalAt: authoredReverse,
+      winding: "reverse",
+    });
+    expectOpposite(forward, reverse);
+    for (const winding of ["forward", "reverse"] as const) {
+      const matching = winding === "forward" ? authoredForward : authoredReverse;
+      const opposing = winding === "forward" ? authoredReverse : authoredForward;
+      expect(() => createParametricSheetMesh({ ...basic, winding, normalAt: opposing })).toThrow(
+        /authored normal opposes/,
+      );
+      expect(() =>
+        createParametricSheetMesh({
+          ...basic,
+          winding,
+          normalAt: (u, v) => (u === 0 && v === 0 ? { x: 1, y: 0, z: 0 } : matching()),
+        }),
+      ).toThrow(/authored normal opposes/);
+    }
+    const automatic = createParametricSheetMesh({ ...basic, normalAt: authoredReverse });
+    const omitted = createParametricSheetMesh({
+      ...basic,
+      normalAt: authoredReverse,
+      winding: undefined,
+    });
+    expect(omitted).toEqual(automatic);
+    expect([...automatic.indices]).toEqual([0, 1, 2, 1, 3, 2]);
+  });
+
+  it("rejects invalid winding and inside-point conflicts before every callback", () => {
+    const positionAt = vi.fn(plane);
+    const uvAt = vi.fn((): [number, number] => [0, 0]);
+    const normalAt = vi.fn(() => ({ x: 0, y: 0, z: -1 }));
+    const insideAt = vi.fn(() => ({ x: 0, y: 0, z: 1 }));
+    const includeCell = vi.fn(() => false);
+    const includeVertex = vi.fn(() => false);
+    for (const winding of [null, "automatic", "", 0, false, {}]) {
+      expect(() =>
+        createParametricSheetMesh({
+          ...basic,
+          positionAt,
+          uvAt,
+          normalAt,
+          includeCell,
+          includeVertex,
+          winding,
+        } as unknown as ParametricSheetMeshOptions),
+      ).toThrow(/winding/);
+    }
+    for (const winding of ["forward", "reverse"] as const) {
+      expect(() =>
+        createParametricSheetMesh({
+          ...basic,
+          positionAt,
+          uvAt,
+          insideAt,
+          includeCell,
+          includeVertex,
+          winding,
+        }),
+      ).toThrow(/mutually exclusive/);
+    }
+    for (const callback of [positionAt, uvAt, normalAt, insideAt, includeCell, includeVertex]) {
+      expect(callback).not.toHaveBeenCalled();
+    }
+  });
+
+  it("snapshots explicit winding before sampling callbacks can mutate options", () => {
+    const options: ParametricSheetMeshOptions = {
+      ...basic,
+      winding: "reverse",
+      includeCell: () => {
+        options.winding = "forward";
+        return true;
+      },
+    };
+    const mesh = createParametricSheetMesh(options);
+    expect([...mesh.indices]).toEqual([0, 1, 2, 1, 3, 2]);
+    for (let id = 0; id < 4; id++) expectVector(xyz(mesh.normals, id), [0, 0, 1]);
+    expectAligned(mesh);
+  });
+
+  it("copies source coordinates before later callbacks reuse the position object", () => {
+    const scratch = { x: 0, y: 0, z: 0 };
+    const options: ParametricSheetMeshOptions = {
+      ...basic,
+      winding: undefined,
+      positionAt: (u, v) => {
+        Object.assign(scratch, { x: 2 * u, y: 3 * v, z: 5 });
+        return scratch;
+      },
+      uvAt: (u, v) => {
+        Object.assign(scratch, { x: 900, y: 900, z: -900 });
+        return [u, v];
+      },
+      insideAt: (u, v) => {
+        Object.assign(scratch, { x: 2 * u, y: 3 * v, z: 4 });
+        return scratch;
+      },
+    };
+    const mesh = createParametricSheetMesh(options);
+    Object.assign(scratch, { x: 999, y: 999, z: 999 });
+    expect([...mesh.positions]).toEqual([0, 0, 5, 2, 0, 5, 0, 3, 5, 2, 3, 5]);
+    expect([...mesh.indices]).toEqual([0, 1, 2, 1, 3, 2]);
+    for (let id = 0; id < 4; id++) expectVector(xyz(mesh.normals, id), [0, 0, 1]);
+    expectAligned(mesh);
+  });
+
+  it("retains strict inside-point tangency before Float32 position quantization", () => {
+    // Stored positions form z=x+1 exactly. Unequal rounding errors on source
+    // X/Z create a spurious normal component only if subtraction happens after
+    // quantization; the raw source-to-inside direction is exactly (1,0,1).
+    const xShift = 1 + 2 ** -25;
+    const zShift = 2 + 2 ** -24;
+    const source = { x: xShift, y: 0, z: zShift };
+    const inside = { x: xShift - 1, y: 0, z: zShift - 1 };
+    expect(source.x - inside.x).toBe(1);
+    expect(source.z - inside.z).toBe(1);
+    expect(Math.fround(source.x) - inside.x).not.toBe(Math.fround(source.z) - inside.z);
     expect(() =>
       createParametricSheetMesh({
-        columns: 7,
-        rows: 17,
-        positionAt: plane,
-        normalAt: (u, v) => ({
-          x: 0,
-          y: 0,
-          z: v === 1 && [1, 2].includes(Math.round(u * 6)) ? 1 : -1,
-        }),
+        ...basic,
+        positionAt: (u, v) => ({ x: xShift + u, y: v, z: zShift + u }),
+        insideAt: (u, v) => ({ x: xShift + u - 1, y: v, z: zShift + u - 1 }),
       }),
-    ).toThrow(/inconsistent orientation at triangle 183; partition the surface/);
+    ).toThrow(/tangent/);
   });
 });
