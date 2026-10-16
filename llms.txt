@@ -17,6 +17,14 @@
 - `noise.createValueNoise2D` requires exactly one explicit seed or injected pure
   integer lattice. Seeded lattice values are in `[-1, 1]`; injected values are not
   remapped or clamped. It uses cubic-smoothed ordered bilinear interpolation.
+- Root/noise `createJitteredCellField2D` takes exactly one seed or pure integer-cell
+  `site(ix,iz)` callback returning a unit offset pair; cellSize defaults1 (positive
+  finite), jitter defaults1 ([0,1]). Fixed25-site complete search returns fresh
+  nearest/runnerUp records {ix,iz,distance} plus gap=returned distance difference.
+  Rank normalized distances, exact ties by(iz,ix), scale afterward; rounded ties
+  and metric underflow do not change rank. No returned site positions, Voronoi SDF,
+  cache, registry or material recipe. Both normalized query magnitudes<2**52;
+  nonfinite or underflowed normalization rejects. See API for precision limits.
 - `noise.createFractalNoise2D` uses recursive per-axis affine octave coordinates;
   defaults: four octaves, amplitude/persistence `0.5`, scale `[2, 2]`, offset `[0, 0]`,
   normalized output. Octaves are integer `[1, 32]`, amplitude positive finite,

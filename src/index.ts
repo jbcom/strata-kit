@@ -135,6 +135,13 @@ export type {
 export { createSeededTerrainField, packScalarGrid16, sampleScalarGrid16 } from "./terrain.js";
 export { packSignedVector8, decodeSignedVector8 } from "./terrain.js";
 export { createValueNoise2D, createFractalNoise2D, createSineLattice2D } from "./noise.js";
+export { createJitteredCellField2D } from "./noise.js";
+export type {
+  JitteredCellField2DOptions,
+  JitteredCellSample2D,
+  CellSite2D,
+  LatticeSiteSampler2D,
+} from "./noise.js";
 export type {
   ValueNoise2DOptions,
   FractalNoise2DOptions,

@@ -9,7 +9,7 @@ consumers keep their dependency boundary explicit.
 | Import | Exports | Dependencies |
 | --- | --- | --- |
 | `strata-procedural` | Noise, SDF, terrain, surface samplers/layers/wear, mesh generators, UV/triplanar/atlas, shader, and scalar-relief APIs | none |
-| `strata-procedural/noise` | `seedToUint32`, `createSeededRandom`, `createSeededNoise`, `fractalNoise`, `createValueNoise2D`, `createFractalNoise2D`, `createSineLattice2D` | none |
+| `strata-procedural/noise` | `seedToUint32`, `createSeededRandom`, `createSeededNoise`, `fractalNoise`, `createValueNoise2D`, `createFractalNoise2D`, `createSineLattice2D`, `createJitteredCellField2D` | none |
 | `strata-procedural/sdf` | `sdSphere`, `sdPlane`, `sdBox`, `opUnion`, `opIntersection`, `opSubtraction`, `opSmoothUnion`, `opSmoothSubtraction` | none |
 | `strata-procedural/terrain` | `createSeededTerrainField`, `composeScalarField2D`, `transformScalarField2D`, `createDirectionalField2D`, `createSmoothMask2D`, scalar-grid and signed-vector codecs, and terrain/field types | none |
 | `strata-procedural/materials` | Surface plans, samplers, composition, wear, UV diagnostics, triplanar sampling, and atlas bakes | none |
@@ -98,6 +98,61 @@ identity. The standard seeded integer lattice remains available without sine has
 `LatticeSampler2D` are exported from root and `noise`. Constructors capture option
 values and copy tuples. Callback identity and callback state remain borrowed;
 callback failures and nonfinite results are rejected during sampling.
+
+## Jittered two-nearest cell fields
+
+Root and `strata-procedural/noise` export `createJitteredCellField2D`,
+`JitteredCellField2DOptions`, `JitteredCellSample2D`, `CellSite2D`, and
+`LatticeSiteSampler2D`. The constructor takes exactly one of `{seed}` or
+`{site: (ix, iz) => readonly [number, number]}`, plus optional `cellSize` (positive
+finite, default 1) and `jitter` (finite `[0,1]`, default 1). The callback returns
+two finite unit offsets inclusive of endpoints; each pair is copied immediately.
+It must be deterministic and independent of sampling order. Callback exceptions
+are wrapped with their cause. Seeded offsets use two fixed channels of the existing
+integer lattice hash, without advancing a query-time random stream; statistical
+independence, collision freedom and infinite nonperiodicity are not promised.
+
+The returned function samples caller XZ coordinates and returns fresh mutable
+`{nearest, runnerUp, gap}` records. Each site record has `{ix, iz, distance}`:
+integer lattice identity and Euclidean distance in caller units. Distinct lattice
+identities remain distinct candidates even when their positions coincide. The
+normalized site offset is `a + jitter * u` on each axis, with `a=(1-jitter)/2`.
+Thus zero jitter uses cell centers; full jitter permits the entire closed cell.
+No site positions or packed numeric IDs are returned.
+
+```ts
+import { createJitteredCellField2D } from 'strata-procedural/noise';
+const cells = createJitteredCellField2D({seed: 'surface-01', cellSize: 0.08});
+const {nearest, runnerUp, gap} = cells(0.12, -0.03);
+// Cell identities can drive caller-owned color, orientation or region rules.
+```
+
+Every query evaluates exactly 25 sites in the square of radius two around the
+floor of the normalized query. This is a complete search for the first two
+identities under the declared jitter bound: the home cell and a horizontal
+neighbor toward the nearer boundary put two candidates within
+`U=hypot(0.5+b,b)`, where `b=(1+jitter)/2`. Every cell outside the square is at
+least `2+a` away on one axis, and `2+a > U` throughout `[0,1]`.
+
+Ranking uses normalized `Math.hypot` distances; exact ties there use ascending
+`(iz, ix)`. Distances scale into caller units only after selection. `gap` is
+literally the returned runner-up distance minus the returned nearest distance.
+It is an unsigned boundary indicator, **not an exact or signed distance to a
+Voronoi edge**. Floating-point scaling can turn different normalized distances
+into equal returned distances, including underflow to zero. Such rounded ties
+do not change the normalized ranking. Neither distinct geometric locations nor
+an exact edge position may be inferred from the identities or zero gap.
+
+Both query coordinates and their normalized quotients must be finite, with
+normalized magnitudes below `2**52`. A nonzero coordinate whose division by
+`cellSize` underflows to zero is rejected. Local distances use nearest-integer
+anchors to preserve represented tiny displacements across zero and integer cell
+boundaries; no large world-space site subtraction is performed. Final distances
+and gap must remain finite. Options and both normalized coordinates validate
+before any site callback. There is no persistent cache or grid allocation;
+only callback count is bounded, not arbitrary callback runtime. Coordinate
+projection, material composition, cell appearance, masks and spatial indexing
+remain caller-owned.
 
 ## Callable terrain fields
 
