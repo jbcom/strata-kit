@@ -13,7 +13,7 @@ consumers keep their dependency boundary explicit.
 | `strata-procedural/sdf` | `sdSphere`, `sdPlane`, `sdBox`, `opUnion`, `opIntersection`, `opSubtraction`, `opSmoothUnion`, `opSmoothSubtraction` | none |
 | `strata-procedural/terrain` | `createSeededTerrainField`, `composeScalarField2D`, `transformScalarField2D`, `createDirectionalField2D`, `createSmoothMask2D`, scalar-grid and signed-vector codecs, and terrain/field types | none |
 | `strata-procedural/materials` | Surface plans, samplers, composition, wear, UV diagnostics, triplanar sampling, and atlas bakes | none |
-| `strata-procedural/mesh` | `createRevolvedMesh`, `createRevolvedSurfaceMesh`, `createSweptMesh`, `createSheetMesh`, `createParametricSheetMesh`, `superellipsePoint2D`, `superellipseHalfDepth2D`, and mesh types | none |
+| `strata-procedural/mesh` | `createRevolvedMesh`, `createRevolvedSurfaceMesh`, `createSweptMesh`, `createSheetMesh`, `createParametricSheetMesh`, `createCurveArcLengthTable`, `curveArcLengthAt`, `curveParameterAtArcLength`, `superellipsePoint2D`, `superellipseHalfDepth2D`, and mesh types | none |
 | `strata-procedural/shaders` | `seededSurfaceNoiseGlsl`, `segmentCoverageGlsl`, `scalarGrid16Glsl`, `signedVector8Glsl`, `replaceOrThrow`, `applyShaderPatches` | none |
 | `strata-procedural/surface-fields` | Scalar-profile, explicit differential, relief-frame, uniform-packing, and GLSL APIs | none |
 | `strata-procedural/three` | `createThreeHeightfieldGeometry`, `createThreeMeshGeometry`, `createThreeSurfaceTextures`, `snapshotThreeStaticMeshes`, `createThreeTriplanarMaterial` | `three` peer |
@@ -568,6 +568,66 @@ follow the same global sign; stored-face corner repairs, pole and degeneracy
 checks, seam correspondence and allocation limits still apply. No per-face
 radial flipping, caps, containment or intersection detection is added. Omitting
 `winding` retains the radial orientation policy described above.
+
+### Curve arc metrics
+
+Root and `strata-procedural/mesh` export `createCurveArcLengthTable`,
+`curveArcLengthAt`, `curveParameterAtArcLength`, and the types
+`CurveArcLengthTableOptions`, `CurveArcLengthTable`, `CurveArcLengthKnot`.
+The constructor consumes `{pointAt, range, tolerance, initialSegments?, maxEvaluations?}`.
+`pointAt(parameter)` returns a finite `Readonly<Vec3>` in caller-chosen units. It
+must be deterministic and independent of sampling order. Each borrowed result's
+three coordinates are copied immediately, so a reused scratch object is allowed.
+The callback and its result objects are not retained.
+
+`range` contains two finite distinct endpoints with a finite representable span.
+It defines traversal: length zero belongs to the first endpoint, even for a
+descending range. `tolerance` is positive, finite and representable when halved;
+its units are the callback's position units. `initialSegments` defaults to 8 and
+is a positive safe integer. `maxEvaluations` defaults to 4097, is an integer from
+5 through 65537, and must cover `4 * initialSegments + 1` initial callbacks.
+These controls validate before sampling. Every callback, including refinement
+probes omitted from the result, counts toward the budget.
+
+```ts
+import { createCurveArcLengthTable, curveParameterAtArcLength } from 'strata-procedural/mesh';
+const metric = createCurveArcLengthTable({
+  pointAt: t => ({x: Math.cos(t), y: t / 4, z: Math.sin(t)}),
+  range: [0, Math.PI * 2],
+  tolerance: 0.001,
+});
+const parameter = curveParameterAtArcLength(metric, metric.totalLength / 3);
+```
+
+The deeply frozen result owns `range`, ordered `knots` of `{parameter, length}`,
+`totalLength`, `evaluations`, `observedLengthDefect`, and `maxProgressResidual`.
+Lengths strictly increase; parameters strictly advance in the declared direction.
+Queries require a table returned by this constructor; manually forged table
+records are outside this contract. The represented metric is the sampled polyline with linear parameter progress
+within each retained edge. Both queries use binary search, bypass exact knots,
+clamp outside their respective domains, require finite queries, and call no
+callback. Forward/inverse table consistency does not certify true-curve accuracy.
+
+Every leaf probes quarter, half and three-quarter parameter progress. Its chord
+defect is `max(0, sum(probe-edge lengths) - endpoint chord)`; its progress residual
+is the maximum absolute difference between probe-prefix length and actual
+parameter fraction times the probe-polyline length. Refinement requires summed
+leaf defects and maximum leaf progress residual each to be at most half the
+requested tolerance. Both diagnostics are reported. These are sampled indicators,
+**not certified bounds on an arbitrary callback's unseen geometry or arc error**.
+Choose baseline sampling and tolerance for the curve's feature scale, and validate
+physical placement with an independent oracle when accuracy matters. A collinear
+nonuniform callback still needs progress refinement; geometric flatness alone
+does not make its inverse correct.
+
+Finite positions, differences, distances, totals, and distinct represented probes
+are required. Budget exhaustion, collapsed parameter probes, an entirely stationary
+sampled interval, or an unrepresentable positive cumulative increment throws;
+there is no partial-success result. Stationary plateaus are unsupported. Equal
+endpoint positions with moving probes are refined, allowing closed curves when
+the retained edges resolve. No implicit wrapping, shortest-arc choice, coordinate
+projection, derivative, spline family, transported frame, cache or renderer policy
+is supplied. Embed planar curves in any fixed 3D plane.
 
 ### Signed-power superellipse sections
 

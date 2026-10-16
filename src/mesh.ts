@@ -10,6 +10,16 @@
 import type { Vec3 } from "./sdf.js";
 
 export type { Vec3 } from "./sdf.js";
+export {
+  createCurveArcLengthTable,
+  curveArcLengthAt,
+  curveParameterAtArcLength,
+} from "./curveArcLength.js";
+export type {
+  CurveArcLengthTableOptions,
+  CurveArcLengthTable,
+  CurveArcLengthKnot,
+} from "./curveArcLength.js";
 export { superellipsePoint2D, superellipseHalfDepth2D } from "./superellipseSections.js";
 export type { SuperellipseSection2D } from "./superellipseSections.js";
 export { createParametricSheetMesh } from "./parametricSheet.js";

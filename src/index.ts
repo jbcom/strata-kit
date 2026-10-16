@@ -45,6 +45,9 @@ export {
   visitUvTexelFootprints,
 } from "./materials.js";
 export type {
+  CurveArcLengthTableOptions,
+  CurveArcLengthTable,
+  CurveArcLengthKnot,
   ProceduralMesh,
   ParametricSheetMesh,
   ParametricSheetMeshOptions,
@@ -60,6 +63,9 @@ export type {
   SuperellipseSection2D,
 } from "./mesh.js";
 export {
+  createCurveArcLengthTable,
+  curveArcLengthAt,
+  curveParameterAtArcLength,
   createParametricSheetMesh,
   createRevolvedMesh,
   createRevolvedSurfaceMesh,
