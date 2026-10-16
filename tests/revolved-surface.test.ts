@@ -117,12 +117,12 @@ describe("sampled revolved surfaces", () => {
     expectStoredSurface(mesh);
   });
 
-  it("keeps angular-length UVs separate from normalized parameter provenance", () => {
+  it("keeps wrapped-angular-length UVs separate from normalized parameter provenance", () => {
     const row = { height: 4, halfWidth: 2, positiveDepth: 3, negativeDepth: 1 };
     const mesh = createRevolvedSurfaceMesh({
       sections: [row, { ...row, height: 5 }],
       segments: 4,
-      uv: "angular-length",
+      uv: "wrapped-angular-length",
       axialOffset: () => -0.25,
     });
     // Mean half-extent is (2+3+1)/3=2, so quarter-turn U is pi.
@@ -777,4 +777,155 @@ describe("explicit revolved parameter winding", () => {
       expect(calls).toBe(0);
     },
   );
+});
+
+describe("revolved angular-length UV projections", () => {
+  it("keeps an open sweep continuous across the wrapped angle boundary", () => {
+    const row = { height: 4, halfWidth: 2, positiveDepth: 3, negativeDepth: 1 };
+    const options: RevolvedSurfaceOptions = {
+      sections: [row, { ...row, height: 5 }],
+      segments: 4,
+      angular: { kind: "open", start: 2, end: 4 },
+      axialOffset: () => -0.25,
+    };
+    const mesh = createRevolvedSurfaceMesh({ ...options, uv: "angular-length" });
+    for (let row = 0; row < 2; row++) {
+      for (let column = 0; column <= 4; column++) {
+        const vertex = row * 5 + column;
+        // Mean reference half-extent 2 times sweep offset column/2.
+        expect(mesh.uvs[vertex * 2]).toBe(column);
+        expect(mesh.uvs[vertex * 2 + 1]).toBe(3.75 + row);
+      }
+    }
+    expect(mesh.parameters[2 * 2 + 1]).toBe(3);
+    expect(mesh.parameters[3 * 2 + 1]).toBeLessThan(0);
+    const normalized = createRevolvedSurfaceMesh(options);
+    expect(mesh.positions).toEqual(normalized.positions);
+    expect(mesh.normals).toEqual(normalized.normals);
+    expect(mesh.indices).toEqual(normalized.indices);
+    expect(mesh.parameters).toEqual(normalized.parameters);
+    expectStoredSurface(mesh);
+  });
+
+  it.each([
+    {
+      label: "asymmetric ellipse",
+      power: 2,
+      sections: [
+        { height: 0, halfWidth: 2, positiveDepth: 3, negativeDepth: 1 },
+        { height: 1, halfWidth: 3, positiveDepth: 4, negativeDepth: 2 },
+      ],
+    },
+    {
+      label: "asymmetric superellipse",
+      power: 4,
+      sections: [
+        { height: 0, halfWidth: 2, positiveDepth: 3, negativeDepth: 1 },
+        { height: 1, halfWidth: 3, positiveDepth: 4, negativeDepth: 2 },
+      ],
+    },
+    { label: "first endpoint pole", power: 2, sections: [section(0, 0), section(1)] },
+    { label: "last endpoint pole", power: 4, sections: [section(0), section(1, 0)] },
+  ])("uses sweep distance through the closed seam for $label", ({ sections, power }) => {
+    for (const seam of [0, 2.5, -1.2]) {
+      const mesh = createRevolvedSurfaceMesh({
+        sections,
+        power,
+        segments: 8,
+        angular: { kind: "closed", seam },
+        uv: "angular-length",
+      });
+      for (let row = 0; row < sections.length; row++) {
+        const source = sections[row];
+        const mean = (source.halfWidth + source.positiveDepth + source.negativeDepth) / 3;
+        const first = row * 9;
+        expect(mesh.uvs[first * 2]).toBe(0);
+        expect(mesh.uvs[(first + 8) * 2]).toBe(Math.fround(2 * Math.PI * mean));
+        expect(point(mesh.positions, first + 8)).toEqual(point(mesh.positions, first));
+        expect(mesh.parameters[(first + 8) * 2 + 1]).toBe(mesh.parameters[first * 2 + 1]);
+        for (let column = 0; column <= 8; column++) {
+          const vertex = first + column;
+          expect(mesh.uvs[vertex * 2]).toBe(Math.fround((column / 8) * 2 * Math.PI * mean));
+          expect(mesh.uvs[vertex * 2 + 1]).toBe(source.height);
+          if (column === 0) continue;
+          const increment = mesh.uvs[vertex * 2] - mesh.uvs[(vertex - 1) * 2];
+          expect(increment).toBeCloseTo((2 * Math.PI * mean) / 8, 5);
+          if (mean > 0) expect(increment).toBeGreaterThan(0);
+          else expect(increment).toBe(0);
+        }
+      }
+      expectStoredSurface(mesh);
+    }
+  });
+
+  it("preserves the explicit wrapped projection and its copied closed seam", () => {
+    const sections = [section(0, 2), section(1, 2)];
+    for (const seam of [0, 2.5]) {
+      const mesh = createRevolvedSurfaceMesh({
+        sections,
+        segments: 8,
+        angular: { kind: "closed", seam },
+        uv: "wrapped-angular-length",
+      });
+      for (let row = 0; row < 2; row++) {
+        const first = row * 9;
+        for (let column = 0; column < 8; column++) {
+          const raw = seam + (column / 8) * 2 * Math.PI;
+          const wrapped = Math.atan2(Math.sin(raw), Math.cos(raw));
+          expect(mesh.uvs[(first + column) * 2]).toBe(Math.fround(wrapped * 2));
+        }
+        expect(mesh.uvs[(first + 8) * 2]).toBe(mesh.uvs[first * 2]);
+      }
+      expectStoredSurface(mesh);
+    }
+    const open = createRevolvedSurfaceMesh({
+      sections,
+      segments: 4,
+      angular: { kind: "open", start: 2, end: 4 },
+      uv: "wrapped-angular-length",
+    });
+    expect(open.uvs[0]).toBe(4);
+    expect(open.uvs[4 * 2]).toBe(Math.fround(Math.atan2(Math.sin(4), Math.cos(4)) * 2));
+    expect(open.uvs[3 * 2]).toBeLessThan(open.uvs[2 * 2]);
+    expectStoredSurface(open);
+  });
+
+  it("checks Float32 admission for the continuous closed seam beyond its unique columns", () => {
+    const radius = 6e37;
+    const options = { sections: [section(0, radius), section(1, radius)], segments: 3 };
+    expect(Number.isFinite(Math.fround((4 * Math.PI * radius) / 3))).toBe(true);
+    expect(Math.fround(2 * Math.PI * radius)).toBe(Number.POSITIVE_INFINITY);
+    expect(() => createRevolvedSurfaceMesh({ ...options, uv: "angular-length" })).toThrow(/UV u/);
+    for (const uv of ["normalized", "wrapped-angular-length"] as const) {
+      const mesh = createRevolvedSurfaceMesh({ ...options, uv });
+      expect(mesh.indices).toHaveLength(18);
+      expectStoredSurface(mesh);
+    }
+  });
+
+  it("rejects malformed UV modes before section or displacement callbacks", () => {
+    for (const uv of ["continuous", "wrapped", "", null, 1]) {
+      let calls = 0;
+      expect(() =>
+        createRevolvedSurfaceMesh({
+          segments: 4,
+          subdivisions: 1,
+          uv,
+          sectionAt(s: number) {
+            calls++;
+            return section(s);
+          },
+          radialOffset() {
+            calls++;
+            return 0;
+          },
+          axialOffset() {
+            calls++;
+            return 0;
+          },
+        } as RevolvedSurfaceOptions),
+      ).toThrow(/UV mode/);
+      expect(calls).toBe(0);
+    }
+  });
 });

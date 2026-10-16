@@ -86,7 +86,8 @@
   Inside directions otherwise use source positions before Float32 rounding.
 - `createRevolvedSurfaceMesh` samples separate half-width and positive/negative Z depths
   from sections or a section callback. It supports open/closed angles, section
-  centers, power >= 2, offsets and normalized or angular-length UVs.
+  centers, power >= 2, offsets and normalized, continuous angular-length or
+  explicitly wrapped-angular-length UVs. Physical arc length is approximate.
   It emits no caps and makes no solid/hollow, skinning or collision promise.
   `parameters` stores normalized row position and wrapped angle per vertex.
   Optional forward/reverse `winding` replaces radial inference for folded

@@ -390,9 +390,15 @@ const mesh = createRevolvedSurfaceMesh({
 ```
 
 `uv: 'normalized'` (default) writes `[column / segments, s]`; its closed
-seam ends at U = 1. `uv: 'angular-length'` writes wrapped angle times the
-mean section half-extent and displaced Y, an approximation rather than exact
-ellipse arc length. `RevolvedSurfaceMesh.parameters` is an interleaved
+seam ends at U = 1. `uv: 'angular-length'` writes the angular sweep offset from
+the domain start times the mean section half-extent, with displaced Y as V.
+Its U is continuous across the wrapped-angle branch cut, and a closed seam ends
+at `2*pi*meanExtent` instead of repeating U = 0. This is an approximation rather
+than exact ellipse arc length. `uv: 'wrapped-angular-length'` explicitly uses
+wrapped angle times mean extent and repeats the first seam UV; it can jump
+inside cells at ±pi and is only appropriate when that wrapped projection is
+intended. Callback angles and parameter provenance remain wrapped in every
+mode. `RevolvedSurfaceMesh.parameters` is an interleaved
 `Float64Array` of `[s, wrapped theta]` for each output vertex, including
 corner repairs, independent of the UV mode. Stored positions, normals and
 UVs use Float32; indices use Uint16 or Uint32. The constructor rejects

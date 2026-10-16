@@ -130,6 +130,9 @@ rejects inconsistent meridian orientation and Float32 face collapse, and
 repairs individual corners when a shared normal would face behind a stored
 triangle. Its interleaved Float64 `parameters` preserve normalized row
 position and wrapped angle independently of the chosen UV mode.
+Angular-length UVs use the continuous angular sweep, while an explicit wrapped
+variant retains branch-cut coordinates. Both approximate physical arc length
+from mean half-extents; neither is a metric surface-map solver.
 Explicit forward/reverse parameter winding also allows a folded meridian's
 underside to face the axis without per-face radial flips. The default radial
 inference remains available. Neither policy establishes a solid or resolves

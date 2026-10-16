@@ -28,10 +28,12 @@ export type RevolvedSurfaceOptions = RevolvedSectionSource & {
   radialOffset?: (s: number, theta: number) => number;
   axialOffset?: (s: number, theta: number) => number;
   /**
-   * Normalized is [column/segments, s]. Angular-length is [wrapped theta times
-   * mean section half-extent, displaced Y], not exact ellipse perimeter length.
+   * Normalized (default) is [column/segments, s]. Angular-length U is the
+   * continuous sweep offset (column/segments)*span times mean section half-extent.
+   * Wrapped-angular-length U is wrapped theta times that same mean. Both length
+   * modes use displaced Y for V and do not measure exact ellipse perimeter length.
    */
-  uv?: "normalized" | "angular-length";
+  uv?: "normalized" | "angular-length" | "wrapped-angular-length";
 };
 export interface RevolvedSurfaceMesh extends ProceduralMesh {
   /** Interleaved Float64 [s, wrapped theta] for every output vertex, including repairs. */
@@ -128,7 +130,10 @@ function offset(
  * boundaries use one-sided differences even for a complete turn. Callbacks are
  * borrowed pure samplers; closed offsets must be periodic. No caps are inferred.
  * Callback theta is atan2(sin(raw), cos(raw)), with either signed-pi endpoint
- * possible. Closed seam parameters copy the first column, while normalized U is 1.
+ * possible. Closed seam parameters copy the first column. Its U is 1 for normalized,
+ * 2*pi times mean section half-extent for angular-length, and the first column's
+ * wrapped U for wrapped-angular-length. Angular-length U starts at zero regardless
+ * of the angular start or seam; parameter theta remains wrapped in every UV mode.
  * Radial offsets clamp negative resulting radii to zero; only analytically collapsed
  * triangles are omitted. Positive-area faces erased by Float32 quantization reject.
  * Omitted winding uses local radial orientation and rejects inconsistent face
@@ -186,7 +191,8 @@ export function createRevolvedSurfaceMesh(options: RevolvedSurfaceOptions): Revo
   const power = finite("power", options.power === undefined ? 2 : options.power);
   if (power < 2) throw new Error(`${OP}: power must be >= 2`);
   const uv = options.uv === undefined ? "normalized" : options.uv;
-  if (uv !== "normalized" && uv !== "angular-length") throw new Error(`${OP}: unknown UV mode`);
+  if (uv !== "normalized" && uv !== "angular-length" && uv !== "wrapped-angular-length")
+    throw new Error(`${OP}: unknown UV mode`);
   const radialOffset = options.radialOffset;
   const axialOffset = options.axialOffset;
   for (const callback of [radialOffset, axialOffset])
@@ -291,7 +297,12 @@ export function createRevolvedSurfaceMesh(options: RevolvedSurfaceOptions): Revo
         "mean section extent",
         (width + section.positiveDepth + section.negativeDepth) / 3,
       );
-      uvs[vertex * 2] = float32("UV u", uv === "normalized" ? column / segments : theta * mean);
+      uvs[vertex * 2] = float32(
+        "UV u",
+        uv === "normalized"
+          ? column / segments
+          : (uv === "angular-length" ? (column / segments) * span : theta) * mean,
+      );
       uvs[vertex * 2 + 1] = float32("UV v", uv === "normalized" ? s : y);
     }
     fullyCollapsed[row] = collapsedCount === (closed ? segments : stride) ? 1 : 0;
@@ -303,7 +314,15 @@ export function createRevolvedSurfaceMesh(options: RevolvedSurfaceOptions): Revo
       working.set(working.subarray(first * 3, first * 3 + 3), last * 3);
       stored.set(stored.subarray(first * 3, first * 3 + 3), last * 3);
       collapsed[last] = collapsed[first];
-      uvs[last * 2] = uv === "normalized" ? 1 : uvs[first * 2];
+      uvs[last * 2] =
+        uv === "normalized"
+          ? 1
+          : uv === "angular-length"
+            ? float32(
+                "UV u",
+                TAU * ((section.halfWidth + section.positiveDepth + section.negativeDepth) / 3),
+              )
+            : uvs[first * 2];
       uvs[last * 2 + 1] = uvs[first * 2 + 1];
     }
   }

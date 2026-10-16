@@ -179,6 +179,9 @@ For a folded meridian whose underside points radially inward, declare
 `winding: 'forward'` or `'reverse'` to orient the entire parameter grid.
 Generated normals follow that same orientation; individual faces are not flipped
 to face away from the axis.
+Optional angular-length UVs use a continuous sweep from the domain start.
+Choose `wrapped-angular-length` only when a branch-cut projection is intended;
+neither mode computes an exact ellipse perimeter.
 
 For a surface that maps both unit coordinates to 3D, use
 `createParametricSheetMesh`:
