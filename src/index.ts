@@ -1,6 +1,8 @@
 /** Pure, seeded procedural fields and surface bakes. Renderer adapters are explicit subpaths. */
 
 export type {
+  SegmentSample2D,
+  BandCoverageSample,
   SurfaceBake,
   SurfaceBakeManifest,
   SurfaceBakeMap,
@@ -26,6 +28,9 @@ export type {
   WearSample,
 } from "./materials.js";
 export {
+  sampleSegment2D,
+  projectPixelFootprint2D,
+  sampleBandCoverage,
   bakeSurface,
   createSurfaceBakeManifest,
   createSurfacePlan,
@@ -54,7 +59,12 @@ export {
   createSheetMesh,
   createSweptMesh,
 } from "./mesh.js";
-export { applyShaderPatches, replaceOrThrow, seededSurfaceNoiseGlsl } from "./shaders.js";
+export {
+  applyShaderPatches,
+  replaceOrThrow,
+  seededSurfaceNoiseGlsl,
+  segmentCoverageGlsl,
+} from "./shaders.js";
 export type { Random, Seed } from "./noise.js";
 export { createSeededNoise, createSeededRandom, fractalNoise, seedToUint32 } from "./noise.js";
 export type { Vec3 } from "./sdf.js";

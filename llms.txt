@@ -108,6 +108,20 @@
   and first-entry ties remain stable, previously incorrect extreme results change.
 - The interactive source-checkout gallery runs with `pnpm build` then `pnpm demo`.
 
+- Root/materials export `sampleSegment2D`, `projectPixelFootprint2D` and
+  `sampleBandCoverage`, with segment/band result types. Coordinates are finite
+  readonly two-number arrays in caller units. Segment samples return fresh
+  nearest/tangent tuples, clamped t, unsigned distance, length and along.
+  Coincident endpoints are point samples; exact endpoint inputs stay exact.
+- Footprints normalize a caller axis and project explicit pixel displacements;
+  zero axis uses the larger parallelogram diagonal. Band samples expose edge,
+  width and product coverage. Zero authored width is invisible; caller visibility
+  floors, segment selection, joins, spatial indexes and appearance stay local.
+- `segmentCoverageGlsl` is exported from root/shaders with matching highp ES3
+  structs/functions, explicit derivative inputs, and defined zero-feather edges.
+  Keep GPU inputs/intermediates finite in local Float32 coordinates. No subnormal,
+  bit-portability, exact area-filter or geometric predicate guarantee is made.
+
 ## Read next
 
 - [Visual acceptance](https://github.com/jbcom/strata-procedural/blob/main/docs/VISUAL-ACCEPTANCE.md):
