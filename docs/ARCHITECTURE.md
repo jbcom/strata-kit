@@ -12,6 +12,16 @@ explicit seed
   -> optional Three.js geometry or React Three Fiber view
 ```
 
+## Cell field boundary
+
+The root/noise jittered-cell field selects two distinct lattice identities with a
+fixed complete 25-site search. Deterministic seeded or injected unit offsets define
+placement; nearest-integer local anchors preserve small boundary displacements.
+Normalized Euclidean distances determine rank and lexicographic ties before
+caller-unit scaling. Fresh records carry identities and distances, with no world
+positions, persistent grid, material policy or spatial registry. The returned
+distance difference is an unsigned indicator, not a Voronoi signed-distance field.
+
 ## Module boundaries
 
 | Layer | Modules | Responsibility |

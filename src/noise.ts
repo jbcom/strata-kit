@@ -10,6 +10,13 @@ export type {
   SineLattice2DOptions,
   LatticeSampler2D,
 } from "./noiseFields.js";
+export { createJitteredCellField2D } from "./jitteredCellField.js";
+export type {
+  JitteredCellField2DOptions,
+  JitteredCellSample2D,
+  CellSite2D,
+  LatticeSiteSampler2D,
+} from "./jitteredCellField.js";
 
 /** A stable string or finite numeric key for deterministic generation. */
 export type Seed = number | string;
