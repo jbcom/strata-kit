@@ -70,6 +70,7 @@ export {
   replaceOrThrow,
   seededSurfaceNoiseGlsl,
   segmentCoverageGlsl,
+  scalarGrid16Glsl,
 } from "./shaders.js";
 export type { Random, Seed } from "./noise.js";
 export { createSeededNoise, createSeededRandom, fractalNoise, seedToUint32 } from "./noise.js";
@@ -112,8 +113,10 @@ export type {
   SeededTerrainField,
   SeededTerrainOptions,
   TerrainSample,
+  ScalarGrid16Input,
+  ScalarGrid16,
 } from "./terrain.js";
-export { createSeededTerrainField } from "./terrain.js";
+export { createSeededTerrainField, packScalarGrid16, sampleScalarGrid16 } from "./terrain.js";
 export { createValueNoise2D, createFractalNoise2D, createSineLattice2D } from "./noise.js";
 export type {
   ValueNoise2DOptions,

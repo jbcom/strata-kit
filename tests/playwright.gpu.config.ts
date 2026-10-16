@@ -3,7 +3,11 @@ import { defineConfig } from "@playwright/test";
 /** The render pool sets HEAVY_RENDER_HEADLESS; local visual proof is intentionally out of scope. */
 export default defineConfig({
   testDir: ".",
-  testMatch: ["surfaceFields.gpu.playwright.ts", "segment-coverage.gpu.playwright.ts"],
+  testMatch: [
+    "surfaceFields.gpu.playwright.ts",
+    "segment-coverage.gpu.playwright.ts",
+    "scalar-grid16.gpu.playwright.ts",
+  ],
   timeout: 30_000,
   workers: 1,
   use: {

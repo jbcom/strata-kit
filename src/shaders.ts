@@ -23,3 +23,4 @@ float strataKitNoise(vec3 point, float seed) {
 }
 `;
 export { segmentCoverageGlsl } from "./segmentCoverageGlsl.js";
+export { scalarGrid16Glsl } from "./scalarGrid16Glsl.js";

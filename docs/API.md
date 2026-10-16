@@ -248,6 +248,53 @@ describes plan inputs only; it cannot serialize arbitrary callback recipes.
 the three controls lie in `[0, 1]`. Mask bias uses clamped unit coordinates with
 positive v downward; scale affects noise frequency. Zero amount disables wear masks.
 
+## Packed scalar grids
+
+Root and `strata-procedural/terrain` export `packScalarGrid16`,
+`sampleScalarGrid16`, `ScalarGrid16Input` and `ScalarGrid16`.
+`packScalarGrid16({ width, height, values, min, range })` requires integer
+dimensions from 1 through 4097, exactly `width * height` finite scalar values in
+row-major order, finite `min` and finite positive `range`. The endpoint
+`max = min + range` must be finite and representably greater than `min`.
+No range is inferred or floored. Each sample uses two numeric bytes: high byte
+then low byte, tightly packed at `(row * width + column) * 2`.
+
+Values at or below `min` encode 0; values at or above `max` encode 65535.
+Strict interior codes use `round(((value-min)/range)*65535)`, clamped to that
+integer range. Explicit endpoint guards preserve endpoint codes even when
+subtraction loses range precision. Division-first avoids a reciprocal-overflow
+requirement. The returned metadata object is frozen and all input data is copied;
+its fresh `Uint8Array` remains caller-mutable. The dimension limit bounds the
+output to 33,570,818 bytes, validated before allocation or sample access.
+
+`sampleScalarGrid16(grid, column, row)` accepts that result or structurally valid
+hand-authored `Uint8Array` bytes. It validates metadata and exact byte count in
+O(1), including genuine `Uint8Array` views from another JavaScript realm. It
+clamps finite fractional sample indices to grid bounds, decodes normalized
+codes, interpolates across columns then rows, and returns `min + value * range`.
+The last valid cell handles upper edges; singleton axes repeat their only sample.
+Sampling reads current bytes without copying or caching; callers synchronize any
+mutations. The codec chooses no world axes, bounds, UV mapping or normal policy.
+
+For well-conditioned metadata, scalar quantization contributes at most
+`range/(2*65535)` plus floating-point rounding error. The same bound carries
+through convex bilinear interpolation relative to the correspondingly clamped
+source samples. Large `min` relative to `range` can make endpoint spacing and
+subtraction/addition rounding dominate. This bound excludes source quantization,
+coordinate precision, mesh tessellation, morphing and GPU arithmetic.
+
+Root and `strata-procedural/shaders` export `scalarGrid16Glsl`. In highp GLSL ES3,
+`strataDecodeScalar16(vec2 rg)` decodes normalized numeric RG8 channels to `[0,1]`.
+`strataSampleScalarGrid16(sampler2D data, ivec2 size, vec2 sampleIndex, float minimum,
+float range)` performs the same clamped manual interpolation using `texelFetch`.
+Supply dimensions and metadata satisfying the CPU contract in the GPU's Float32
+domain: all used arithmetic must remain finite normal values or zero, with
+representably distinct endpoints. GLSL does not validate these preconditions.
+CPU/GPU bit identity and subnormal preservation are not promised. Texture data
+must have numeric channels without color conversion; nearest sampling, row
+orientation, byte unpack alignment and upload lifetime remain caller-owned.
+No uniforms, transforms, derivatives, textures or render loop are created.
+
 ## Segment samples and filtered bands
 
 The root and `strata-procedural/materials` export `sampleSegment2D`,
