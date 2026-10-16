@@ -415,6 +415,13 @@ policy. No spatial index, world projection, material or renderer is created.
 `segmentCoverageGlsl` from `strata-procedural/shaders` provides matching highp
 GLSL ES 3.00 helpers with explicitly supplied pixel derivatives.
 
+`packSignedVector8` and `decodeSignedVector8` from `strata-procedural/terrain`
+encode caller-computed bounded XYZ triples as numeric RGBA8 bytes and recover raw
+vectors. `signedVector8Glsl` supplies the paired shader decode. These functions
+keep dimensions, field/normal generation, texture policy and normalization after
+blending with the caller; zero and nonunit inputs are preserved only up to the
+explicit signed-byte quantization described in [the API](docs/API.md#raw-signed-vector-bytes).
+
 ## Develop
 
 ```sh

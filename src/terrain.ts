@@ -1,4 +1,5 @@
 import { createSeededNoise, createSeededRandom, fractalNoise, type Seed } from "./noise.js";
+export { packSignedVector8, decodeSignedVector8 } from "./signedVector8.js";
 import { opSmoothSubtraction, type Vec3 } from "./sdf.js";
 export {
   composeScalarField2D,

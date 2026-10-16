@@ -293,6 +293,15 @@ explicit numeric limits. These functions do not choose height interpolation,
 projection into 3D, thickness, ridges, normals, volume, or curve metrics. Their
 parameterization is distinct from the existing revolved mesh's true polar angle.
 
+## Raw vector storage boundary
+
+The root/terrain signed-vector codec maps flat bounded XYZ streams to owned
+RGBA8 bytes and decodes raw values without choosing a frame or normalization.
+Root/shaders exposes only its normalized numeric-RGB decode. There is no second
+grid object, inferred normal, texture owner, interpolation or renderer dependency.
+Zero has a quantization offset; normalization after interpolation remains caller
+policy and cannot be moved into per-sample encoding without changing behavior.
+
 ## Intentional limits
 
 The package currently provides the APIs documented in [API.md](API.md). It does not

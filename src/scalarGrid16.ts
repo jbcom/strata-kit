@@ -1,13 +1,10 @@
 /** Renderer-neutral, explicit-range scalar grids encoded as high/low numeric bytes. */
 
-import { requireFiniteNumber, requirePositiveFiniteNumber } from "./validation.js";
-
-// The intrinsic getter reads the view's internal kind across JavaScript realms;
-// Object#toString could instead be changed by an own Symbol.toStringTag property.
-const typedArrayName = Object.getOwnPropertyDescriptor(
-  Object.getPrototypeOf(Uint8Array.prototype),
-  Symbol.toStringTag,
-)?.get;
+import {
+  isUint8ArrayView,
+  requireFiniteNumber,
+  requirePositiveFiniteNumber,
+} from "./validation.js";
 
 /** Caller-owned scalar samples in row-major order, with an explicit decode range. */
 export interface ScalarGrid16Input {
@@ -139,11 +136,7 @@ export function sampleScalarGrid16(grid: ScalarGrid16, column: number, row: numb
   const operation = "sampleScalarGrid16";
   const { width, height, min, range, count } = readMetadata(operation, grid);
   const data = grid.data;
-  if (
-    !ArrayBuffer.isView(data) ||
-    typedArrayName?.call(data) !== "Uint8Array" ||
-    data.length !== count * 2
-  ) {
+  if (!isUint8ArrayView(data) || data.length !== count * 2) {
     throw new Error(`${operation}: data must be a Uint8Array of exactly width * height * 2 bytes`);
   }
   requireFiniteNumber(operation, "column", column);
