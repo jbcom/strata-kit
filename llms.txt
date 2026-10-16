@@ -177,6 +177,14 @@
   are one-sided, callback scratch is copied immediately, bad stencils reject before
   evaluation. No default step/wrapping/normal/analytic-accuracy or simulation policy.
 
+- Root/terrain `packSignedVector8` maps finite XYZ components[-1,1] to fresh RGBA8,
+  count0..4097², alpha255. `decodeSignedVector8(data,sampleIndex)` reads genuine
+  cross-realm Uint8Array four-byte samples into fresh raw Vec3, ignoring alpha.
+  Root/shaders `signedVector8Glsl` supplies `strataDecodeSignedVector8(vec3 rgb)`.
+  No unit-length constraint or normalization. Zero components have byte-quantization
+  tilt; dimensions, frame, normal generation, filtering/blending and final normalize
+  remain caller-owned. No CPU/GPU bit identity or arbitrary angular bound.
+
 ## Read next
 
 - [Visual acceptance](https://github.com/jbcom/strata-procedural/blob/main/docs/VISUAL-ACCEPTANCE.md):

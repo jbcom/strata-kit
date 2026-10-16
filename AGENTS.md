@@ -41,6 +41,6 @@ limits change. Use Conventional Commits. Releases are prepared from `main`; do n
 manually edit versions or the changelog as part of ordinary feature work.
 
 `mise exec -- pnpm test:gpu` runs muted WebGL2 readback checks for the paired
-CPU/GLSL scalar-relief, segment-coverage and packed scalar-grid implementations,
+CPU/GLSL scalar-relief, segment-coverage, packed scalar-grid and raw signed-vector implementations,
 including independent witnesses with injected shader defects. Use the configured
 hardware test path when a paired module changes.

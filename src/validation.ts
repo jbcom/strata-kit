@@ -6,6 +6,16 @@ export interface Vector3Like {
   z: number;
 }
 
+// Read the intrinsic kind across realms rather than an overridable own tag.
+const typedArrayName = Object.getOwnPropertyDescriptor(
+  Object.getPrototypeOf(Uint8Array.prototype),
+  Symbol.toStringTag,
+)?.get;
+
+export function isUint8ArrayView(value: unknown): value is Uint8Array {
+  return ArrayBuffer.isView(value) && typedArrayName?.call(value) === "Uint8Array";
+}
+
 export function requireFiniteNumber(operation: string, name: string, value: number): void {
   if (!Number.isFinite(value)) throw new Error(`${operation}: ${name} must be finite`);
 }

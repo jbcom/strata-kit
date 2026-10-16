@@ -11,11 +11,11 @@ consumers keep their dependency boundary explicit.
 | `strata-procedural` | Noise, SDF, terrain, surface samplers/layers/wear, mesh generators, UV/triplanar/atlas, shader, and scalar-relief APIs | none |
 | `strata-procedural/noise` | `seedToUint32`, `createSeededRandom`, `createSeededNoise`, `fractalNoise`, `createValueNoise2D`, `createFractalNoise2D`, `createSineLattice2D` | none |
 | `strata-procedural/sdf` | `sdSphere`, `sdPlane`, `sdBox`, `opUnion`, `opIntersection`, `opSubtraction`, `opSmoothUnion`, `opSmoothSubtraction` | none |
-| `strata-procedural/terrain` | `createSeededTerrainField`, `composeScalarField2D`, `transformScalarField2D`, `createDirectionalField2D`, `createSmoothMask2D`, and terrain/field types | none |
+| `strata-procedural/terrain` | `createSeededTerrainField`, `composeScalarField2D`, `transformScalarField2D`, `createDirectionalField2D`, `createSmoothMask2D`, scalar-grid and signed-vector codecs, and terrain/field types | none |
 | `strata-procedural/materials` | Surface plans, samplers, composition, wear, UV diagnostics, triplanar sampling, and atlas bakes | none |
 | `strata-procedural/mesh` | `createRevolvedMesh`, `createRevolvedSurfaceMesh`, `createSweptMesh`, `createSheetMesh`, `createParametricSheetMesh`, `superellipsePoint2D`, `superellipseHalfDepth2D`, and mesh types | none |
-| `strata-procedural/shaders` | `seededSurfaceNoiseGlsl`, `replaceOrThrow`, `applyShaderPatches` | none |
-| `strata-procedural/surface-fields` | Scalar-profile, relief-frame, uniform-packing, and GLSL APIs | none |
+| `strata-procedural/shaders` | `seededSurfaceNoiseGlsl`, `segmentCoverageGlsl`, `scalarGrid16Glsl`, `signedVector8Glsl`, `replaceOrThrow`, `applyShaderPatches` | none |
+| `strata-procedural/surface-fields` | Scalar-profile, explicit differential, relief-frame, uniform-packing, and GLSL APIs | none |
 | `strata-procedural/three` | `createThreeHeightfieldGeometry`, `createThreeMeshGeometry`, `createThreeSurfaceTextures`, `snapshotThreeStaticMeshes`, `createThreeTriplanarMaterial` | `three` peer |
 | `strata-procedural/r3f` | `StrataHeightfield` and `StrataHeightfieldProps` | React, Three, and R3F peers |
 
@@ -202,6 +202,42 @@ three actual Z-coordinate rows, treats `-0` and `0` as distinct coordinates, and
 uses direct sampling for uncached coordinates when it is full. This is an internal
 work bound; it does not change `HeightfieldMesh` buffers, layout, or deterministic
 output for equal inputs.
+
+## Raw signed-vector bytes
+
+`packSignedVector8(values)` and `decodeSignedVector8(data, sampleIndex)` are
+available from root and `strata-procedural/terrain`. They store raw vectors in an
+arbitrary caller frame; they do not generate normals or define tangent-space maps.
+
+Packing accepts flat `ArrayLike<number>` XYZ triples with finite components in
+inclusive `[-1,1]`. The length must be a safe integer divisible by three, for zero
+through `4097*4097` vectors. The count is checked before allocation. The fresh
+mutable `Uint8Array` contains four bytes per vector: each XYZ component maps with
+`Math.round((component*0.5+0.5)*255)`, and alpha is always255. No input is retained.
+Zero and nonunit vectors are legal; out-of-range components reject without clamping.
+
+Decoding accepts genuine `Uint8Array` views, including other JavaScript realms,
+with a byte count divisible by four and an integer sample index in range. It reads
+the current bytes, ignores alpha, and returns a fresh `{x,y,z}` from
+`2*(byte/255)-1`. The caller synchronizes byte mutation. There is no normalization:
+`[0,1,0]` encodes `[128,255,128,255]`, whose raw decode is approximately
+`[1/255,1,1/255]`. Even an input zero vector decodes to a small nonzero vector.
+Per-component error is bounded by `1/255` plus floating-point rounding; neither
+relative-length nor angular accuracy is guaranteed near a zero or cancelling blend.
+
+```ts
+import { packSignedVector8, decodeSignedVector8 } from 'strata-procedural/terrain';
+const bytes = packSignedVector8([0, 1, 0, -0.5, 0.25, 0.75]);
+const raw = decodeSignedVector8(bytes, 1);
+```
+
+Root/shaders `signedVector8Glsl` provides highp GLSL ES3
+`strataDecodeSignedVector8(vec3 rgb)` as `rgb*2.0-1.0` for normalized numeric RGB.
+It declares no uniforms, texture operations or normalization. Float32 readback has
+its own rounding tolerance; CPU/GPU bit identity is not promised. Dimensions, row
+order, texture colour-space/upload/filtering/lifetime, interpolation, coordinate
+transforms and final normalization stay caller-owned. Normalizing each decoded
+vector before blending can change the result and is not an encoding operation.
 
 ## Surface bakes
 
