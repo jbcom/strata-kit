@@ -678,6 +678,41 @@ The subpath also exports `MAX_CUBIC_HERMITE_PROFILE_KNOTS`,
 `ScalarCoordinateDerivatives`, `ProjectedReliefSample`, `ReliefDerivatives`,
 `SurfaceDifferentials`, and `ReliefFrame`.
 
+### Explicit parametric surface differentials
+
+`sampleParametricSurfaceDifferentials(options)` is available from root and
+`strata-procedural/surface-fields`. `ParametricSurfaceDifferentialOptions` accepts
+`positionAt(u,v): Vec3`, finite query `u`/`v`, positive finite `uStep`/`vStep`, and
+optional ordered finite two-number `uRange`/`vRange` bounds. The result uses the
+existing `SurfaceDifferentials` shape `{du: Vec3, dv: Vec3}` in the callback's space.
+
+Each vector is a secant across the clipped `[coordinate-step, coordinate+step]`
+stencil divided by its actual represented coordinate separation. At an exact
+range endpoint this is one-sided; a clipped interior stencil can be asymmetric.
+Queries outside a declared range, erased interior increments, nonfinite or
+collapsed sampled spans, nonfinite callback positions, position differences or
+quotients are rejected. Both stencils are validated before any callback runs.
+Each returned position is copied immediately, allowing the callback to reuse a
+borrowed scratch object; returned differential vectors are independently owned.
+
+```ts
+import { sampleParametricSurfaceDifferentials, deriveReliefFrame } from 'strata-procedural/surface-fields';
+const differentials = sampleParametricSurfaceDifferentials({
+  positionAt: (u, v) => ({ x: u, y: u * u, z: v }),
+  u: 0.5, v: 0.25, uStep: 0.001, vStep: 0.001,
+  uRange: [0, 1], vRange: [0, 1],
+});
+const frame = deriveReliefFrame(differentials, { du: 0, dv: 0 });
+```
+
+Callbacks must be deterministic and independent of call order. There is no default step, periodic wrapping,
+normalization, orientation or approximation-error guarantee. Zero vectors are
+legal here; `deriveReliefFrame` separately rejects a degenerate frame. Supplied
+steps, callback conditioning and boundary clipping determine numerical accuracy.
+A finite-difference normal does not establish an exact analytic normal, especially
+at singular parameterizations or nonsmooth recipe boundaries. No geometry or
+simulation state is retained.
+
 ## Optional adapters
 
 `createThreeHeightfieldGeometry(mesh)` creates a `THREE.BufferGeometry` from a

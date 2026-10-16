@@ -163,6 +163,12 @@
   unpack alignment/texture lifetime stay caller-owned; GPU metadata/arithmetic
   must be representable finite normal Float32 or zero. No bit-identity promise.
 
+- Root/surface-fields `sampleParametricSurfaceDifferentials` consumes `positionAt`,
+  `u`/`v`, explicit positive `uStep`/`vStep`, optional finite ordered ranges; returns
+  existing `{du,dv}` vectors. Clipped secants use actual represented spans, endpoints
+  are one-sided, callback scratch is copied immediately, bad stencils reject before
+  evaluation. No default step/wrapping/normal/analytic-accuracy or simulation policy.
+
 ## Read next
 
 - [Visual acceptance](https://github.com/jbcom/strata-procedural/blob/main/docs/VISUAL-ACCEPTANCE.md):

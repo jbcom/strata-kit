@@ -5,6 +5,8 @@ export { createPeriodicRidgeProfile, sampleCosineProfile } from './periodicProfi
 export type { ScalarProfileSampler } from './fieldTypes.js';
 export { createMonotoneCubicProfile, sampleMonotoneCubicProfile } from './monotoneProfiles.js';
 export type { MonotoneCubicProfile, MonotoneCubicProfilePoint } from './monotoneProfiles.js';
+export { sampleParametricSurfaceDifferentials } from './surfaceDifferentials.js';
+export type { ParametricSurfaceDifferentialOptions } from './surfaceDifferentials.js';
 import { requireFiniteNumber, requireFiniteVector3 } from './validation.js';
 
 /** The maximum knot count accepted by the bounded GLSL evaluator. */

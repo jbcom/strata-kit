@@ -91,6 +91,7 @@ export type {
   CubicHermiteProfileUniforms,
   MonotoneCubicProfile,
   MonotoneCubicProfilePoint,
+  ParametricSurfaceDifferentialOptions,
   ProjectedReliefSample,
   ReliefDerivatives,
   ReliefFrame,
@@ -106,6 +107,7 @@ export {
   projectScalarProfileDerivative,
   sampleCubicHermiteProfile,
   sampleMonotoneCubicProfile,
+  sampleParametricSurfaceDifferentials,
   surfaceFieldsGlsl,
   toCubicHermiteProfileUniforms,
 } from "./surfaceFields.js";

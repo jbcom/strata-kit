@@ -272,6 +272,16 @@ integration. The `surface-fields` profile/frame module remains independent of
 these coordinate-bearing coverage kernels. World planning, candidate search,
 terrain semantics and simulation remain consumer or upstream-package concerns.
 
+## Numerical surface differential boundary
+
+The root/surface-fields secant sampler consumes a deterministic position callback
+and explicit coordinate steps, with optional range clipping. It snapshots each
+returned vector immediately, validates both stencils before callback evaluation,
+and returns independent derivatives using actual sampled spans. Endpoint secants
+are one-sided. It owns neither parameter wrapping nor a normal, geometry, clock,
+or error-estimation policy. Zero derivatives remain valid until a consumer requires
+a nondegenerate frame; finite arithmetic failures reject explicitly.
+
 ## Intentional limits
 
 The package currently provides the APIs documented in [API.md](API.md). It does not
