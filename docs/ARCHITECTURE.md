@@ -242,6 +242,18 @@ This is first-order relief shading. It intentionally omits the curvature term fr
 derivative of a physically offset curved surface. Consumers that alter curved geometry
 need a curvature-aware differential implementation of their own.
 
+## Encoded scalar data boundary
+
+The terrain barrel exposes a renderer-neutral explicit-range scalar-grid codec.
+It owns high/low RG8 numeric encoding and sample-index interpolation of those
+bytes; it does not own the original field, world-to-grid mapping, texel-centre
+transform, gradients, normals or terrain planning. Callers supply the min/range
+policy and own upload, filtering, LOD and visible/depth material lifecycle.
+The matching namespaced GLSL chunk declares no uniforms or renderer state.
+Scalar metadata is copied/frozen, encoded bytes are newly owned and mutable,
+and sampling reads them without a cache. Quantization, endpoint conditioning and
+Float32 prerequisites are separate from geometric/tessellation error.
+
 ## Segment coverage boundary
 
 `materials` owns finite-segment nearest-point sampling, explicit directional
