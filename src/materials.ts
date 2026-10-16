@@ -1,6 +1,15 @@
 import { createSeededNoise, type Seed, seedToUint32 } from "./noise.js";
 import { requireFiniteNumber, requirePositiveFiniteNumber } from "./validation.js";
 
+export { createHexTileConfig, sampleHexTile2D } from "./hexTiling.js";
+export type {
+  HexTileOptions,
+  HexTileConfig,
+  HexTileRequest,
+  HexTilePair,
+  HexTileResult,
+} from "./hexTiling.js";
+
 export { sampleSegment2D, projectPixelFootprint2D, sampleBandCoverage } from "./segmentCoverage.js";
 export type { SegmentSample2D, BandCoverageSample } from "./segmentCoverage.js";
 

@@ -279,6 +279,15 @@ Layers share a deterministic coordinate domain. Color blends in linear sRGB;
 roughness, bump, and optional metalness use the same alpha weights. Wear fields
 provide correlated masks without choosing a palette or material for the consumer.
 
+## Seeded stochastic tiling
+
+`createHexTileConfig` and `sampleHexTile2D` blend paired surface/normal samples
+across seeded triangular cells. `hexTilingGlsl` supplies complete 2D and array
+texture samplers with explicit gradients. Coordinate projection, textures and
+material policy stay with the consumer; channel layout and normal Y convention
+are explicit. See [the API](docs/API.md#seeded-stochastic-texture-tiling) for
+Float32 bounds, normal transport and ownership.
+
 ## Packed scalar grids
 
 ```ts

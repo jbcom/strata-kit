@@ -1,6 +1,11 @@
 /** Pure, seeded procedural fields and surface bakes. Renderer adapters are explicit subpaths. */
 
 export type {
+  HexTileOptions,
+  HexTileConfig,
+  HexTileRequest,
+  HexTilePair,
+  HexTileResult,
   SegmentSample2D,
   BandCoverageSample,
   SurfaceBake,
@@ -28,6 +33,8 @@ export type {
   WearSample,
 } from "./materials.js";
 export {
+  createHexTileConfig,
+  sampleHexTile2D,
   sampleSegment2D,
   projectPixelFootprint2D,
   sampleBandCoverage,

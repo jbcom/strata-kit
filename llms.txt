@@ -204,6 +204,16 @@
   stationary sampled intervals and unrepresentable increments throw. Callers own
   physical units, feature-scale sampling, spline evaluation and frames.
 
+## Stochastic texture sampling
+
+`createHexTileConfig`/`sampleHexTile2D` are renderer-neutral root/materials APIs;
+`hexTilingGlsl` is one root/shaders ES3 string containing complete sampler2D and
+sampler2DArray functions. Required seed, explicit gradients, separate normal
+packing/Y convention, canonical planar +U,+V output and Float32 numerical bounds
+are part of the contract. No texture allocation, world state or material catalogue.
+Do not infer exact CPU/GPU boundary addressing or game visual acceptance from
+integer hash parity. See docs/API.md.
+
 ## Read next
 
 - [Visual acceptance](https://github.com/jbcom/strata-procedural/blob/main/docs/VISUAL-ACCEPTANCE.md):

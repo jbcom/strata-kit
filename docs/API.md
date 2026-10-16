@@ -339,6 +339,75 @@ describes plan inputs only; it cannot serialize arbitrary callback recipes.
 the three controls lie in `[0, 1]`. Mask bias uses clamped unit coordinates with
 positive v downward; scale affects noise frequency. Zero amount disables wear masks.
 
+## Seeded stochastic texture tiling
+
+Root and `strata-procedural/materials` export `createHexTileConfig`,
+`sampleHexTile2D`, `HexTileOptions`, `HexTileConfig`, `HexTileRequest`,
+`HexTilePair` and `HexTileResult`. Root and `strata-procedural/shaders` export
+one `hexTilingGlsl` string containing both `strataSampleHex2D` and
+`strataSampleHexArray` for highp GLSL ES 3.00. The array function takes an explicit
+integer layer; array bounds, texture ownership, wrap/filter/mipmap/upload policy
+and projection remain caller-owned.
+
+```ts
+import { createHexTileConfig, sampleHexTile2D } from 'strata-procedural/materials';
+const config = createHexTileConfig({ seed: 'field', tileScale: 1.6 });
+const result = sampleHexTile2D(config, [0.3, -0.2], [0.01, 0], [0, 0.01],
+  ({ uv, dUVdx, dUVdy }) => sampleOwnTexturePair(uv, dUVdx, dUVdy));
+// result.surface: linear RGBA; result.normalXY: original planar +U,+V;
+// result.weights: three final blend weights in triangle-vertex order.
+```
+
+Supply a string or finite numeric `seed` and positive `tileScale`. Optional
+`rotationStrength` defaults to 1 and `luminanceInfluence` to 0.6, both in `[0,1]`;
+`offsetScale` defaults to 3 and must be nonnegative. Strict `(0,1)` `contrast`
+defaults to 0.6. The constructor snapshots controls, returns an owned frozen
+`integer-v1` config and compiles `gainExponent` from the raw contrast with
+`fround(log1p(-contrast)/log(0.5))`. The exponent must be positive normal Float32.
+Contrast is descriptive CPU metadata; the shader uses the compiled exponent.
+Other numeric controls normalize to Float32 before use. Upload `seedKey` with
+a uint uniform; numeric `0` and string `'0'` intentionally share a key.
+
+`normalChannels` independently chooses `'rg'` (default) or `'ra'`;
+`inputNormalYSign` is `1` (default, decoded Y follows increasing source V) or
+`-1` (opposite source V). The output always follows the original orthonormal
+planar +U,+V axes. Each cell rotates UVs and both explicit gradient rows together;
+normal XY receives the inverse rotation after its input Y convention is applied.
+Tile scale changes patch spacing, not the source-texture UV frequency: gradients
+are never divided by tile scale. No world axis or texture orientation is inferred.
+
+The CPU sampler takes arrays of exactly two finite UV/gradient components and a
+deterministic, call-order-independent paired sampler. After validating all three
+plans, it invokes that callback exactly three times, including zero-weight cells,
+with fresh frozen request records/tuples. Each return has `surface` and `normal`
+arrays of exactly four finite channels in `[0,1]`; RGB surface values are linear,
+normal channels are numeric, and alpha has no assigned material meaning. All
+returned components are copied before the next call. Callback exceptions retain
+their cause. No state or callback data is cached. Results and tuples are fresh and
+frozen. The shader performs three surface and three normal `textureGrad` reads;
+callers obtain derivatives before divergent control flow.
+
+Luminance biases barycentric weights before piecewise contrast gain and final
+normalization. Zero total gain falls back to normalized base barycentrics.
+Weighted normal XY is neither normalized nor a reconstructed Z/world normal,
+and does not include derivatives of changing blend weights. Non-height-derived
+or strongly tilted input normal maps can expose the method's visual limitations.
+There is no whole-material seamlessness or unchanged-appearance guarantee.
+
+The versioned computation explicitly represents controls, queries and elementary
+sampling arithmetic in Float32. Tiny query components can round to zero. With
+`H = Float32_MAX / 16`, uploaded tile scale must lie in `[2**-126,H]`, offset scale
+and its product with tile scale in `[0,H]`; query/gradient components and all
+three planned centres, offsets, sample UVs and rotated gradients must have
+absolute value at most H. Skewed grid coordinates must lie in `[-4096,4096]`.
+Nonfinite intermediate arithmetic rejects before callbacks. GLSL cannot validate
+these preconditions. These bounds provide arithmetic headroom, not fine spatial
+resolution at large coordinates. CPU and GPU need not select identical triangles
+at rounded grid boundaries; exact hash parity is conditional on identical cell
+IDs. Trigonometry, filtering, compression and subnormal preservation remain
+backend-dependent. Numerical readbacks and actual material images are separate
+forms of evidence.
+
 ## Packed scalar grids
 
 Root and `strata-procedural/terrain` export `packScalarGrid16`,

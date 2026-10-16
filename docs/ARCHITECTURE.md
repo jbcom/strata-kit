@@ -1,5 +1,17 @@
 # Architecture
 
+## Stochastic sampling boundary
+
+The renderer-neutral materials API owns seeded cell selection, paired sample
+coordinates/gradients, normal transport and luminance/gain blending. Its compiled
+configuration contains scalar shader-ready data; there is no World, texture
+catalogue, renderer or mutable random stream. The shader subpath supplies one
+guarded ES3 source string with complete ordinary/array sampling functions.
+Both use the same versioned integer field. Texture allocation, source UV/world
+projection, sampler state and semantic material composition stay outside this
+unit. CPU/GPU hash equality assumes equal integer cell IDs; rounded boundaries
+and transcendentals require separate numerical and rendered evidence.
+
 Strata Procedural is a data-first procedural library, not a game framework. Its current
 pipeline composes deterministic numeric fields into portable data that a consumer can
 render, bake, serialize, or use to drive its own systems.
