@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 import { projectPixelFootprint2D, sampleBandCoverage, sampleSegment2D } from "../src/materials.ts";
 import { segmentCoverageGlsl } from "../src/shaders.ts";
 
@@ -97,11 +97,8 @@ function inputs(): Input[] {
   );
 }
 
-test("segment and band GLSL matches finite Float32 CPU inputs through float readback", async ({
-  page,
-}, info) => {
-  const cases = inputs();
-  const result = await page.evaluate(
+async function readback(page: Page, cases: Input[], shaderFragment = fragment) {
+  return page.evaluate(
     ({ cases, vertex, fragment }) => {
       const canvas = document.createElement("canvas");
       canvas.width = 4;
@@ -205,8 +202,15 @@ test("segment and band GLSL matches finite Float32 CPU inputs through float read
         throw new Error("GPU oracle resource survived disposal");
       return { hardware, samples, resourcesDeleted: true };
     },
-    { cases, vertex, fragment },
+    { cases, vertex, fragment: shaderFragment },
   );
+}
+
+test("segment and band GLSL matches finite Float32 CPU inputs through float readback", async ({
+  page,
+}, info) => {
+  const cases = inputs();
+  const result = await readback(page, cases);
 
   const unitless = new Set([2, 3, 4, 10, 11, 12, 13, 14, 15]);
   const comparisons = cases.map((input, index) => {
@@ -253,6 +257,42 @@ test("segment and band GLSL matches finite Float32 CPU inputs through float read
   expect(result.resourcesDeleted).toBe(true);
   await info.attach("segment-coverage-float-readback", {
     body: Buffer.from(JSON.stringify({ ...result, comparisons }, null, 2)),
+    contentType: "application/json",
+  });
+});
+
+test("independent band witnesses reject a finite cubic-to-linear shader defect", async ({
+  page,
+}, info) => {
+  const witnesses: Input[] = [0.5, 1.5].map((distance) => ({
+    point: [0, distance],
+    start: [-1, 0],
+    end: [1, 0],
+    direction: [0, 1],
+    perPixelX: [0.25, 0],
+    perPixelY: [0, 2],
+    halfWidth: 0.5,
+    feather: 0,
+  }));
+  // H=1, E=1, width share=1/2; x=1/4 or3/4. These exact rational
+  // expectations do not call the CPU implementation or derive from shader output.
+  const expected = [27 / 64, 5 / 64];
+  const baseline = await readback(page, witnesses);
+  const assignment = "edgeCoverage = 1.0 - x * x * (3.0 - 2.0 * x);";
+  expect(fragment.split(assignment)).toHaveLength(2);
+  const mutant = await readback(
+    page,
+    witnesses,
+    fragment.replace(assignment, "edgeCoverage = 1.0 - x;"),
+  );
+  for (let index = 0; index < witnesses.length; index += 1) {
+    expect(Math.abs(baseline.samples[index][12] - expected[index])).toBeLessThan(3e-6);
+    // Only a successfully compiled, finite readback can reach this verdict.
+    expect(Math.abs(mutant.samples[index][12] - expected[index])).toBeGreaterThan(0.04);
+  }
+  expect(baseline.resourcesDeleted && mutant.resourcesDeleted).toBe(true);
+  await info.attach("independent-band-defect-witnesses", {
+    body: Buffer.from(JSON.stringify({ witnesses, expected, baseline, mutant }, null, 2)),
     contentType: "application/json",
   });
 });
