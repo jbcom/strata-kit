@@ -140,7 +140,7 @@ image files and applying them to a material remain consumer work.
 | `strata-procedural/sdf` | Sphere, plane, box, and boolean/smooth distance operations |
 | `strata-procedural/terrain` | Ordered scalar fields, directional projection, smooth masks, seeded terrain, heightfields, and scatter |
 | `strata-procedural/materials` | Surface plans, samples, bakes, and bake manifests |
-| `strata-procedural/mesh` | Revolved profiles, transported sweeps, sampled sheets, and mapped parametric sheets |
+| `strata-procedural/mesh` | Revolved profiles and section surfaces, transported sweeps, and height or parametric sheets |
 | `strata-procedural/shaders` | GLSL seeded noise and checked literal shader patches |
 | `strata-procedural/surface-fields` | Periodic and clamped scalar profiles, relief frames, and cubic-Hermite GLSL |
 | `strata-procedural/three` | Mesh geometry, copied static mesh snapshots, surface textures, and triplanar materials |
@@ -149,6 +149,64 @@ image files and applying them to a material remain consumer work.
 Only these package-exported paths are public API. See [docs/API.md](docs/API.md) for
 the exported symbols and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for boundaries
 and intentional limits.
+
+## Build mapped meshes
+
+The existing `createRevolvedMesh` and `createSheetMesh` constructors retain their
+original inputs and output layouts. For a section with separate front/back depths
+or an open angular range, use the additional revolved-surface constructor:
+
+```ts
+import { createRevolvedSurfaceMesh } from 'strata-procedural/mesh';
+
+const shell = createRevolvedSurfaceMesh({
+  sections: [
+    { height: 0, halfWidth: 0.3, positiveDepth: 0.22, negativeDepth: 0.28 },
+    { height: 1, halfWidth: 0.35, positiveDepth: 0.26, negativeDepth: 0.3 },
+  ],
+  segments: 24,
+  power: 2.5,
+  angular: { kind: 'open', start: -1.2, end: 1.2 },
+});
+```
+
+Angle zero points along +Z, and the returned surface has open ends without
+automatically added caps. `shell.parameters` retains each vertex's normalized
+row parameter and wrapped angle, including vertices duplicated to repair normals.
+Section dimensions, offsets and angular bounds must form a coherent radial
+surface; this constructor does not infer a solid interior.
+For a folded meridian whose underside points radially inward, declare
+`winding: 'forward'` or `'reverse'` to orient the entire parameter grid.
+Generated normals follow that same orientation; individual faces are not flipped
+to face away from the axis.
+Optional angular-length UVs use a continuous sweep from the domain start.
+Choose `wrapped-angular-length` only when a branch-cut projection is intended;
+neither mode computes an exact ellipse perimeter.
+
+For a surface that maps both unit coordinates to 3D, use
+`createParametricSheetMesh`:
+
+```ts
+import { createParametricSheetMesh } from 'strata-procedural/mesh';
+
+const panel = createParametricSheetMesh({
+  columns: 9,
+  rows: 5,
+  positionAt: (u, v) => ({ x: u, y: v, z: 0.1 * Math.sin(Math.PI * u) }),
+  uvAt: (u, v) => [u * 2, v],
+  normalMode: 'area-weighted',
+});
+```
+
+`columns` and `rows` count sample vertices. The output includes
+`sourceVertex`, which maps every returned vertex to its original grid sample
+after any corner-normal repair. Optional `includeCell` and `includeVertex`
+callbacks remove connectivity, while sampled positions and UVs remain available.
+Mapped sheets also accept an explicit `winding` for coherent folded surfaces;
+it cannot be combined with the point-based `insideAt` orientation hint.
+See the [mesh contract](docs/API.md#portable-meshes-and-reskinning) for normal,
+seam, validation and resource limits. These pure constructors do not choose
+placement, skinning, materials, collision or renderer policy.
 
 For saved procedural content, read [compatibility guidance](docs/COMPATIBILITY.md).
 Keep the package version and complete inputs or buffers; a seed cannot serialize
@@ -173,13 +231,6 @@ Use `includeCell(column, row)` to select sheet cells for openings. It runs once 
 cell before height sampling and must return a boolean. Sampled vertices and UVs are
 retained, including when all cells are omitted; the generic Three adapter accepts
 the resulting empty indexed surface.
-
-`createParametricSheetMesh` maps a unit-domain grid into caller-defined 3D positions,
-UVs and optional authored normals. Cell and vertex masks can separate disconnected
-strips without welding their boundary samples; `sourceVertex` retains numeric sample
-correspondence when generated-normal corner repair adds vertices. Its root and
-`mesh` exports are renderer-neutral. A patch must have coherent triangle orientation;
-partition folded or contradictory patches rather than disabling validation.
 
 Nearest-biome selection also retains valid ranking at extreme radii. That correction
 changes previously incorrect extreme-input results while preserving ordinary output.

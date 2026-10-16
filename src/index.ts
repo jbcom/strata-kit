@@ -43,6 +43,11 @@ export type {
   ProceduralMesh,
   ParametricSheetMesh,
   ParametricSheetMeshOptions,
+  RevolvedAngularDomain,
+  RevolvedSection,
+  RevolvedSectionSource,
+  RevolvedSurfaceMesh,
+  RevolvedSurfaceOptions,
   RevolveProfilePoint,
   RevolvedMeshOptions,
   SheetMeshOptions,
@@ -51,6 +56,7 @@ export type {
 export {
   createParametricSheetMesh,
   createRevolvedMesh,
+  createRevolvedSurfaceMesh,
   createSheetMesh,
   createSweptMesh,
 } from "./mesh.js";

@@ -13,7 +13,7 @@ consumers keep their dependency boundary explicit.
 | `strata-procedural/sdf` | `sdSphere`, `sdPlane`, `sdBox`, `opUnion`, `opIntersection`, `opSubtraction`, `opSmoothUnion`, `opSmoothSubtraction` | none |
 | `strata-procedural/terrain` | `createSeededTerrainField`, `composeScalarField2D`, `transformScalarField2D`, `createDirectionalField2D`, `createSmoothMask2D`, and terrain/field types | none |
 | `strata-procedural/materials` | Surface plans, samplers, composition, wear, UV diagnostics, triplanar sampling, and atlas bakes | none |
-| `strata-procedural/mesh` | `createRevolvedMesh`, `createSweptMesh`, `createSheetMesh`, `createParametricSheetMesh`, and mesh types | none |
+| `strata-procedural/mesh` | `createRevolvedMesh`, `createRevolvedSurfaceMesh`, `createSweptMesh`, `createSheetMesh`, `createParametricSheetMesh`, and mesh types | none |
 | `strata-procedural/shaders` | `seededSurfaceNoiseGlsl`, `replaceOrThrow`, `applyShaderPatches` | none |
 | `strata-procedural/surface-fields` | Scalar-profile, relief-frame, uniform-packing, and GLSL APIs | none |
 | `strata-procedural/three` | `createThreeHeightfieldGeometry`, `createThreeMeshGeometry`, `createThreeSurfaceTextures`, `snapshotThreeStaticMeshes`, `createThreeTriplanarMaterial` | `three` peer |
@@ -279,67 +279,151 @@ an empty index buffer with complete sampled attributes. The generic Three mesh
 adapter accepts this empty surface; the heightfield adapter and UV analysis/atlas
 contracts still require triangles. Normal correction considers retained faces only.
 
-### Mapped parametric sheets
+### Parametric sheets
 
-`createParametricSheetMesh(options)` is available from the root and `mesh` entrypoints,
-with `ParametricSheetMesh` and `ParametricSheetMeshOptions` types. It returns the
-standard mesh buffers plus `sourceVertex: Uint32Array`.
+`createParametricSheetMesh(options)` maps a unit-square grid through
+`positionAt(u, v): Vec3`, with `u = column / (columns - 1)` and
+`v = row / (rows - 1)`. `columns` and `rows` are sample-vertex counts:
+at least two each, or at least four columns when `closedColumns` is true.
+Optional `uvAt(u, v)` returns two coordinates; otherwise UVs are `[u, v]`.
+Positions, normals and UVs are Float32 output, while `sourceVertex` is a
+`Uint32Array` mapping every output vertex to its original
+`row * columns + column` sample ID. Returned indices are Uint16 or Uint32.
+The constructor is exported from root and `strata-procedural/mesh`.
 
 ```ts
 import { createParametricSheetMesh } from 'strata-procedural/mesh';
 
-const ribbon = createParametricSheetMesh({
-  columns: 17,
-  rows: 3,
-  positionAt: (u, v) => ({ x: u * 4, y: v, z: 0.2 * u * v }),
-  uvAt: (u, v) => [u * 2, v],
+const mesh = createParametricSheetMesh({
+  columns: 9,
+  rows: 5,
+  positionAt: (u, v) => ({ x: u, y: v, z: 0.1 * Math.sin(Math.PI * u) }),
+  uvAt: (u, v) => [2 * u, v],
+  normalMode: 'area-weighted',
 });
 ```
 
-`columns` and `rows` count samples, both at least two. Column U and row V span
-`[0,1]`; generated grid normals follow row-cross-column secants. `positionAt(u,v)`
-returns a finite Vec3. Optional `uvAt` returns two finite Float32-representable
-numbers, defaulting to `[u,v]`; coordinates outside the unit tile are retained.
-Callbacks must be deterministic and independent of call order. Returned scratch
-objects are copied immediately; the constructor retains no callback objects.
+Without `normalAt`, `normalMode: 'grid'` (the default) derives normals from
+neighbouring samples on the full mapped surface, including samples whose cells
+are later omitted. `normalMode: 'area-weighted'` accumulates retained
+triangle face crosses in Float64 before storing normalized Float32 normals.
+`insideAt(u, v)`, when supplied, returns a **point in the same frame as
+`positionAt`**; it guides generated normals away from that point. It is an
+orientation hint, not a solid containment or collision certificate. A
+referenced sample with a coincident or tangent inside point is rejected.
+The inside direction is computed from the source position and inside point
+before position storage is rounded to Float32.
+`normalAt(u, v)` supplies normalized authored normals and cannot be combined
+with `insideAt` or an explicit `normalMode`. Authored normals that oppose a
+retained triangle are rejected rather than silently replaced.
 
-Choose `normalAt(u,v)` for finite nonzero authored vectors, normalized by the
-constructor, or generated normals via `normalMode: 'grid' | 'area-weighted'`
-(default `grid`). Grid normals use the complete sampled surface; area-weighted
-normals use only retained triangles. `insideAt(u,v)` can orient generated normals
-away from a point in the same coordinate frame. It is not a direction vector.
-Authored normals are mutually exclusive with `insideAt` and explicit `normalMode`.
+Optional `winding: 'forward' | 'reverse'` selects one orientation for the whole
+parameter grid instead of inferring it from the normals. Forward uses
+`[a, c, b]`, `[b, c, d]` per cell; reverse swaps each triangle's final two
+corners. Generated grid or area-weighted normals receive the same global sign.
+Authored normals are kept and must agree with the selected winding. This option
+is mutually exclusive with `insideAt`. Corner repair still requires a strictly
+positive dot against each actual stored face; an explicit winding is not a
+self-intersection or solid-space certificate.
 
-`includeCell(column,row)` and `includeVertex(column,row)` run before sampling, in
-row-major order, and must return booleans. A triangle is retained only when its cell
-and all three vertices are selected. Omitted samples remain in the buffers; an
-all-false selection yields empty indices. Masks do not create connecting triangles
-between separated strips. Singular generated normals on unreferenced samples use
-the deterministic `[0,1,0]` fallback; referenced singular samples are rejected.
+`includeCell(column, row)` selects whole grid cells; `includeVertex(column,
+row)` selects each sampled vertex, so a retained cell can lose an individual
+triangle touching an omitted vertex. Both callbacks run once in row-major
+order before `positionAt` sampling and must return booleans. All original
+sampled positions and UVs remain in the output even if unused by indices.
+An unused generated normal that has no derivative or retained-face direction
+falls back to `[0, 1, 0]`; a referenced sample with no computable normal
+is rejected.
 
-`closedColumns: true` requires at least four columns including the seam endpoint.
-The final column copies first-column positions, authored normals and inside points
-without sampling those callbacks at U=1. Its UVs and selection remain independently
-sampled. Generated neighbors wrap over the unique columns; no extra closing strip
-is added. Coincident samples remain distinct vertices, not welded topology.
+`closedColumns: true` copies the first position, authored/generated normal
+and inside point into a distinct final column; it adds no extra strip.
+`positionAt`, `normalAt` and `insideAt` are called only for unique columns,
+while `uvAt` and `includeVertex` are independently called at both seam
+endpoints. A seam can therefore have distinct UVs or vertex selection while
+sharing position and normal. Generated corner repair may duplicate vertices
+where an indexed triangle would face behind its smooth normal.
+`sourceVertex` identifies the original sample for each duplicate; consumers
+must use returned indices rather than infer grid connectivity. Mixed patch
+orientation, degenerate retained triangles and unresolved normal conflicts
+reject. Input coordinates and stored Float32 values must be finite;
+`columns * rows` and the maximum candidate indices are bounded by one
+million and six million before callbacks, and repaired output stays within
+the vertex cap. Callbacks must be deterministic and independent of call order
+for repeatable output.
+Vertex counts up to 65,536 use Uint16 indices; larger valid outputs use Uint32.
 
-Each retained stored triangle must be nondegenerate and consistently oriented
-across the patch. Winding may reverse coherently for the entire patch. Authored
-normals must point strictly outward at every indexed corner; tangent/opposing
-incidence is rejected using raw stored-face arithmetic. Generated corners may be
-duplicated with face normals, subject to the same inside-point agreement. A folded
-surface whose orientation changes across the patch is unsupported: partition it
-into coherent patches. The constructor does not discard triangles or relax the
-orientation guard to admit such input.
+### Revolved section surfaces
 
-`sourceVertex[i]` identifies the original `row * columns + column` sample, including
-independent seam endpoints. Added generated-normal repair corners repeat that ID;
-caller-owned attributes can use it to retain correspondence. It is not a skinning,
-material or scene-ownership API. Limits precede callbacks: at most 1,000,000 base
-vertices and 6,000,000 candidate indices even when masked out; repaired vertices
-must also fit the vertex limit. Inputs and stored Float32 geometry must remain
-finite. Final vertex counts up to 65,536 use Uint16 indices, otherwise Uint32;
-`sourceVertex` always uses Uint32.
+`createRevolvedSurfaceMesh(options)` accepts either an array of at least two
+`sections`, or `sectionAt(s)` with integer `subdivisions >= 1` (sampled
+once per row at `s = row / subdivisions`). A `RevolvedSection` supplies
+`height`, `halfWidth`, `positiveDepth` toward +Z, `negativeDepth`
+toward -Z, and optional XZ `center` (default `[0, 0]`). Angle zero points
+along +Z and `pi/2` along +X. The polar superellipse `power` defaults to
+two and must be finite and at least two. All non-pole half-extents must be
+positive and survive Float32 storage; all-zero poles are allowed only at
+end rows. Adjacent fully collapsed rows and non-pole zero-area faces reject.
+
+The default angular domain is `{ kind: 'closed', seam: 0 }` with at least
+three segments. `{ kind: 'open', start, end }` accepts at least one segment
+and a finite positive span of at most `2*pi`; even a full-turn open domain
+retains separate boundaries. Closed domains duplicate the first angular
+column at the seam and sample offsets only at unique columns. The callback
+angle is wrapped with `atan2(sin(angle), cos(angle))`; either signed-pi
+endpoint is possible. `radialOffset(s, theta)` and
+`axialOffset(s, theta)` add local radial and Y displacements and must be
+pure; closed offsets must be periodic. A negative displaced radius clamps
+to zero. No end caps are inferred.
+
+```ts
+import { createRevolvedSurfaceMesh } from 'strata-procedural/mesh';
+
+const mesh = createRevolvedSurfaceMesh({
+  sections: [
+    { height: 0, halfWidth: 0.3, positiveDepth: 0.2, negativeDepth: 0.28 },
+    { height: 1, halfWidth: 0.35, positiveDepth: 0.24, negativeDepth: 0.3 },
+  ],
+  segments: 24,
+  angular: { kind: 'open', start: -1.2, end: 1.2 },
+  uv: 'angular-length',
+});
+```
+
+`uv: 'normalized'` (default) writes `[column / segments, s]`; its closed
+seam ends at U = 1. `uv: 'angular-length'` writes the angular sweep offset from
+the domain start times the mean section half-extent, with displaced Y as V.
+Its U is continuous across the wrapped-angle branch cut, and a closed seam ends
+at `2*pi*meanExtent` instead of repeating U = 0. This is an approximation rather
+than exact ellipse arc length. `uv: 'wrapped-angular-length'` explicitly uses
+wrapped angle times mean extent and repeats the first seam UV; it can jump
+inside cells at ±pi and is only appropriate when that wrapped projection is
+intended. Callback angles and parameter provenance remain wrapped in every
+mode. `RevolvedSurfaceMesh.parameters` is an interleaved
+`Float64Array` of `[s, wrapped theta]` for each output vertex, including
+corner repairs, independent of the UV mode. Stored positions, normals and
+UVs use Float32; indices use Uint16 or Uint32. The constructor rejects
+inconsistent orientation across a shared patch edge, non-pole degenerate
+faces and positive-area faces lost to Float32 quantization. It can duplicate
+corners to give an incident face a compatible normal, so output vertex count
+and indices need not equal the original grid. Base grid work is bounded
+before callbacks to one million vertices and six million candidate indices;
+final repaired vertices and emitted indices are bounded again. This is a
+surface builder with radial orientation by default, not a hollow mesh, solid volume,
+collision, skinning or animation API. It is separate from
+`createRevolvedMesh`, whose existing closed profile/cap contract is unchanged.
+
+With optional `winding: 'forward' | 'reverse'`, the complete parameter grid uses
+one declared winding instead of radial inference. This supports folded meridians
+with coherent undersides that face toward the axis. Parameter-derived normals
+use `dP/dtheta` crossed with `dP/ds` for forward, and its negation for reverse.
+The corresponding base triangles are `[a, b, c]`, `[b, d, c]`, with `b` the
+next angular sample and `c` the next row; reverse swaps the last two corners.
+These triangles differ from the sheet constructor's forward convention.
+Generated normals
+follow the same global sign; stored-face corner repairs, pole and degeneracy
+checks, seam correspondence and allocation limits still apply. No per-face
+radial flipping, caps, containment or intersection detection is added. Omitting
+`winding` retains the radial orientation policy described above.
 
 ### UV analysis and reskinning
 
