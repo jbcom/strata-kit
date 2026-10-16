@@ -24,6 +24,16 @@ explicit seed
   -> optional Three.js geometry or React Three Fiber view
 ```
 
+## Injected periodic-field boundary
+
+The root/noise toroidal adapter maps two bounded phase coordinates into four
+scalar coordinates on independent circles and borrows one deterministic field
+callback. It preserves the raw finite output and original angular evaluation
+order. The caller owns field generation, seed, domain, remapping, octave recipes
+and texture/filter policy. No dependency, random stream, simulation or renderer
+state is introduced. Floating phase and callback continuity limit numerical seam
+behavior; this coordinate adapter cannot certify an entire material as seamless.
+
 ## Cell field boundary
 
 The root/noise jittered-cell field selects two distinct lattice identities with a

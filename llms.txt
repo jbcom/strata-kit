@@ -221,6 +221,15 @@ are part of the contract. No texture allocation, world state or material catalog
 Do not infer exact CPU/GPU boundary addressing or game visual acceptance from
 integer hash parity. See docs/API.md.
 
+## Injected periodic fields
+
+Root/noise `sampleToroidalField2D(sample4D,u,v,circumference)` maps unit-repeat
+coordinates to two independent 4D circle planes, with one borrowed deterministic
+callback and raw finite output. `ScalarField4D` is the callback type. Finite phases
+have absolute cap 2**20; circumference and radius must remain positive finite.
+No modulo, built-in RNG, remap, octave/texture/renderer state or exact numerical
+seam guarantee. Caller owns the field's seed, domain and continuity.
+
 ## Read next
 
 - [Visual acceptance](https://github.com/jbcom/strata-procedural/blob/main/docs/VISUAL-ACCEPTANCE.md):

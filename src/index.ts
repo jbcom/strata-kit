@@ -93,6 +93,8 @@ export {
   hexTilingGlsl,
 } from "./shaders.js";
 export type { Random, Seed } from "./noise.js";
+export { sampleToroidalField2D } from "./noise.js";
+export type { ScalarField4D } from "./noise.js";
 export { createSeededNoise, createSeededRandom, fractalNoise, seedToUint32 } from "./noise.js";
 export type { Vec3 } from "./sdf.js";
 export {

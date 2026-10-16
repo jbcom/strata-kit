@@ -180,6 +180,10 @@ try {
       import * as root from 'strata-procedural';
       import { createHexTileConfig, sampleHexTile2D } from 'strata-procedural/materials';
       import { hexTilingGlsl } from 'strata-procedural/shaders';
+      import { sampleToroidalField2D } from 'strata-procedural/noise';
+      assert.equal(typeof root.sampleToroidalField2D, 'function');
+      assert.equal(sampleToroidalField2D((x,y,z,w) => x + 2*z, 0, 0, 2*Math.PI), 3);
+      assert.equal(root.sampleToroidalField2D(() => -7, 0.1, -0.2, 2), -7);
       assert.equal(typeof root.createHexTileConfig, 'function');
       assert.equal(typeof root.sampleHexTile2D, 'function');
       assert.equal(root.hexTilingGlsl, hexTilingGlsl);
