@@ -295,6 +295,25 @@ The CPU and GLSL evaluators use the same maximum of eight knots.
 exact tangent frame of a curved, physically displaced surface. Consumers that change
 geometry need a curvature-aware path.
 
+For scalar data without supplied slopes, `createMonotoneCubicProfile(points)`
+builds an owned shape-preserving profile from 2–65,536 increasing coordinates.
+`sampleMonotoneCubicProfile(profile, coordinate)` returns value and analytic
+derivative. It uses secant slopes at the endpoints and weighted harmonic slopes
+inside. Internal joins are C1; the constant exterior extension is generally only
+C0. Exact endpoints report their interior one-sided derivative, while strictly
+outside samples return derivative zero. This CPU-only profile has a distinct
+data type and does not extend the eight-knot GLSL format.
+
+```ts
+import { createMonotoneCubicProfile, sampleMonotoneCubicProfile } from 'strata-procedural/surface-fields';
+const dimensions = createMonotoneCubicProfile([
+  { coordinate: 0, value: 1 },
+  { coordinate: 1, value: 2 },
+  { coordinate: 3, value: 6 },
+]);
+const { value, derivative } = sampleMonotoneCubicProfile(dimensions, 0.5);
+```
+
 ## Optional views
 
 ```ts
