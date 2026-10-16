@@ -602,7 +602,8 @@ const parameter = curveParameterAtArcLength(metric, metric.totalLength / 3);
 The deeply frozen result owns `range`, ordered `knots` of `{parameter, length}`,
 `totalLength`, `evaluations`, `observedLengthDefect`, and `maxProgressResidual`.
 Lengths strictly increase; parameters strictly advance in the declared direction.
-The represented metric is the sampled polyline with linear parameter progress
+Queries require a table returned by this constructor; manually forged table
+records are outside this contract. The represented metric is the sampled polyline with linear parameter progress
 within each retained edge. Both queries use binary search, bypass exact knots,
 clamp outside their respective domains, require finite queries, and call no
 callback. Forward/inverse table consistency does not certify true-curve accuracy.

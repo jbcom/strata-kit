@@ -152,6 +152,8 @@ class LeafHeap {
 export function createCurveArcLengthTable(
   options: CurveArcLengthTableOptions,
 ): CurveArcLengthTable {
+  if (!options || typeof options !== "object")
+    throw new Error(`${BUILD}: options must be a non-null object`);
   const { pointAt, range, tolerance, initialSegments = 8, maxEvaluations = 4097 } = options;
   if (typeof pointAt !== "function") throw new Error(`${BUILD}: pointAt must be callable`);
   if (!Array.isArray(range) || range.length !== 2)

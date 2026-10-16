@@ -389,9 +389,11 @@ describe("curve metric finite arithmetic and evaluation bounds", () => {
       ).toThrow();
     }
     expect(pointAt).not.toHaveBeenCalled();
-    expect(() =>
-      createCurveArcLengthTable(null as unknown as CurveArcLengthTableOptions),
-    ).toThrow();
+    for (const invalidOptions of [null, undefined, 3, "options"]) {
+      expect(() =>
+        createCurveArcLengthTable(invalidOptions as unknown as CurveArcLengthTableOptions),
+      ).toThrow(/createCurveArcLengthTable: options/);
+    }
     expect(() =>
       createCurveArcLengthTable({
         ...basic,
