@@ -4,6 +4,13 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      # 2026-10-17: TypeScript 7 removes the JS compiler API that tsup 9's bundled
+      # rollup-plugin-dts calls (`ts.parseJsonConfigFileContent is not a function`),
+      # so `pnpm build` cannot emit declarations. Stay on 6.x until tsup ships TS 7
+      # declaration support (issue #75); remove this entry then.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
