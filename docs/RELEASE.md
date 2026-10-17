@@ -26,12 +26,25 @@ gh release create v0.1.0 --draft --title "strata-kit 0.1.0" --notes-file CHANGEL
 ## Future trusted releases
 
 The canonical GitHub repository is now `jbcom/strata-procedural`, matching the
-npm package. Configure trusted publishing against that repository and `cd.yml`.
-The old title in the initial-release record above is historical, not a new release instruction.
+npm package. Configure the npm trusted publisher (package settings on npmjs.com) with
+owner `jbcom`, repository `strata-procedural`, workflow filename `release.yml` and no
+environment. The old title in the initial-release record above is historical, not a new release instruction.
 
-`.github/workflows/cd.yml` is the only publisher workflow. It runs only for a published GitHub release and is skipped unless the repository variable `NPM_TRUSTED_PUBLISHING_READY` is exactly `true`. Set that variable only after the owner has configured npm trusted publishing. The workflow validates the package, requires the release tag to match `package.json`, and refuses a version already present in npm before it reaches `npm publish --provenance`.
+`.github/workflows/release.yml` is the only release and publisher workflow. Release Please
+creates releases with `GITHUB_TOKEN`, and events created by that token never start other
+workflows, so the `npm` job lives in the same workflow and runs after the `release-please`
+job reports `release_created`. The `npm` job is skipped unless the repository variable
+`NPM_TRUSTED_PUBLISHING_READY` is exactly `true`; set it only after the trusted publisher is
+configured. The job checks out the release tag, runs `pnpm verify`, requires npm 11.5.1 or newer
+(OIDC support), requires the tag to match `package.json`, refuses a version already present in
+npm, and then runs `npm publish --access public --provenance` with `id-token: write`. No npm
+token is stored in the repository.
 
-This gate keeps the existing draft and any prematurely published release from issuing an npm publish before the trust relationship is ready. The next release remains pending that owner setup; do not merge or publish its Release Please PR yet.
+If a release was created while the variable was unset, run the Release workflow manually
+(`workflow_dispatch`) with `publish_tag` set to the existing tag, for example `v0.2.0`.
+
+This gate keeps a merged Release Please PR from issuing an npm publish before the trust
+relationship is ready. Do not merge a Release Please PR until the owner has decided to publish.
 
 ## Registry-consumer proof after publication
 
