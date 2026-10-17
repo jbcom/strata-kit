@@ -308,8 +308,8 @@ it("copies an affine field transform into independent field and normal uniforms"
   const expectedNormal = new Matrix3().getNormalMatrix(
     new Matrix4().set(2, 0, 0, 3, 0, 3, 0, 4, 0, 0, 4, 5, 0, 0, 0, 1),
   );
-  expect(matrixValues(inverse[0]!)).toEqual(matrixValues(expectedField));
-  expect(matrixValues(normal[0]!)).toEqual(matrixValues(expectedNormal));
+  expect(matrixValues(inverse[0])).toEqual(matrixValues(expectedField));
+  expect(matrixValues(normal[0])).toEqual(matrixValues(expectedNormal));
   material.dispose();
   input.dispose();
 });

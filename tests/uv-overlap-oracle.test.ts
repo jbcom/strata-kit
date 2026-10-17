@@ -33,8 +33,8 @@ function points(triangle: UvTriangle): Point[] {
 function twiceArea(polygon: readonly Point[]): number {
   let area = 0;
   for (let index = 0; index < polygon.length; index += 1) {
-    const current = polygon[index]!;
-    const next = polygon[(index + 1) % polygon.length]!;
+    const current = polygon[index];
+    const next = polygon[(index + 1) % polygon.length];
     area += current[0] * next[1] - current[1] * next[0];
   }
   return area;
@@ -62,12 +62,12 @@ function positiveIntersection(first: UvTriangle, second: UvTriangle): boolean {
   const winding = Math.sign(twiceArea(clip));
   if (winding === 0 || Math.abs(twiceArea(points(first))) < 2e-12) return false;
   for (let edge = 0; edge < 3 && polygon.length > 0; edge += 1) {
-    const start = clip[edge]!;
-    const end = clip[(edge + 1) % 3]!;
+    const start = clip[edge];
+    const end = clip[(edge + 1) % 3];
     const output: Point[] = [];
     for (let index = 0; index < polygon.length; index += 1) {
-      const current = polygon[index]!;
-      const previous = polygon[(index + polygon.length - 1) % polygon.length]!;
+      const current = polygon[index];
+      const previous = polygon[(index + polygon.length - 1) % polygon.length];
       const currentInside = cross(start, end, current) * winding >= 0;
       const previousInside = cross(start, end, previous) * winding >= 0;
       if (currentInside !== previousInside)
@@ -84,7 +84,7 @@ function bruteOverlapFraction(triangles: readonly UvTriangle[]): number {
   const overlapping = new Set<number>();
   for (let left = 0; left < storedTriangles.length; left += 1)
     for (let right = left + 1; right < storedTriangles.length; right += 1)
-      if (positiveIntersection(storedTriangles[left]!, storedTriangles[right]!)) {
+      if (positiveIntersection(storedTriangles[left], storedTriangles[right])) {
         overlapping.add(left);
         overlapping.add(right);
       }

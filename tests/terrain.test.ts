@@ -36,7 +36,7 @@ describe("seeded terrain fields", () => {
     ]) {
       expect(createSeededTerrainField({ seed, biomes }).heightAt(2, 0)).toBe(expected);
       const tie = createSeededTerrainField({ seed, biomes }).heightAt(1.5, 0);
-      expect(tie).toBe(createSeededTerrainField({ seed, biomes: [biomes[0]!] }).heightAt(1.5, 0));
+      expect(tie).toBe(createSeededTerrainField({ seed, biomes: [biomes[0]] }).heightAt(1.5, 0));
     }
   });
 

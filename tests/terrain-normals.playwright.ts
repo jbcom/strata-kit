@@ -79,7 +79,7 @@ function hashesForCapture(capture: Record<View, ViewCapture>): Record<View, stri
     (Object.keys(capture) as View[]).map((view) => [
       view,
       createHash("sha256")
-        .update(Buffer.from(capture[view].image.split(",")[1]!, "base64"))
+        .update(Buffer.from(capture[view].image.split(",")[1], "base64"))
         .digest("hex"),
     ]),
   ) as Record<View, string>;
@@ -307,7 +307,7 @@ test("heightfield incident normal fallback renders, rejects old normals, and res
       for (const view of ["normal", "lit"] as const) {
         await writeFile(
           path.join(directory, `${view}-${state}.png`),
-          Buffer.from(result[state][view].image.split(",")[1]!, "base64"),
+          Buffer.from(result[state][view].image.split(",")[1], "base64"),
         );
       }
     }

@@ -143,7 +143,7 @@ test("sheet incident normals reject visible defects and restore exact buffers", 
       );
       const hashes: Record<string, string> = {};
       for (const mode of ["baseline", "fault", "restored"] as const) {
-        const bytes = Buffer.from(result[mode].split(",")[1]!, "base64");
+        const bytes = Buffer.from(result[mode].split(",")[1], "base64");
         await writeFile(path.join(directory, `${kind}-${mode}.png`), bytes);
         hashes[mode] = createHash("sha256").update(bytes).digest("hex");
       }

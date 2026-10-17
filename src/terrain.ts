@@ -109,7 +109,7 @@ function requireBiomes(biomes: readonly Biome[]): void {
 }
 
 function closestBiome(x: number, z: number, biomes: readonly Biome[]): Biome {
-  let closest = biomes[0]!;
+  let closest = biomes[0];
   if (biomes.length === 1) return closest;
   let closestDistance = Infinity;
   let requiresStableRanking = false;
@@ -238,9 +238,9 @@ function retainHeightfieldRows(
   upper: HeightfieldCoordinateKey,
 ): number {
   let removedSamples = 0;
-  for (const key of rows.keys()) {
+  for (const [key, row] of rows) {
     if (key !== lower && key !== current && key !== upper) {
-      removedSamples += rows.get(key)!.size;
+      removedSamples += row.size;
       rows.delete(key);
     }
   }
@@ -364,7 +364,8 @@ export function createSeededTerrainField(options: SeededTerrainOptions): SeededT
           cachedHeightRows.set(zKey, row);
         }
         const cached = row.get(xKey);
-        if (cached !== undefined || row.has(xKey)) return cached!;
+        // The row only stores numbers, so a miss is exactly `undefined`.
+        if (cached !== undefined) return cached;
 
         // Keep the optimization's retained memory fixed even for a permitted
         // wide, shallow heightfield. Direct sampling retains the exact request.
@@ -464,15 +465,15 @@ function correctHeightfieldIncidentNormals(
 ): void {
   let repairs: Uint8Array | undefined;
   for (let offset = 0; offset < indices.length; offset += 3) {
-    const a = indices[offset]! * 3;
-    const b = indices[offset + 1]! * 3;
-    const c = indices[offset + 2]! * 3;
-    const abx = positions[b]! - positions[a]!;
-    const aby = positions[b + 1]! - positions[a + 1]!;
-    const abz = positions[b + 2]! - positions[a + 2]!;
-    const acx = positions[c]! - positions[a]!;
-    const acy = positions[c + 1]! - positions[a + 1]!;
-    const acz = positions[c + 2]! - positions[a + 2]!;
+    const a = indices[offset] * 3;
+    const b = indices[offset + 1] * 3;
+    const c = indices[offset + 2] * 3;
+    const abx = positions[b] - positions[a];
+    const aby = positions[b + 1] - positions[a + 1];
+    const abz = positions[b + 2] - positions[a + 2];
+    const acx = positions[c] - positions[a];
+    const acy = positions[c + 1] - positions[a + 1];
+    const acz = positions[c + 2] - positions[a + 2];
     const crossX = aby * acz - abz * acy;
     const crossY = abz * acx - abx * acz;
     const crossZ = abx * acy - aby * acx;
@@ -490,12 +491,12 @@ function correctHeightfieldIncidentNormals(
     const normalY = scaledY * inverseLength;
     const normalZ = scaledZ * inverseLength;
     for (let corner = 0; corner < 3; corner += 1) {
-      const vertex = indices[offset + corner]!;
+      const vertex = indices[offset + corner];
       const normalOffset = vertex * 3;
       const alignment =
-        normalX * normals[normalOffset]! +
-        normalY * normals[normalOffset + 1]! +
-        normalZ * normals[normalOffset + 2]!;
+        normalX * normals[normalOffset] +
+        normalY * normals[normalOffset + 1] +
+        normalZ * normals[normalOffset + 2];
       if (!(alignment > 0)) {
         if (!repairs) repairs = new Uint8Array(normals.length / 3);
         repairs[vertex] = 1;
