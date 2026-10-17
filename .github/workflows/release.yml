@@ -1,9 +1,22 @@
 name: Release
 
+# One workflow owns both release creation and npm publication, so the npm trusted
+# publisher is configured against exactly one file: release.yml. Release Please
+# creates its release with GITHUB_TOKEN, and events created by GITHUB_TOKEN never
+# start other workflows, so publication cannot live in a separate
+# `on: release` workflow.
+
 on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      publish_tag:
+        description: >-
+          Existing release tag (for example v0.2.0) to publish to npm. Use only after
+          the trusted publisher is configured and NPM_TRUSTED_PUBLISHING_READY is true.
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -14,9 +27,56 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
-      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+      - id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+  npm:
+    needs: release-please
+    # The repository variable is set only after npm trusted publishing is
+    # configured for this repository and workflow. Until then a merged release PR
+    # creates the tag and GitHub release but never reaches `npm publish`.
+    if: >-
+      vars.NPM_TRUSTED_PUBLISHING_READY == 'true' &&
+      (needs.release-please.outputs.release_created == 'true' || inputs.publish_tag != '')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      RELEASE_TAG: ${{ needs.release-please.outputs.tag_name || inputs.publish_tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+      - uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
+        with:
+          cache: false
+      - run: mise exec -- pnpm install --frozen-lockfile
+      - run: mise exec -- pnpm verify
+      - name: Require npm CLI with trusted-publishing support and refuse a mismatched or published version
+        run: |
+          mise exec -- node -e '
+            const [a, b, c] = process.argv[1].split(".").map(Number);
+            if (a < 11 || (a === 11 && (b < 5 || (b === 5 && c < 1)))) {
+              console.error("npm " + process.argv[1] + " cannot use OIDC trusted publishing (needs >= 11.5.1)");
+              process.exit(1);
+            }' "$(mise exec -- npm --version)"
+          package_name="$(mise exec -- node -p 'require("./package.json").name')"
+          package_version="$(mise exec -- node -p 'require("./package.json").version')"
+          if [ "v${package_version}" != "${RELEASE_TAG}" ]; then
+            echo "Release tag ${RELEASE_TAG} does not match package version v${package_version}."
+            exit 1
+          fi
+          if mise exec -- npm view "${package_name}@${package_version}" version --userconfig /dev/null --prefer-online >/dev/null 2>&1; then
+            echo "${package_name}@${package_version} is already present in npm; refusing to publish it again."
+            exit 1
+          fi
+      - run: mise exec -- npm publish --access public --provenance
