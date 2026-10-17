@@ -1,6 +1,6 @@
 {
   "name": "strata-procedural",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "packageManager": "pnpm@12.11.2",
   "description": "Seeded procedural layers, terrain, surface fields and material bakes with optional Three.js adapters",
   "type": "module",
