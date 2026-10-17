@@ -68,7 +68,7 @@ built artifact in an isolated checkout:
 node scripts/benchmark-procedural.mjs \
   --revision <source-revision> \
   --module-root <built-artifact-directory> \
-  --output .agent-state/performance/report.json
+  --output <ignored-report>.json
 ```
 
 The script relaunches itself with exposed GC, performs a warm-up, and records
