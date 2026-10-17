@@ -163,7 +163,7 @@ describe("neutral procedural meshes", () => {
     for (let triangle = 0; triangle < mesh.indices.length / 3; triangle += 1) {
       const face = faceNormal(mesh, triangle);
       for (let corner = 0; corner < 3; corner += 1) {
-        expect(dot(face, normal(mesh, mesh.indices[triangle * 3 + corner]!))).toBeGreaterThan(0);
+        expect(dot(face, normal(mesh, mesh.indices[triangle * 3 + corner]))).toBeGreaterThan(0);
       }
     }
     expectFiniteUnitNormals(mesh);
@@ -183,7 +183,7 @@ describe("neutral procedural meshes", () => {
     for (let triangle = 0; triangle < mesh.indices.length / 3; triangle += 1) {
       const face = faceNormal(mesh, triangle);
       for (let corner = 0; corner < 3; corner += 1) {
-        expect(dot(face, normal(mesh, mesh.indices[triangle * 3 + corner]!))).toBeGreaterThan(0);
+        expect(dot(face, normal(mesh, mesh.indices[triangle * 3 + corner]))).toBeGreaterThan(0);
       }
     }
     expectFiniteUnitNormals(mesh);

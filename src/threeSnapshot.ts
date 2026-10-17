@@ -60,7 +60,7 @@ function attribute(value: Attribute | undefined, size: number, name: string): At
 
 function preparedMatrix(source: Matrix4): Matrix4 {
   const e = source?.elements;
-  if (!e || e.length !== 16 || !e.every(Number.isFinite)) fail("prepared matrices must be finite");
+  if (e?.length !== 16 || !e.every(Number.isFinite)) fail("prepared matrices must be finite");
   if (e[3] !== 0 || e[7] !== 0 || e[11] !== 0 || e[15] !== 1) {
     fail("prepared matrices must be affine");
   }
@@ -93,15 +93,15 @@ function triangles(
 ): void {
   const sums = generateNormals ? new Float64Array(positions.length) : undefined;
   for (let t = 0; t < indices.length; t += 3) {
-    const a = indices[t]! * 3,
-      b = indices[t + 1]! * 3,
-      c = indices[t + 2]! * 3;
-    const abx = positions[b]! - positions[a]!,
-      aby = positions[b + 1]! - positions[a + 1]!,
-      abz = positions[b + 2]! - positions[a + 2]!;
-    const acx = positions[c]! - positions[a]!,
-      acy = positions[c + 1]! - positions[a + 1]!,
-      acz = positions[c + 2]! - positions[a + 2]!;
+    const a = indices[t] * 3,
+      b = indices[t + 1] * 3,
+      c = indices[t + 2] * 3;
+    const abx = positions[b] - positions[a],
+      aby = positions[b + 1] - positions[a + 1],
+      abz = positions[b + 2] - positions[a + 2];
+    const acx = positions[c] - positions[a],
+      acy = positions[c + 1] - positions[a + 1],
+      acz = positions[c + 2] - positions[a + 2];
     const x = aby * acz - abz * acy,
       y = abz * acx - abx * acz,
       z = abx * acy - aby * acx;
@@ -110,15 +110,15 @@ function triangles(
       fail("stored triangles must have finite nonzero area");
     if (sums) {
       for (const corner of [a, b, c]) {
-        sums[corner] = sums[corner]! + x;
-        sums[corner + 1] = sums[corner + 1]! + y;
-        sums[corner + 2] = sums[corner + 2]! + z;
+        sums[corner] = sums[corner] + x;
+        sums[corner + 1] = sums[corner + 1] + y;
+        sums[corner + 2] = sums[corner + 2] + z;
       }
     }
   }
   if (sums)
     for (let i = 0; i < sums.length; i += 3) {
-      normalized(normals, i, sums[i]!, sums[i + 1]!, sums[i + 2]!);
+      normalized(normals, i, sums[i], sums[i + 1], sums[i + 2]);
     }
 }
 
@@ -133,7 +133,7 @@ export function snapshotThreeStaticMeshes(
   root: Object3D,
   options: SnapshotThreeStaticMeshesOptions = {},
 ): ThreeStaticMeshSnapshot[] {
-  if (!root || root.isObject3D !== true) fail("root must be an Object3D");
+  if (root?.isObject3D !== true) fail("root must be an Object3D");
   if (!options || typeof options !== "object") fail("options must be an object");
   const space = options.space ?? "root";
   if (space !== "root" && space !== "world") fail("space must be root or world");
@@ -151,13 +151,13 @@ export function snapshotThreeStaticMeshes(
     entriesTotal = 0;
   while (stack.length) {
     const node = stack.pop() as Flags;
-    if (!node || node.isObject3D !== true || seen.has(node))
+    if (node?.isObject3D !== true || seen.has(node))
       fail("hierarchy must be an Object3D tree");
     seen.add(node);
     if (!Array.isArray(node.children)) fail("hierarchy children must be an array");
     scheduled += node.children.length;
     if (scheduled > 100_000) fail("hierarchy node count exceeds 100000");
-    for (let i = node.children.length - 1; i >= 0; i -= 1) stack.push(node.children[i]!);
+    for (let i = node.children.length - 1; i >= 0; i -= 1) stack.push(node.children[i]);
     if (
       node.isSkinnedMesh ||
       node.isInstancedMesh ||
@@ -171,7 +171,7 @@ export function snapshotThreeStaticMeshes(
     if (!node.isMesh) continue;
     const mesh = node as Mesh,
       geometry = mesh.geometry;
-    if (!geometry || !geometry.isBufferGeometry) fail("mesh must have a BufferGeometry");
+    if (!geometry?.isBufferGeometry) fail("mesh must have a BufferGeometry");
     if ("isInstancedBufferGeometry" in geometry && geometry.isInstancedBufferGeometry) {
       fail("instanced geometry is unsupported");
     }
@@ -246,8 +246,8 @@ export function snapshotThreeStaticMeshes(
     }
     if (determinant < 0)
       for (let i = 0; i < indices.length; i += 3) {
-        const b = indices[i + 1]!;
-        indices[i + 1] = indices[i + 2]!;
+        const b = indices[i + 1];
+        indices[i + 1] = indices[i + 2];
         indices[i + 2] = b;
       }
     triangles(positions, indices, normals, !part.normal);

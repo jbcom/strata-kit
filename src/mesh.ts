@@ -139,15 +139,15 @@ function requireNonDegenerateStoredTriangles(
   mesh: ProceduralMesh,
 ): ProceduralMesh {
   for (let offset = 0; offset < mesh.indices.length; offset += 3) {
-    const a = mesh.indices[offset]! * 3;
-    const b = mesh.indices[offset + 1]! * 3;
-    const c = mesh.indices[offset + 2]! * 3;
-    const abx = mesh.positions[b]! - mesh.positions[a]!;
-    const aby = mesh.positions[b + 1]! - mesh.positions[a + 1]!;
-    const abz = mesh.positions[b + 2]! - mesh.positions[a + 2]!;
-    const acx = mesh.positions[c]! - mesh.positions[a]!;
-    const acy = mesh.positions[c + 1]! - mesh.positions[a + 1]!;
-    const acz = mesh.positions[c + 2]! - mesh.positions[a + 2]!;
+    const a = mesh.indices[offset] * 3;
+    const b = mesh.indices[offset + 1] * 3;
+    const c = mesh.indices[offset + 2] * 3;
+    const abx = mesh.positions[b] - mesh.positions[a];
+    const aby = mesh.positions[b + 1] - mesh.positions[a + 1];
+    const abz = mesh.positions[b + 2] - mesh.positions[a + 2];
+    const acx = mesh.positions[c] - mesh.positions[a];
+    const acy = mesh.positions[c + 1] - mesh.positions[a + 1];
+    const acz = mesh.positions[c + 2] - mesh.positions[a + 2];
     const crossX = aby * acz - abz * acy;
     const crossY = abz * acx - abx * acz;
     const crossZ = abx * acy - aby * acx;
@@ -231,22 +231,22 @@ export function createRevolvedMesh(options: RevolvedMeshOptions): ProceduralMesh
   let sideIndices = 0;
   let hasPositiveRadius = false;
   for (let index = 0; index < profile.length; index += 1) {
-    const point = profile[index]!;
+    const point = profile[index];
     requireNonNegativeFinite(operation, `profile[${index}].radius`, point.radius);
     if (point.radius > 0) {
       requireRepresentablePositiveFloat32(operation, `profile[${index}].radius`, point.radius);
       hasPositiveRadius = true;
     }
     requireFloat32(operation, `profile[${index}].height`, point.height);
-    if (index > 0 && point.height <= profile[index - 1]!.height) {
+    if (index > 0 && point.height <= profile[index - 1].height) {
       throw new Error(`${operation}: profile heights must be strictly increasing`);
     }
   }
   if (!hasPositiveRadius)
     throw new Error(`${operation}: profile must contain at least one positive radius`);
   for (let index = 0; index < profile.length - 1; index += 1) {
-    const lower = profile[index]!;
-    const upper = profile[index + 1]!;
+    const lower = profile[index];
+    const upper = profile[index + 1];
     segmentSlopes[index] = (upper.radius - lower.radius) / (upper.height - lower.height);
     if (lower.radius === 0 && upper.radius === 0) {
       throw new Error(`${operation}: profile cannot contain adjacent zero-radius points`);
@@ -259,14 +259,14 @@ export function createRevolvedMesh(options: RevolvedMeshOptions): ProceduralMesh
   const splitRows = new Array<boolean>(profile.length).fill(false);
   let splitCount = 0;
   for (let row = 1; row < profile.length - 1; row += 1) {
-    if (1 + segmentSlopes[row - 1]! * segmentSlopes[row]! < 0) {
+    if (1 + segmentSlopes[row - 1] * segmentSlopes[row] < 0) {
       splitRows[row] = true;
       splitCount += 1;
     }
   }
 
-  const firstCap = caps && profile[0]!.radius > 0;
-  const lastCap = caps && profile[profile.length - 1]!.radius > 0;
+  const firstCap = caps && profile[0].radius > 0;
+  const lastCap = caps && profile[profile.length - 1].radius > 0;
   const capVertices = (firstCap ? segments + 2 : 0) + (lastCap ? segments + 2 : 0);
   const capIndices = (firstCap ? segments * 3 : 0) + (lastCap ? segments * 3 : 0);
   const baseSideVertices = profile.length * ringSize;
@@ -288,7 +288,7 @@ export function createRevolvedMesh(options: RevolvedMeshOptions): ProceduralMesh
   }
 
   const addSideRing = (row: number, ring: number, slope: number): void => {
-    const point = profile[row]!;
+    const point = profile[row];
     for (let column = 0; column <= segments; column += 1) {
       const vertex = ring + column;
       const theta = column === segments ? 0 : (column / segments) * TAU;
@@ -308,27 +308,27 @@ export function createRevolvedMesh(options: RevolvedMeshOptions): ProceduralMesh
   };
   for (let row = 0; row < profile.length; row += 1) {
     if (splitRows[row]) {
-      addSideRing(row, incomingRings[row]!, segmentSlopes[row - 1]!);
-      addSideRing(row, outgoingRings[row]!, segmentSlopes[row]!);
+      addSideRing(row, incomingRings[row], segmentSlopes[row - 1]);
+      addSideRing(row, outgoingRings[row], segmentSlopes[row]);
       continue;
     }
-    const previous = profile[Math.max(0, row - 1)]!;
-    const next = profile[Math.min(profile.length - 1, row + 1)]!;
+    const previous = profile[Math.max(0, row - 1)];
+    const next = profile[Math.min(profile.length - 1, row + 1)];
     addSideRing(
       row,
-      incomingRings[row]!,
+      incomingRings[row],
       (next.radius - previous.radius) / (next.height - previous.height),
     );
   }
 
   let indexCursor = 0;
   for (let row = 0; row < profile.length - 1; row += 1) {
-    const lower = profile[row]!;
-    const upper = profile[row + 1]!;
+    const lower = profile[row];
+    const upper = profile[row + 1];
     for (let column = 0; column < segments; column += 1) {
-      const lowerCurrent = outgoingRings[row]! + column;
+      const lowerCurrent = outgoingRings[row] + column;
       const lowerNext = lowerCurrent + 1;
-      const upperCurrent = incomingRings[row + 1]! + column;
+      const upperCurrent = incomingRings[row + 1] + column;
       const upperNext = upperCurrent + 1;
       if (lower.radius !== 0) {
         mesh.indices[indexCursor++] = lowerCurrent;
@@ -345,7 +345,7 @@ export function createRevolvedMesh(options: RevolvedMeshOptions): ProceduralMesh
 
   let vertexCursor = sideVertices;
   const addCap = (row: number, direction: -1 | 1): void => {
-    const point = profile[row]!;
+    const point = profile[row];
     const center = vertexCursor++;
     setPosition(mesh.positions, center, 0, point.height, 0, operation);
     setNormal(mesh.normals, center, 0, direction, 0);
@@ -396,7 +396,7 @@ export function createSweptMesh(options: SweptMeshOptions): ProceduralMesh {
   if (path.length < 2) throw new Error(`${operation}: path must contain at least two points`);
   requirePositiveInteger(operation, "radialSegments", radialSegments, 3);
   for (let index = 0; index < path.length; index += 1)
-    requireFinitePoint(operation, `path[${index}]`, path[index]!);
+    requireFinitePoint(operation, `path[${index}]`, path[index]);
 
   let sideVertices = path.length * (radialSegments + 1);
   const capVertices = caps ? 2 * (radialSegments + 2) : 0;
@@ -407,8 +407,8 @@ export function createSweptMesh(options: SweptMeshOptions): ProceduralMesh {
   const lengthAt = new Float64Array(path.length);
   const segmentTangents = new Float64Array((path.length - 1) * 3);
   for (let index = 0; index < path.length - 1; index += 1) {
-    const start = path[index]!;
-    const end = path[index + 1]!;
+    const start = path[index];
+    const end = path[index + 1];
     const dx = end.x - start.x;
     const dy = end.y - start.y;
     const dz = end.z - start.z;
@@ -416,13 +416,13 @@ export function createSweptMesh(options: SweptMeshOptions): ProceduralMesh {
     if (!Number.isFinite(length) || length === 0) {
       throw new Error(`${operation}: path contains consecutive identical points`);
     }
-    lengthAt[index + 1] = lengthAt[index]! + length;
+    lengthAt[index + 1] = lengthAt[index] + length;
     const offset = index * 3;
     segmentTangents[offset] = dx / length;
     segmentTangents[offset + 1] = dy / length;
     segmentTangents[offset + 2] = dz / length;
   }
-  const totalLength = lengthAt[path.length - 1]!;
+  const totalLength = lengthAt[path.length - 1];
   if (!Number.isFinite(totalLength) || totalLength === 0)
     throw new Error(`${operation}: path length must be finite`);
 
@@ -431,23 +431,23 @@ export function createSweptMesh(options: SweptMeshOptions): ProceduralMesh {
     const target = index * 3;
     if (index === 0 || index === path.length - 1) {
       const source = (index === 0 ? 0 : index - 1) * 3;
-      tangents[target] = segmentTangents[source]!;
-      tangents[target + 1] = segmentTangents[source + 1]!;
-      tangents[target + 2] = segmentTangents[source + 2]!;
+      tangents[target] = segmentTangents[source];
+      tangents[target + 1] = segmentTangents[source + 1];
+      tangents[target + 2] = segmentTangents[source + 2];
       continue;
     }
     const previous = (index - 1) * 3;
     const next = index * 3;
     const dot =
-      segmentTangents[previous]! * segmentTangents[next]! +
-      segmentTangents[previous + 1]! * segmentTangents[next + 1]! +
-      segmentTangents[previous + 2]! * segmentTangents[next + 2]!;
+      segmentTangents[previous] * segmentTangents[next] +
+      segmentTangents[previous + 1] * segmentTangents[next + 1] +
+      segmentTangents[previous + 2] * segmentTangents[next + 2];
     if (dot <= -1 + 1e-12)
       throw new Error(`${operation}: path contains reversing consecutive tangents`);
     const tangent = normalized(
-      segmentTangents[previous]! + segmentTangents[next]!,
-      segmentTangents[previous + 1]! + segmentTangents[next + 1]!,
-      segmentTangents[previous + 2]! + segmentTangents[next + 2]!,
+      segmentTangents[previous] + segmentTangents[next],
+      segmentTangents[previous + 1] + segmentTangents[next + 1],
+      segmentTangents[previous + 2] + segmentTangents[next + 2],
       operation,
     );
     tangents[target] = tangent[0];
@@ -457,7 +457,7 @@ export function createSweptMesh(options: SweptMeshOptions): ProceduralMesh {
 
   const radii = new Float64Array(path.length);
   for (let index = 0; index < path.length; index += 1) {
-    const t = lengthAt[index]! / totalLength;
+    const t = lengthAt[index] / totalLength;
     const value = typeof radius === "function" ? radius(t) : radius;
     if (!Number.isFinite(value) || value <= 0) {
       throw new Error(`${operation}: radius(t) must return a positive finite number`);
@@ -476,8 +476,8 @@ export function createSweptMesh(options: SweptMeshOptions): ProceduralMesh {
     incomingRings[row] = row * ringSize;
     outgoingRings[row] = row * ringSize;
     if (row === 0 || row === path.length - 1) continue;
-    const before = (radii[row]! - radii[row - 1]!) / (lengthAt[row]! - lengthAt[row - 1]!);
-    const after = (radii[row + 1]! - radii[row]!) / (lengthAt[row + 1]! - lengthAt[row]!);
+    const before = (radii[row] - radii[row - 1]) / (lengthAt[row] - lengthAt[row - 1]);
+    const after = (radii[row + 1] - radii[row]) / (lengthAt[row + 1] - lengthAt[row]);
     if (1 + before * after < 0) {
       outgoingRings[row] = sideVertices;
       sideVertices += ringSize;
@@ -487,9 +487,9 @@ export function createSweptMesh(options: SweptMeshOptions): ProceduralMesh {
 
   const transportedNormals = new Float64Array(path.length * 3);
   const binormals = new Float64Array(path.length * 3);
-  const tx = tangents[0]!;
-  const ty = tangents[1]!;
-  const tz = tangents[2]!;
+  const tx = tangents[0];
+  const ty = tangents[1];
+  const tz = tangents[2];
   const cardinal =
     Math.abs(tx) <= Math.abs(ty) && Math.abs(tx) <= Math.abs(tz)
       ? [1, 0, 0]
@@ -497,24 +497,24 @@ export function createSweptMesh(options: SweptMeshOptions): ProceduralMesh {
         ? [0, 1, 0]
         : [0, 0, 1];
   let frameNormal = normalized(
-    cardinal[0]! - tx * cardinal[0]!,
-    cardinal[1]! - ty * cardinal[1]!,
-    cardinal[2]! - tz * cardinal[2]!,
+    cardinal[0] - tx * cardinal[0],
+    cardinal[1] - ty * cardinal[1],
+    cardinal[2] - tz * cardinal[2],
     operation,
   );
   for (let index = 0; index < path.length; index += 1) {
     const offset = index * 3;
     const currentTangent: [number, number, number] = [
-      tangents[offset]!,
-      tangents[offset + 1]!,
-      tangents[offset + 2]!,
+      tangents[offset],
+      tangents[offset + 1],
+      tangents[offset + 2],
     ];
     if (index > 0) {
       const previous = offset - 3;
       const previousTangent: [number, number, number] = [
-        tangents[previous]!,
-        tangents[previous + 1]!,
-        tangents[previous + 2]!,
+        tangents[previous],
+        tangents[previous + 1],
+        tangents[previous + 2],
       ];
       const axisX = previousTangent[1] * currentTangent[2] - previousTangent[2] * currentTangent[1];
       const axisY = previousTangent[2] * currentTangent[0] - previousTangent[0] * currentTangent[2];
@@ -570,7 +570,7 @@ export function createSweptMesh(options: SweptMeshOptions): ProceduralMesh {
 
   const mesh = allocateMesh(sideVertices + capVertices, sideIndices + capIndices);
   for (let row = 0; row < path.length; row += 1) {
-    const center = path[row]!;
+    const center = path[row];
     const offset = row * 3;
     for (let column = 0; column <= radialSegments; column += 1) {
       const vertex = row * (radialSegments + 1) + column;
@@ -580,14 +580,14 @@ export function createSweptMesh(options: SweptMeshOptions): ProceduralMesh {
       setPosition(
         mesh.positions,
         vertex,
-        center.x + radii[row]! * (transportedNormals[offset]! * cosine + binormals[offset]! * sine),
+        center.x + radii[row] * (transportedNormals[offset] * cosine + binormals[offset] * sine),
         center.y +
-          radii[row]! * (transportedNormals[offset + 1]! * cosine + binormals[offset + 1]! * sine),
+          radii[row] * (transportedNormals[offset + 1] * cosine + binormals[offset + 1] * sine),
         center.z +
-          radii[row]! * (transportedNormals[offset + 2]! * cosine + binormals[offset + 2]! * sine),
+          radii[row] * (transportedNormals[offset + 2] * cosine + binormals[offset + 2] * sine),
         operation,
       );
-      setUv(mesh.uvs, vertex, column / radialSegments, lengthAt[row]! / totalLength);
+      setUv(mesh.uvs, vertex, column / radialSegments, lengthAt[row] / totalLength);
     }
   }
 
@@ -609,17 +609,14 @@ export function createSweptMesh(options: SweptMeshOptions): ProceduralMesh {
       const radialOffsetAfter = radialAfter * 3;
       const longitudinalOffsetBefore = longitudinalBefore * 3;
       const longitudinalOffsetAfter = longitudinalAfter * 3;
-      const rx = mesh.positions[radialOffsetAfter]! - mesh.positions[radialOffsetBefore]!;
-      const ry = mesh.positions[radialOffsetAfter + 1]! - mesh.positions[radialOffsetBefore + 1]!;
-      const rz = mesh.positions[radialOffsetAfter + 2]! - mesh.positions[radialOffsetBefore + 2]!;
-      const lx =
-        mesh.positions[longitudinalOffsetAfter]! - mesh.positions[longitudinalOffsetBefore]!;
+      const rx = mesh.positions[radialOffsetAfter] - mesh.positions[radialOffsetBefore];
+      const ry = mesh.positions[radialOffsetAfter + 1] - mesh.positions[radialOffsetBefore + 1];
+      const rz = mesh.positions[radialOffsetAfter + 2] - mesh.positions[radialOffsetBefore + 2];
+      const lx = mesh.positions[longitudinalOffsetAfter] - mesh.positions[longitudinalOffsetBefore];
       const ly =
-        mesh.positions[longitudinalOffsetAfter + 1]! -
-        mesh.positions[longitudinalOffsetBefore + 1]!;
+        mesh.positions[longitudinalOffsetAfter + 1] - mesh.positions[longitudinalOffsetBefore + 1];
       const lz =
-        mesh.positions[longitudinalOffsetAfter + 2]! -
-        mesh.positions[longitudinalOffsetBefore + 2]!;
+        mesh.positions[longitudinalOffsetAfter + 2] - mesh.positions[longitudinalOffsetBefore + 2];
       const nx = ry * lz - rz * ly;
       const ny = rz * lx - rx * lz;
       const nz = rx * ly - ry * lx;
@@ -632,12 +629,12 @@ export function createSweptMesh(options: SweptMeshOptions): ProceduralMesh {
         setNormal(
           mesh.normals,
           current,
-          transportedNormals[frameOffset]! * Math.cos(theta) +
-            binormals[frameOffset]! * Math.sin(theta),
-          transportedNormals[frameOffset + 1]! * Math.cos(theta) +
-            binormals[frameOffset + 1]! * Math.sin(theta),
-          transportedNormals[frameOffset + 2]! * Math.cos(theta) +
-            binormals[frameOffset + 2]! * Math.sin(theta),
+          transportedNormals[frameOffset] * Math.cos(theta) +
+            binormals[frameOffset] * Math.sin(theta),
+          transportedNormals[frameOffset + 1] * Math.cos(theta) +
+            binormals[frameOffset + 1] * Math.sin(theta),
+          transportedNormals[frameOffset + 2] * Math.cos(theta) +
+            binormals[frameOffset + 2] * Math.sin(theta),
         );
       }
     }
@@ -646,8 +643,8 @@ export function createSweptMesh(options: SweptMeshOptions): ProceduralMesh {
     mesh.normals.set(mesh.normals.subarray(first * 3, first * 3 + 3), seam * 3);
   };
   for (let row = 0; row < path.length; row += 1) {
-    const incoming = incomingRings[row]!;
-    const outgoing = outgoingRings[row]!;
+    const incoming = incomingRings[row];
+    const outgoing = outgoingRings[row];
     const split = incoming !== outgoing;
     writeRingNormals(
       row,
@@ -668,9 +665,9 @@ export function createSweptMesh(options: SweptMeshOptions): ProceduralMesh {
   let indexCursor = 0;
   for (let row = 0; row < path.length - 1; row += 1) {
     for (let column = 0; column < radialSegments; column += 1) {
-      const lowerCurrent = outgoingRings[row]! + column;
+      const lowerCurrent = outgoingRings[row] + column;
       const lowerNext = lowerCurrent + 1;
-      const upperCurrent = incomingRings[row + 1]! + column;
+      const upperCurrent = incomingRings[row + 1] + column;
       const upperNext = upperCurrent + 1;
       mesh.indices[indexCursor++] = lowerCurrent;
       mesh.indices[indexCursor++] = lowerNext;
@@ -685,14 +682,14 @@ export function createSweptMesh(options: SweptMeshOptions): ProceduralMesh {
     const addCap = (row: number, direction: -1 | 1): void => {
       const frameOffset = row * 3;
       const center = vertexCursor;
-      const point = path[row]!;
+      const point = path[row];
       setPosition(mesh.positions, vertexCursor++, point.x, point.y, point.z, operation);
       setNormal(
         mesh.normals,
         center,
-        tangents[frameOffset]! * direction,
-        tangents[frameOffset + 1]! * direction,
-        tangents[frameOffset + 2]! * direction,
+        tangents[frameOffset] * direction,
+        tangents[frameOffset + 1] * direction,
+        tangents[frameOffset + 2] * direction,
       );
       setUv(mesh.uvs, center, 0.5, 0.5);
       const rim = vertexCursor;
@@ -702,17 +699,17 @@ export function createSweptMesh(options: SweptMeshOptions): ProceduralMesh {
         setPosition(
           mesh.positions,
           vertexCursor,
-          mesh.positions[sourceOffset]!,
-          mesh.positions[sourceOffset + 1]!,
-          mesh.positions[sourceOffset + 2]!,
+          mesh.positions[sourceOffset],
+          mesh.positions[sourceOffset + 1],
+          mesh.positions[sourceOffset + 2],
           operation,
         );
         setNormal(
           mesh.normals,
           vertexCursor,
-          tangents[frameOffset]! * direction,
-          tangents[frameOffset + 1]! * direction,
-          tangents[frameOffset + 2]! * direction,
+          tangents[frameOffset] * direction,
+          tangents[frameOffset + 1] * direction,
+          tangents[frameOffset + 2] * direction,
         );
         const theta = column === radialSegments ? 0 : (column / radialSegments) * TAU;
         setUv(mesh.uvs, vertexCursor++, 0.5 + Math.cos(theta) * 0.5, 0.5 + Math.sin(theta) * 0.5);
@@ -800,11 +797,11 @@ export function createSheetMesh(options: SheetMeshOptions): ProceduralMesh {
       const before = (previousRow * columns + column) * 3;
       const after = (nextRow * columns + column) * 3;
       const dhdx =
-        (mesh.positions[right + 1]! - mesh.positions[left + 1]!) /
-        (mesh.positions[right]! - mesh.positions[left]!);
+        (mesh.positions[right + 1] - mesh.positions[left + 1]) /
+        (mesh.positions[right] - mesh.positions[left]);
       const dhdz =
-        (mesh.positions[after + 1]! - mesh.positions[before + 1]!) /
-        (mesh.positions[after + 2]! - mesh.positions[before + 2]!);
+        (mesh.positions[after + 1] - mesh.positions[before + 1]) /
+        (mesh.positions[after + 2] - mesh.positions[before + 2]);
       setNormal(mesh.normals, row * columns + column, -dhdx, 1, -dhdz);
     }
   }
@@ -830,15 +827,15 @@ function correctSheetIncidentCorners(operation: string, mesh: ProceduralMesh): P
     visit: (offset: number, nx: number, ny: number, nz: number) => void,
   ) => {
     for (let offset = 0; offset < mesh.indices.length; offset += 3) {
-      const a = mesh.indices[offset]! * 3;
-      const b = mesh.indices[offset + 1]! * 3;
-      const c = mesh.indices[offset + 2]! * 3;
-      const abx = mesh.positions[b]! - mesh.positions[a]!;
-      const aby = mesh.positions[b + 1]! - mesh.positions[a + 1]!;
-      const abz = mesh.positions[b + 2]! - mesh.positions[a + 2]!;
-      const acx = mesh.positions[c]! - mesh.positions[a]!;
-      const acy = mesh.positions[c + 1]! - mesh.positions[a + 1]!;
-      const acz = mesh.positions[c + 2]! - mesh.positions[a + 2]!;
+      const a = mesh.indices[offset] * 3;
+      const b = mesh.indices[offset + 1] * 3;
+      const c = mesh.indices[offset + 2] * 3;
+      const abx = mesh.positions[b] - mesh.positions[a];
+      const aby = mesh.positions[b + 1] - mesh.positions[a + 1];
+      const abz = mesh.positions[b + 2] - mesh.positions[a + 2];
+      const acx = mesh.positions[c] - mesh.positions[a];
+      const acy = mesh.positions[c + 1] - mesh.positions[a + 1];
+      const acz = mesh.positions[c + 2] - mesh.positions[a + 2];
       const crossX = aby * acz - abz * acy;
       const crossY = abz * acx - abx * acz;
       const crossZ = abx * acy - aby * acx;
@@ -857,10 +854,10 @@ function correctSheetIncidentCorners(operation: string, mesh: ProceduralMesh): P
         ny = 0,
         nz = 0;
       for (let corner = 0; corner < 3; corner += 1) {
-        const vertex = mesh.indices[offset + corner]! * 3;
-        const xTerm = crossX * mesh.normals[vertex]!;
-        const yTerm = crossY * mesh.normals[vertex + 1]!;
-        const zTerm = crossZ * mesh.normals[vertex + 2]!;
+        const vertex = mesh.indices[offset + corner] * 3;
+        const xTerm = crossX * mesh.normals[vertex];
+        const yTerm = crossY * mesh.normals[vertex + 1];
+        const zTerm = crossZ * mesh.normals[vertex + 2];
         // A sum of nonnegative terms with a positive term is strictly outward.
         // Skip normalization only for that unambiguous case. Mixed signs still
         // use the exact normalized predicate, including near-tangent corners.
@@ -873,9 +870,7 @@ function correctSheetIncidentCorners(operation: string, mesh: ProceduralMesh): P
           nz = crossZ / length;
         }
         const alignment =
-          nx * mesh.normals[vertex]! +
-          ny * mesh.normals[vertex + 1]! +
-          nz * mesh.normals[vertex + 2]!;
+          nx * mesh.normals[vertex] + ny * mesh.normals[vertex + 1] + nz * mesh.normals[vertex + 2];
         if (alignment <= 0) visit(offset + corner, nx, ny, nz);
       }
     }
@@ -896,12 +891,12 @@ function correctSheetIncidentCorners(operation: string, mesh: ProceduralMesh): P
   result.indices.set(mesh.indices);
   let nextVertex = vertices;
   visitBehindCorners((offset, nx, ny, nz) => {
-    const original = mesh.indices[offset]!;
+    const original = mesh.indices[offset];
     for (let axis = 0; axis < 3; axis += 1) {
-      result.positions[nextVertex * 3 + axis] = mesh.positions[original * 3 + axis]!;
+      result.positions[nextVertex * 3 + axis] = mesh.positions[original * 3 + axis];
     }
-    result.uvs[nextVertex * 2] = mesh.uvs[original * 2]!;
-    result.uvs[nextVertex * 2 + 1] = mesh.uvs[original * 2 + 1]!;
+    result.uvs[nextVertex * 2] = mesh.uvs[original * 2];
+    result.uvs[nextVertex * 2 + 1] = mesh.uvs[original * 2 + 1];
     setNormal(result.normals, nextVertex, nx, ny, nz);
     result.indices[offset] = nextVertex;
     nextVertex += 1;

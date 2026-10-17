@@ -5,20 +5,20 @@ function expectOutwardCorners(mesh: ProceduralMesh): void {
   expect(mesh.indices.length % 3).toBe(0);
   for (let t = 0; t < mesh.indices.length; t += 3) {
     const [a, b, c] = Array.from(mesh.indices.slice(t, t + 3), (i) => i * 3);
-    const ab = [0, 1, 2].map((i) => mesh.positions[b + i]! - mesh.positions[a + i]!);
-    const ac = [0, 1, 2].map((i) => mesh.positions[c + i]! - mesh.positions[a + i]!);
+    const ab = [0, 1, 2].map((i) => mesh.positions[b + i] - mesh.positions[a + i]);
+    const ac = [0, 1, 2].map((i) => mesh.positions[c + i] - mesh.positions[a + i]);
     const face = [
-      ab[1]! * ac[2]! - ab[2]! * ac[1]!,
-      ab[2]! * ac[0]! - ab[0]! * ac[2]!,
-      ab[0]! * ac[1]! - ab[1]! * ac[0]!,
+      ab[1] * ac[2] - ab[2] * ac[1],
+      ab[2] * ac[0] - ab[0] * ac[2],
+      ab[0] * ac[1] - ab[1] * ac[0],
     ];
     const magnitude = Math.hypot(...face);
     expect(magnitude).toBeGreaterThan(0);
     for (const corner of [a, b, c]) {
-      const normal = [0, 1, 2].map((i) => mesh.normals[corner + i]!);
+      const normal = [0, 1, 2].map((i) => mesh.normals[corner + i]);
       expect(Math.hypot(...normal)).toBeCloseTo(1, 6);
       expect(
-        face.reduce((sum, value, i) => sum + (value / magnitude) * normal[i]!, 0),
+        face.reduce((sum, value, i) => sum + (value / magnitude) * normal[i], 0),
       ).toBeGreaterThan(0);
     }
   }
@@ -53,7 +53,7 @@ describe("sheet incident-corner normals", () => {
         columns,
         rows,
         heightAt: (u, v) =>
-          heights[Math.round(v * (rows - 1)) * columns + Math.round(u * (columns - 1))]!,
+          heights[Math.round(v * (rows - 1)) * columns + Math.round(u * (columns - 1))],
       });
       expectOutwardCorners(mesh);
     }

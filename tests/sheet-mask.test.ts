@@ -36,21 +36,18 @@ describe("sampled sheet cell selection", () => {
       for (let t = 0; t < mesh.indices.length; t += 3) {
         const corners = Array.from(mesh.indices.slice(t, t + 3), (i) => i * 3);
         const [a, b, c] = corners;
-        const ab = [0, 1, 2].map((i) => mesh.positions[b + i]! - mesh.positions[a + i]!);
-        const ac = [0, 1, 2].map((i) => mesh.positions[c + i]! - mesh.positions[a + i]!);
+        const ab = [0, 1, 2].map((i) => mesh.positions[b + i] - mesh.positions[a + i]);
+        const ac = [0, 1, 2].map((i) => mesh.positions[c + i] - mesh.positions[a + i]);
         const face = [
-          ab[1]! * ac[2]! - ab[2]! * ac[1]!,
-          ab[2]! * ac[0]! - ab[0]! * ac[2]!,
-          ab[0]! * ac[1]! - ab[1]! * ac[0]!,
+          ab[1] * ac[2] - ab[2] * ac[1],
+          ab[2] * ac[0] - ab[0] * ac[2],
+          ab[0] * ac[1] - ab[1] * ac[0],
         ];
         const magnitude = Math.hypot(...face);
         expect(magnitude).toBeGreaterThan(0);
         for (const corner of corners) {
           expect(
-            face.reduce(
-              (dot, value, i) => dot + (value / magnitude) * mesh.normals[corner + i]!,
-              0,
-            ),
+            face.reduce((dot, value, i) => dot + (value / magnitude) * mesh.normals[corner + i], 0),
           ).toBeGreaterThan(0);
         }
       }

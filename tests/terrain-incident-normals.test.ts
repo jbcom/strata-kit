@@ -49,15 +49,15 @@ function createLegacyHeightfield(
 function incidentDots(mesh: HeightfieldMesh): number[] {
   const result: number[] = [];
   for (let offset = 0; offset < mesh.indices.length; offset += 3) {
-    const a = mesh.indices[offset]! * 3;
-    const b = mesh.indices[offset + 1]! * 3;
-    const c = mesh.indices[offset + 2]! * 3;
-    const abx = mesh.positions[b]! - mesh.positions[a]!;
-    const aby = mesh.positions[b + 1]! - mesh.positions[a + 1]!;
-    const abz = mesh.positions[b + 2]! - mesh.positions[a + 2]!;
-    const acx = mesh.positions[c]! - mesh.positions[a]!;
-    const acy = mesh.positions[c + 1]! - mesh.positions[a + 1]!;
-    const acz = mesh.positions[c + 2]! - mesh.positions[a + 2]!;
+    const a = mesh.indices[offset] * 3;
+    const b = mesh.indices[offset + 1] * 3;
+    const c = mesh.indices[offset + 2] * 3;
+    const abx = mesh.positions[b] - mesh.positions[a];
+    const aby = mesh.positions[b + 1] - mesh.positions[a + 1];
+    const abz = mesh.positions[b + 2] - mesh.positions[a + 2];
+    const acx = mesh.positions[c] - mesh.positions[a];
+    const acy = mesh.positions[c + 1] - mesh.positions[a + 1];
+    const acz = mesh.positions[c + 2] - mesh.positions[a + 2];
     const crossX = aby * acz - abz * acy;
     const crossY = abz * acx - abx * acz;
     const crossZ = abx * acy - aby * acx;
@@ -65,11 +65,11 @@ function incidentDots(mesh: HeightfieldMesh): number[] {
     expect(scale).toBeGreaterThan(0);
     const inverseLength = 1 / Math.hypot(crossX / scale, crossY / scale, crossZ / scale);
     for (let corner = 0; corner < 3; corner += 1) {
-      const normal = mesh.indices[offset + corner]! * 3;
+      const normal = mesh.indices[offset + corner] * 3;
       result.push(
-        (crossX / scale) * inverseLength * mesh.normals[normal]! +
-          (crossY / scale) * inverseLength * mesh.normals[normal + 1]! +
-          (crossZ / scale) * inverseLength * mesh.normals[normal + 2]!,
+        (crossX / scale) * inverseLength * mesh.normals[normal] +
+          (crossY / scale) * inverseLength * mesh.normals[normal + 1] +
+          (crossZ / scale) * inverseLength * mesh.normals[normal + 2],
       );
     }
   }
