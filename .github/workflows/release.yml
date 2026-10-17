@@ -45,7 +45,8 @@ jobs:
     # creates the tag and GitHub release but never reaches `npm publish`.
     if: >-
       vars.NPM_TRUSTED_PUBLISHING_READY == 'true' &&
-      (needs.release-please.outputs.release_created == 'true' || inputs.publish_tag != '')
+      (needs.release-please.outputs.release_created == 'true' ||
+      (github.event_name == 'workflow_dispatch' && inputs.publish_tag != ''))
     runs-on: ubuntu-24.04
     permissions:
       contents: read
