@@ -112,6 +112,12 @@ bounded complete search. Callers choose each cell's appearance. See
 [cell field limits](docs/API.md#jittered-two-nearest-cell-fields) and [API details](docs/API.md) for noise
 seed semantics, finite-coordinate limits, mask contours, and normalization.
 
+`sampleToroidalField2D` from `strata-procedural/noise` maps unit-repeat coordinates
+to a caller-supplied deterministic 4D field. It keeps the generator, seed, output
+range and octave recipe under your control. See the
+[periodic-field contract](docs/API.md#periodic-coordinates-through-a-4d-field)
+for numerical seam and phase limits.
+
 ## Bake a surface layer
 
 ```ts

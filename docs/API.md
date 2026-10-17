@@ -99,6 +99,39 @@ identity. The standard seeded integer lattice remains available without sine has
 values and copy tuples. Callback identity and callback state remain borrowed;
 callback failures and nonfinite results are rejected during sampling.
 
+## Periodic coordinates through a 4D field
+
+Root and `strata-procedural/noise` export
+`sampleToroidalField2D(sample4D, u, v, circumference)` and the `ScalarField4D`
+callback type `(x, y, z, w) => number`. This pure adapter maps each unit-repeat
+axis to a circle in a separate coordinate plane, then calls the supplied field
+once. It returns the raw finite value, without clamping or signed-to-unit remapping.
+
+```ts
+import { sampleToroidalField2D } from 'strata-procedural/noise';
+const field4D = (x: number, y: number, z: number, w: number) => x*z + y*w;
+const value = sampleToroidalField2D(field4D, 0.2, -0.3, 12);
+```
+
+With `tau = 2*Math.PI`, `radius = circumference/tau`, `a = u*tau` and `b = v*tau`,
+the callback receives `(cos(a)*radius, sin(a)*radius, cos(b)*radius, sin(b)*radius)`
+in that order. Circumference controls field-space travel per unit repeat; it does
+not change the mathematical period. Angles use the original coordinates directly,
+without modulo reduction. `u` and `v` must be finite numbers in `[-2**20,2**20]`;
+circumference and its computed radius must be positive finite numbers. A tiny
+positive circumference whose radius underflows to zero is rejected. Invalid
+controls never invoke the callback. Nonfinite callback values reject, and callback
+exceptions retain their cause.
+
+The sampler is borrowed and must be deterministic and independent of call order.
+Its domain, explicit random seed when applicable, range and smoothness belong to
+the caller. No generator, cache, octave schedule, texture state or renderer is
+created. Mathematical unit periodicity does not imply bit-identical floating
+coordinates or values at repeat boundaries: trigonometric reduction, lost phase
+resolution and tiny/large radii introduce rounding, and discontinuous injected
+fields can amplify it. The phase cap bounds the input; it does not guarantee
+feature resolution, smooth seams or a seamless rendered material.
+
 ## Jittered two-nearest cell fields
 
 Root and `strata-procedural/noise` export `createJitteredCellField2D`,

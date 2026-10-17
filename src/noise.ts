@@ -3,6 +3,9 @@
 import { requireFiniteNumber } from "./validation.js";
 import { sampleSeededLattice } from "./noiseLattice.js";
 
+export { sampleToroidalField2D } from "./toroidalField.js";
+export type { ScalarField4D } from "./toroidalField.js";
+
 export { createValueNoise2D, createFractalNoise2D, createSineLattice2D } from "./noiseFields.js";
 export type {
   ValueNoise2DOptions,
