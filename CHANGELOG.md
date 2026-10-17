@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.1](https://github.com/jbcom/strata-procedural/compare/v0.2.0...v0.2.1) (2026-10-17)
+
+
+### Bug Fixes
+
+* **lint:** remove redundant non-null assertions ([d250d80](https://github.com/jbcom/strata-procedural/commit/d250d80f3169b08baecdd84bfc1cb064abf03ba4))
+* **lint:** remove redundant non-null assertions ([8fdf4a5](https://github.com/jbcom/strata-procedural/commit/8fdf4a5b5a480c6f2ee7cd8276df1fc931f9ed0f))
+
 ## [0.2.0](https://github.com/jbcom/strata-procedural/compare/v0.1.0...v0.2.0) (2026-10-17)
 
 
